@@ -1,0 +1,264 @@
+/* グローバルなスタイル設定 */
+body {
+    font-family: 'DotGothic16', sans-serif; /* 新しいレトロフォントを適用 */
+    background-color: #000; /* 背景色を黒に設定 */
+    color: #0f0; /* テキスト色を明るい緑に設定（レトロゲーム風） */
+    display: flex;
+    flex-direction: column; /* 要素を縦に並べる */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* 画面全体を覆う */
+    margin: 0;
+    padding: 10px; /* 全体のパディングを少し減らす */
+    box-sizing: border-box;
+    /* レトロなグリッド背景パターン */
+    background-image:
+        linear-gradient(to right, #1a1a1a 1px, transparent 1px),
+        linear-gradient(to bottom, #1a1a1a 1px, transparent 1px);
+    background-size: 20px 20px; /* グリッドのサイズ */
+    background-position: 0 0;
+    overflow-y: auto; /* コンテンツがはみ出た場合にスクロール可能にする */
+}
+
+/* メインコンテナのスタイル */
+.container {
+    max-width: 360px; /* ゲーム画面の幅(360px)に合わせる */
+    height: 440px;    /* ゲーム画面の高さに合わせて調整 */
+    width: 95%; /* 画面幅の95%を使用 */
+    padding: 20px; /* パディングを調整 */
+    border-radius: 15px; /* 角を丸く */
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); /* 鮮やかな緑色の影 */
+    border: 2px solid #0f0; /* 緑色のボーダー */
+    text-align: center; /* テキストを中央揃え */
+    box-sizing: border-box; /* パディングとボーダーを幅に含める */
+    overflow-y: auto; /* コンテンツがはみ出た場合に縦スクロールを許可 */
+
+    /* 背景画像とウォッシュアウト効果 */
+    background-image: linear-gradient(rgba(17, 17, 17, 0.95), rgba(17, 17, 17, 0.85)), url('background.png');
+    background-color: #111; /* 画像読み込み失敗時のフォールバック */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* タイトルのスタイル */
+h1 {
+    font-family: 'Press Start 2P', cursive; /* ゲーム風フォントに変更 */
+    font-size: 1.5rem; /* タイトルを大きく */
+    color: #0f0; /* タイトル色を緑に */
+    margin-bottom: 20px;
+    text-shadow: 0 0 15px rgba(0, 255, 0, 0.8); /* テキストに光るような影 */
+    line-height: 1.5; /* 行の高さを調整 */
+    text-align: center; /* テキストを中央揃えにする */
+}
+
+/* 段落のスタイル */
+p {
+    font-size: 0.9rem; /* 段落のフォントサイズを少し小さく */
+    margin-bottom: 15px;
+    line-height: 1.8; /* 行の高さを少し広げて読みやすく */
+    color: #eee; /* 少し明るいグレーのテキスト色 */
+    overflow-wrap: break-word; /* 長い単語やURLがはみ出す場合に、単語の途中で改行する */
+}
+
+/* 強調テキストのスタイル */
+p strong {
+    color: #ffa500; /* 強調部分をオレンジ色に */
+    text-shadow: 0 0 5px rgba(255, 255, 0, 0.6); /* 黄色い光る影 */
+}
+
+/* 区切り線のスタイル */
+/* .container内のhrに限定してスタイルを適用し、他のスタイルとの競合を避けます */
+.container hr {
+    border: none;
+    border-top: 2px dashed #0f0; /* 点線でレトロ感を出す */
+    /* `margin` の左右を `auto` にすることで中央揃えになります */
+    margin: 30px auto; /* 上下80px、左右autoで中央揃えを確実に適用 */
+    width: 80%; /* 幅を調整 */
+}
+
+/* Special Thanksセクションのスタイル */
+.special-thanks {
+    text-align: center; /* ご要望に応じて中央揃えに変更 */
+    font-size: 0.8rem; /* 小さめのフォントサイズ */
+    color: #aaa; /* 暗めのグレー */
+}
+
+.special-thanks h2 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.3rem; /* サブタイトル */
+    color: #0f0;
+    margin-bottom: 15px;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+}
+
+.special-thanks ul {
+    list-style: none; /* リストの点をなくす */
+    padding: 0;
+    margin: 0; /* ulのデフォルトマージンをリセット。親要素のtext-align:centerを継承して中央揃えにする */
+}
+
+.special-thanks li {
+    margin-bottom: 20px; /* 各項目の間隔を広げる */
+}
+
+.special-thanks a {
+    display: inline-block; /* レイアウトを安定させる */
+    position: relative; /* 疑似要素の基準位置 */
+    color: #0ff; /* リンク色をシアンに */
+    padding-left: 1.5em; /* アイコン用のスペースを確保 */
+    text-decoration: none; /* 下線をなくす */
+    transition: all 0.3s ease; /* ホバー時のアニメーション */
+}
+
+/* リンクの前に選択カーソル(▶)を配置 */
+.special-thanks a::before {
+    content: '▶';
+    position: absolute;
+    left: 0;
+    opacity: 0; /* 通常は非表示 */
+    transition: opacity 0.2s ease;
+    color: #ff0; /* カーソルの色を黄色に */
+}
+
+.special-thanks a:hover {
+    color: #fff; /* ホバー時に白く光らせる */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+}
+
+/* ホバー時に選択カーソルを表示 */
+.special-thanks a:hover::before {
+    opacity: 1;
+}
+
+/* スクロールバーのスタイルをカスタマイズ */
+.container::-webkit-scrollbar {
+    width: 10px; /* スクロールバーの幅 */
+}
+
+.container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.5); /* スクロールバーの背景 */
+    border-radius: 10px;
+}
+
+.container::-webkit-scrollbar-thumb {
+    background-color: #0f0; /* スクロールバー自体の色 */
+    border-radius: 10px;
+    border: 2px solid #222; /* 枠線 */
+}
+
+/* レスポンシブ対応 (既存のメディアクエリも調整) */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.8rem;
+    }
+    p {
+        font-size: 0.85rem;
+    }
+    .container {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.6rem;
+    }
+    p {
+        font-size: 0.8rem;
+    }
+    .container {
+        padding: 15px;
+        border-radius: 10px;
+    }
+    .special-thanks h2 {
+        font-size: 1.2rem;
+    }
+    .special-thanks {
+        font-size: 0.75rem;
+    }
+}
+
+/* --- メニュースタイル --- */
+#menu-container {
+    position: fixed; /* 画面に固定 */
+    top: 15px;
+    right: 20px;
+    z-index: 1000; /* 他の要素より手前に表示 */
+    cursor: pointer;
+}
+
+#menu-icon {
+    width: 30px;
+    height: 25px;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+#menu-icon span {
+    display: block;
+    position: absolute;
+    height: 3px;
+    width: 100%;
+    background: #0f0; /* 緑色 */
+    border-radius: 3px;
+    opacity: 1;
+    left: 0;
+    transition: all 0.25s ease-in-out;
+}
+
+#menu-icon span:nth-child(1) { top: 0px; }
+#menu-icon span:nth-child(2) { top: 10px; }
+#menu-icon span:nth-child(3) { top: 20px; }
+
+/* メニューが開いたときのアイコン（×印） */
+#menu-container.open #menu-icon span:nth-child(1) {
+    top: 10px;
+    transform: rotate(135deg);
+}
+#menu-container.open #menu-icon span:nth-child(2) {
+    opacity: 0;
+    left: -30px;
+}
+#menu-container.open #menu-icon span:nth-child(3) {
+    top: 10px;
+    transform: rotate(-135deg);
+}
+
+#menu-content {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    border: 1px solid #0f0;
+    border-radius: 5px;
+    padding: 10px 20px;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+}
+
+#menu-content.hidden {
+    display: none;
+}
+
+#menu-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#menu-content li {
+    margin: 10px 0;
+}
+
+#menu-content a {
+    color: #0f0;
+    text-decoration: none;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8rem;
+    transition: color 0.2s;
+}
+
+#menu-content a:hover {
+    color: #fff;
+    text-shadow: 0 0 5px #fff;
+}

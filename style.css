@@ -1,0 +1,188 @@
+body {
+    background-color: #000;
+    color: #fff;
+    font-family: 'Press Start 2P', cursive, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    /* スマホでの意図しない動作を防ぐ */
+    touch-action: none;
+    -webkit-user-select: none; /* Safari, Chrome */
+    user-select: none; /* Standard */
+    image-rendering: pixelated; /* 画像がぼやけないようにする */
+}
+
+h1 {
+    color: #0f0;
+    text-shadow: 2px 2px #0a0;
+}
+
+#game-container {
+    position: relative;
+    display: block;
+    border: 2px solid #0f0;
+    box-shadow: 0 0 15px #0f0;
+    width: 100%;
+    max-width: 360px; /* canvasの幅に合わせる */
+    background-image: url('background.png');
+    background-size: cover;
+    background-position: center;
+}
+
+#gameCanvas {
+    /* 背景画像を少し透けて見せる（ウォッシュアウト効果） */
+    background-color: rgba(17, 17, 17, 0.85);
+    display: block;
+    width: 100%; /* コンテナに合わせて伸縮 */
+}
+
+#gameCanvas.hidden {
+    display: none;
+}
+
+#game-info {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #222;
+    border-top: 2px solid #0f0;
+}
+
+#game-info.hidden {
+    display: none;
+}
+
+#game-info span {
+    flex-grow: 1;
+    text-align: center;
+    font-size: 16px;
+}
+
+/* #game-info の中の #lives-display に限定することで、スタイルの優先度を上げて意図したサイズを適用します */
+#game-info #lives-display {
+    font-size: 40px; /* この値を変更することでサイズを調整できます */
+    color: #ff5555; /* ライフを赤色に */
+    letter-spacing: 3px; /* シンボル間のスペースを調整 */
+    font-weight: bold;
+}
+
+#start-screen, #message-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.85);
+    padding: 40px;
+    width: 80%;
+    border: 2px solid #0f0;
+    text-align: center;
+}
+
+#start-screen.hidden, #message-container.hidden {
+    display: none;
+}
+
+#start-button, #restart-button {
+    background-color: #0f0;
+    color: #000;
+    border: none;
+    padding: 15px 30px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+    text-transform: uppercase;
+}
+
+/* --- Menu Bar --- */
+#menu-container {
+    position: fixed; /* 画面に固定 (about.htmlと統一) */
+    top: 15px;
+    right: 20px;
+    z-index: 1000; /* ゲームUIより手前に表示 */
+    cursor: pointer;
+}
+
+#menu-icon {
+    width: 30px;
+    height: 25px;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+#menu-icon span {
+    display: block;
+    position: absolute;
+    height: 3px;
+    width: 100%;
+    background: #0f0; /* about.htmlに合わせて緑色に変更 */
+    border-radius: 3px;
+    opacity: 1;
+    left: 0;
+    transition: all 0.25s ease-in-out;
+}
+
+/* about.htmlのスタイルに合わせて位置を調整 */
+/* メニューが開いている時のアイコンの変化（X印にするアニメーション） - about.htmlと統一 */
+#menu-icon span:nth-child(1) { top: 0px; }
+#menu-icon span:nth-child(2) { top: 10px; }
+#menu-icon span:nth-child(3) { top: 20px; }
+
+#menu-container.open #menu-icon span:nth-child(1) {
+    top: 10px;
+    transform: rotate(135deg);
+}
+
+#menu-container.open #menu-icon span:nth-child(2) {
+    opacity: 0;
+    left: -30px;
+}
+
+#menu-container.open #menu-icon span:nth-child(3) {
+    top: 10px;
+    transform: rotate(-135deg);
+}
+
+#menu-content {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.9); /* about.htmlと統一 */
+    border: 1px solid #0f0;
+    border-radius: 5px;
+    padding: 10px 20px;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); /* about.htmlと統一 */
+}
+
+#menu-content.hidden {
+    display: none;
+}
+
+#menu-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#menu-content li {
+    margin: 10px 0; /* about.htmlと統一 */
+}
+
+#menu-content a {
+    color: #0f0; /* about.htmlに合わせて緑色に変更 */
+    text-decoration: none;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8rem; /* about.htmlと統一 */
+    transition: color 0.2s;
+}
+
+#menu-content a:hover {
+    color: #fff; /* about.htmlと統一 */
+    text-shadow: 0 0 5px #fff; /* about.htmlと統一 */
+}
