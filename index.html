@@ -10,6 +10,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div id="menu-container">
+        <div id="menu-icon">
+            <span></span><span></span><span></span>
+        </div>
+        <nav id="menu-content" class="hidden">
+            <ul>
+                <li><a href="../profile/index.html">Profile</a></li>
+                <li><a href="index.html">Game</a></li>
+                <li><a href="about.html">About</a></li>
+            </ul>
+        </nav>
+    </div>
     <h1>Arcade Invade</h1>
     <div id="game-container">
         <canvas id="gameCanvas" width="360" height="440" class="hidden"></canvas>
@@ -30,6 +42,8 @@
             <button id="restart-button">PLAY AGAIN</button>
         </div>
     </div>
-    <script src="script.js"></script>
+    <!-- メニューの開閉ロジックを共通ファイルに分離し、defer属性で読み込みます -->
+    <script src="menu.js" defer></script>
+    <script src="script.js" defer></script>
 </body>
 </html>

@@ -1,28 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- メニューバーの生成とセットアップ ---
-    const menuContainer = document.createElement('div');
-    menuContainer.id = 'menu-container';
-
-    const menuIcon = document.createElement('div');
-    menuIcon.id = 'menu-icon';
-    menuIcon.innerHTML = '<span></span><span></span><span></span>';
-
-    const menuContent = document.createElement('nav');
-    menuContent.id = 'menu-content';
-    menuContent.classList.add('hidden');
-    // プロフィールやリンク先は未定のため、ダミーのリンクを設定
-    menuContent.innerHTML = `
-        <ul>
-            <li><a href="#">Profile_Under construction</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="#">Other_Under construction</a></li>
-        </ul>
-    `;
-
-    menuContainer.appendChild(menuIcon);
-    menuContainer.appendChild(menuContent);
-    document.body.prepend(menuContainer);
-
     // Canvasのセットアップ
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -572,21 +548,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- イベントリスナー ---
-
-    // メニューアイコンのクリックイベント
-    menuIcon.addEventListener('click', (e) => {
-        e.stopPropagation(); // documentへのクリックイベントの伝播を停止
-        menuContainer.classList.toggle('open');
-        menuContent.classList.toggle('hidden');
-    });
-
-    // メニューの外側をクリックしたときにメニューを閉じる
-    document.addEventListener('click', (e) => {
-        if (!menuContainer.contains(e.target) && menuContainer.classList.contains('open')) {
-            menuContainer.classList.remove('open');
-            menuContent.classList.add('hidden');
-        }
-    });
 
     function startGame() {
         startScreen.classList.add('hidden');
