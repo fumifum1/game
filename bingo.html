@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BINGO Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="bingo.css">
+</head>
+<body>
+    <!-- Initial Setup Screen -->
+    <div id="start-screen">
+        <h1>BINGO Game Setup</h1>
+        <div class="setup-section">
+            <h2>1. Choose your role</h2>
+            <div class="role-selection">
+                <label><input type="radio" name="role" value="admin" checked> Admin (抽選 & プレイ)</label>
+                <label><input type="radio" name="role" value="player"> Player (プレイ)</label>
+            </div>
+        </div>
+        <div class="setup-section">
+            <h2>2. Select BINGO rule</h2>
+            <div class="rule-selection">
+                <label><input type="radio" name="bingoRuleSetup" value="1" checked> 1 line</label>
+                <label><input type="radio" name="bingoRuleSetup" value="2"> 2 lines</label>
+                <label><input type="radio" name="bingoRuleSetup" value="3"> 3 lines</label>
+            </div>
+        </div>
+        <button id="start-game-btn">Start Game</button>
+    </div>
+
+    <!-- Main Game Container (Initially Hidden) -->
+    <div id="game-container">
+        <div class="container">
+            <!-- Tab navigation -->
+            <nav class="tabs">
+                <button class="tab-link active" data-tab="lottery-view">Lottery</button>
+                <button class="tab-link" data-tab="card-view">Card</button>
+            </nav>
+
+            <!-- Lottery View -->
+            <div id="lottery-view" class="tab-content active">
+                <h1>BINGO Lottery</h1>
+                <div id="lottery-section">
+                    <div id="current-number-display">?</div>
+                    <button id="draw-button">DRAW</button>
+                </div>
+                <div id="history-section">
+                    <h2>Drawn Numbers</h2>
+                    <div id="drawn-numbers-container"></div>
+                </div>
+                <div id="game-controls">
+                    <button id="reset-game-btn">Back to Setup</button>
+                </div>
+            </div>
+
+            <!-- Card View -->
+            <div id="card-view" class="tab-content">
+                <h1>BINGO Card</h1>
+                <div id="bingo-message" class="bingo-message"></div>
+                <div id="bingo-grid"></div>
+                <div class="controls">
+                    <button id="reset-card-btn">New Card</button>
+                </div>
+            </div>
+        </div>
+        <footer>
+            &copy; 2025 Synapse Creations. Sep.Bingo_ver1.0.0 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+        </footer>
+    </div>
+
+    <!-- Audio Elements for Sound Effects -->
+    <audio id="sound1" src="sounds/sound1.mp3" preload="metadata"></audio>
+    <audio id="sound2" src="sounds/sound2.mp3" preload="metadata"></audio>
+    <audio id="sound3" src="sounds/sound3.mp3" preload="metadata"></audio>
+    <audio id="sound4" src="sounds/sound4.mp3" preload="metadata"></audio>
+    <audio id="sound5" src="sounds/sound5.mp3" preload="metadata"></audio>
+    <audio id="sound6" src="sounds/sound6.mp3" preload="metadata"></audio>
+    <audio id="sound7" src="sounds/sound7.mp3" preload="metadata"></audio>
+    <audio id="sound8" src="sounds/sound8.mp3" preload="metadata"></audio>
+
+    <script src="bingo.js"></script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+/* General Body and Font Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 700px;
+    box-sizing: border-box;
+}
+
+h1, h2 {
+    font-family: 'Zen Dots', sans-serif;
+    text-align: center;
+    color: #333;
+}
+
+h1 {
+    /* Responsive font size to prevent wrapping on small screens */
+    font-size: clamp(1.6rem, 7vw, 2.5rem);
+    margin-bottom: 20px;
+    color: #072078;
+}
+
+h2 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+footer {
+    margin-top: 40px;
+    color: #888;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Start Screen Styles */
+#start-screen {
+    background-color: #fff;
+    padding: 30px 50px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+}
+
+.setup-section {
+    margin-bottom: 30px;
+    text-align: left;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.setup-section h2 {
+    text-align: left;
+    font-size: 1.3rem;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: none;
+}
+
+.role-selection label,
+.rule-selection label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+#start-game-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.2rem;
+}
+
+/* Game Container (Initially Hidden) */
+#game-container {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Tab Navigation */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 24px;
+}
+
+.tab-link {
+    font-family: 'Zen Dots', sans-serif;
+    font-size: 1.1rem;
+    padding: 10px 20px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #666;
+    transition: all 0.2s ease-in-out;
+}
+
+.tab-link:hover {
+    color: #333;
+}
+
+.tab-link.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none; /* Hide all content by default */
+}
+
+.tab-content.active {
+    display: block; /* Show only the active content */
+}
+
+/* Lottery View Styles */
+#lottery-section {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#lottery-section p {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+#current-number-display {
+    font-family: 'Zen Dots', sans-serif;
+    font-size: 5rem; /* Adjusted for better fit */
+    font-weight: bold;
+    color: #007bff;
+    line-height: 1;
+    border: 5px solid #007bff;
+    border-radius: 50%;
+    width: 160px;
+    height: 160px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto;
+    background-color: #f8f9fa;
+}
+
+/* Style for the finalized number */
+#current-number-display.decided {
+    color: #dc3545; /* A bootstrap-like danger red */
+    border-color: #dc3545;
+}
+
+#history-section {
+    margin-bottom: 30px;
+}
+
+#drawn-numbers-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+    gap: 8px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-height: 50px;
+    background-color: #f9f9f9;
+}
+
+/* Card View Container - for positioning context */
+#card-view {
+    position: relative; /* This is crucial for absolute positioning of the child */
+}
+
+/* Card View Styles */
+#bingo-grid {
+    width: 100%;
+    aspect-ratio: 1; /* Make the entire table a square */
+    margin: 20px 0;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 4px;
+    background-color: #ccc; /* This color will show through the gaps */
+    padding: 4px;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.bingo-cell {
+    background-color: #fff;
+    /* Responsive font size to prevent overflow */
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    font-family: 'Zen Dots', sans-serif;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+}
+
+.bingo-cell.free {
+    background-color: #e9ecef;
+    color: #495057;
+    cursor: default;
+}
+
+.bingo-cell.hit {
+    background-color: #ffc107;
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.7);
+}
+
+/* Controls and Buttons */
+.controls, #game-controls {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.rule-selection {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.rule-selection p {
+    margin: 0;
+}
+
+button {
+    font-family: 'Zen Dots', sans-serif;
+    font-size: 1rem;
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+#reset-game-btn, #reset-card-btn {
+    background-color: #6c757d;
+}
+
+#reset-game-btn:hover, #reset-card-btn:hover {
+    background-color: #5a6268;
+}
+
+/* Bingo Message */
+.bingo-message {
+    /* Positioning to overlay on the card */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10; /* Ensure it's above the table */
+
+    /* Hide it by default */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Allow clicks to pass through */
+    transition: opacity 0.3s, visibility 0.3s;
+
+    /* Appearance */
+    font-family: 'Zen Dots', sans-serif;
+    /* Responsive font size */
+    font-size: clamp(3rem, 18vw, 8rem);
+    text-align: center;
+    color: #28a745;
+    font-weight: bold;
+    text-shadow: 3px 3px 0 #fff, 6px 6px 0 rgba(0,0,0,0.2);
+}
+
+.bingo-message.show {
+    /* Show it with animation */
+    opacity: 1;
+    visibility: visible;
+    animation: pop-in 0.5s ease-out;
+}
+
+@keyframes pop-in {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0;
+    }
+    80% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
