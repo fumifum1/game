@@ -40,6 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sound8'),
     ];
 
+    // Modal Elements
+    const soundModalOverlay = document.getElementById('sound-modal-overlay');
+    const confirmSoundBtn = document.getElementById('confirm-sound-btn');
+
     // --- GAME STATE ---
     let gameState = {};
 
@@ -304,20 +308,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * Gathers settings and starts the game.
+     */
+    function startGame() {
+        const selectedRole = document.querySelector('input[name="role"]:checked').value;
+        const selectedLines = parseInt(document.querySelector('input[name="bingoRuleSetup"]:checked').value, 10);
+
+        startScreen.style.display = 'none';
+        gameContainer.style.display = 'flex';
+
+        initializeGame(selectedRole, selectedLines);
+    }
+
+    /**
      * Sets up all the main event listeners for the application.
      */
     function setupEventListeners() {
         startGameBtn.addEventListener('click', () => {
             const selectedRole = document.querySelector('input[name="role"]:checked').value;
-            const selectedLines = parseInt(document.querySelector('input[name="bingoRuleSetup"]:checked').value, 10);
-
-            startScreen.style.display = 'none';
-            gameContainer.style.display = 'flex';
-
-            initializeGame(selectedRole, selectedLines);
+            if (selectedRole === 'admin') {
+                soundModalOverlay.classList.remove('hidden');
+            } else {
+                startGame();
+            }
         });
 
         drawButton.addEventListener('click', drawNumber);
+
         resetGameBtn.addEventListener('click', () => {
             gameContainer.style.display = 'none';
             startScreen.style.display = 'block';
@@ -333,6 +350,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     createBingoCard();
                 }
             }
+        });
+
+        confirmSoundBtn.addEventListener('click', () => {
+            soundModalOverlay.classList.add('hidden');
+            startGame();
         });
     }
 

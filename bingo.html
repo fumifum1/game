@@ -69,7 +69,7 @@
             </div>
         </div>
         <footer>
-            &copy; 2025 Synapse Creations. Sep.Bingo_ver1.0.1 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+            &copy; 2025 Synapse Creations. Sep.Bingo_ver1.1.0 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
         </footer>
     </div>
 
@@ -82,6 +82,15 @@
     <audio id="sound6" src="sounds/sound6.mp3" preload="metadata"></audio>
     <audio id="sound7" src="sounds/sound7.mp3" preload="metadata"></audio>
     <audio id="sound8" src="sounds/sound8.mp3" preload="metadata"></audio>
+
+    <!-- Sound Confirmation Modal (Initially Hidden) -->
+    <div id="sound-modal-overlay" class="modal-overlay hidden">
+        <div id="sound-modal" class="modal-content">
+            <h2>音声の確認</h2>
+            <p>抽選中は効果音がでます。<br>音量にご注意ください。</p>
+            <button id="confirm-sound-btn">了解！ゲーム開始！</button>
+        </div>
+    </div>
 
     <script src="bingo.js"></script>
 </body>
