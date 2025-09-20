@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameContainer = document.getElementById('game-container');
 
     // Tabs
+    const tabsContainer = document.querySelector('.tabs');
     const tabLinks = document.querySelectorAll('.tab-link');
     const tabContents = document.querySelectorAll('.tab-content');
 
@@ -43,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modal Elements
     const soundModalOverlay = document.getElementById('sound-modal-overlay');
     const confirmSoundBtn = document.getElementById('confirm-sound-btn');
+    const shareBtn = document.getElementById('share-btn');
+    const qrModalOverlay = document.getElementById('qr-modal-overlay');
 
     // --- GAME STATE ---
     let gameState = {};
@@ -89,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function setupUIForRole() {
         if (gameState.role === 'player') {
-            lotteryTabLink.style.display = 'none';
+            tabsContainer.style.display = 'none'; // Hide the entire tab navigation for players
             // Force card view to be active for players
             lotteryTabLink.classList.remove('active');
             cardTabLink.classList.add('active');
@@ -97,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cardTabView.classList.add('active');
             resetCardBtn.textContent = 'Back to Setup'; // Change button text for player
         } else { // admin
-            lotteryTabLink.style.display = 'block';
+            tabsContainer.style.display = 'flex'; // Ensure tab navigation is visible for admins
             lotteryTabLink.classList.add('active');
             cardTabLink.classList.remove('active');
             lotteryTabView.classList.add('active');
@@ -355,6 +358,15 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmSoundBtn.addEventListener('click', () => {
             soundModalOverlay.classList.add('hidden');
             startGame();
+        });
+
+        // QR Code Modal Listeners
+        shareBtn.addEventListener('click', () => {
+            qrModalOverlay.classList.remove('hidden');
+        });
+
+        qrModalOverlay.addEventListener('click', () => {
+            qrModalOverlay.classList.add('hidden');
         });
     }
 

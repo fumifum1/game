@@ -86,6 +86,18 @@ footer {
     cursor: pointer;
 }
 
+/* Radio button custom styles */
+.role-selection input[type="radio"],
+.rule-selection input[type="radio"] {
+    /* Change the color of the radio button when checked */
+    accent-color: #35393d;
+    /* Adjust size and alignment for better visuals */
+    width: 1.1em;
+    height: 1.1em;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
 #start-game-btn {
     width: 100%;
     padding: 15px;
@@ -103,29 +115,34 @@ footer {
 /* Tab Navigation */
 .tabs {
     display: flex;
-    border-bottom: 1px solid #ddd;
+    justify-content: center; /* ボタンを中央に配置 */
+    gap: 20px; /* ボタン間のスペース */
     margin-bottom: 24px;
 }
 
 .tab-link {
     font-family: 'Zen Dots', sans-serif;
     font-size: 1.1rem;
-    padding: 10px 20px;
+    width: 180px; /* 幅を調整 */
+    padding: 15px;
     cursor: pointer;
-    background: none;
     border: none;
-    border-bottom: 3px solid transparent;
-    color: #666;
+    border-radius: 100px; /* 丸い形 */
+    box-sizing: border-box;
+    background: #e0e0e0; /* 非アクティブ時の背景色 (グレー) */
+    color: #333; /* テキスト色を濃いグレーに */
+    text-align: center;
     transition: all 0.2s ease-in-out;
 }
 
 .tab-link:hover {
-    color: #333;
+    background-color: #d0d0d0; /* ホバー時の色 */
 }
 
 .tab-link.active {
-    color: #007bff;
-    border-bottom-color: #007bff;
+    background-color: #6c757d; /* アクティブ時の背景色 (他のボタンと統一) */
+    color: #fff; /* アクティブ時のテキスト色を白に */
+    font-weight: bold;
 }
 
 /* Tab Content */
@@ -276,6 +293,21 @@ button:hover {
     background-color: #5a6268;
 }
 
+/* Share Button */
+#share-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    z-index: 900;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    padding: 0;
+    line-height: 1;
+}
+
 /* Bingo Message */
 .bingo-message {
     /* Positioning to overlay on the card */
@@ -345,10 +377,10 @@ button:hover {
 }
 
 .modal-content {
-    background: transparent;
+    background: white;
     padding: 30px 25px;
-    border-radius: 0;
-    box-shadow: none;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     text-align: center;
     max-width: 400px;
     width: 90%;
@@ -361,7 +393,12 @@ button:hover {
     transform: scale(0.9);
 }
 
-.modal-content h2 {
+/* Sound modal specific overrides */
+#sound-modal {
+    background: transparent;
+    box-shadow: none;
+}
+#sound-modal h2 {
     /* Responsive font size */
     font-size: clamp(1.2rem, 5vw, 1.5rem);
     margin-top: 0;
@@ -372,12 +409,20 @@ button:hover {
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-.modal-content p {
+#sound-modal p {
     margin: 15px 0 25px;
     color: #f0f2f5;
     font-size: clamp(0.9rem, 4vw, 1rem);
     line-height: 1.6; /* Improve readability for wrapped text */
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+#qr-modal-content img {
+    max-width: 220px;
+    width: 100%;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid #ddd;
 }
 
 #confirm-sound-btn {

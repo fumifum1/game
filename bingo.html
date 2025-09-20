@@ -18,16 +18,16 @@
         <div class="setup-section">
             <h2>1. Choose your role</h2>
             <div class="role-selection">
-                <label><input type="radio" name="role" value="admin" checked> Admin (抽選 & プレイ)</label>
-                <label><input type="radio" name="role" value="player"> Player (プレイ)</label>
+                <label><input type="radio" name="role" value="admin" checked> 管理者（抽選）</label>
+                <label><input type="radio" name="role" value="player"> 一般プレイヤー</label>
             </div>
         </div>
         <div class="setup-section">
             <h2>2. Select BINGO rule</h2>
             <div class="rule-selection">
-                <label><input type="radio" name="bingoRuleSetup" value="1" checked> 1 line</label>
-                <label><input type="radio" name="bingoRuleSetup" value="2"> 2 lines</label>
-                <label><input type="radio" name="bingoRuleSetup" value="3"> 3 lines</label>
+                <label><input type="radio" name="bingoRuleSetup" value="1" checked> 1 本</label>
+                <label><input type="radio" name="bingoRuleSetup" value="2"> 2 本</label>
+                <label><input type="radio" name="bingoRuleSetup" value="3"> 3 本</label>
             </div>
         </div>
         <button id="start-game-btn">Start Game</button>
@@ -73,6 +73,9 @@
         </footer>
     </div>
 
+    <!-- Share Button -->
+    <button id="share-btn" title="このページをQRコードで共有">QR</button>
+
     <!-- Audio Elements for Sound Effects -->
     <audio id="sound1" src="sounds/sound1.mp3" preload="metadata"></audio>
     <audio id="sound2" src="sounds/sound2.mp3" preload="metadata"></audio>
@@ -89,6 +92,16 @@
             <h2>音声の確認</h2>
             <p>抽選中は効果音がでます。<br>音量にご注意ください。</p>
             <button id="confirm-sound-btn">了解！ゲーム開始！</button>
+        </div>
+    </div>
+
+    <!-- QR Code Modal (Initially Hidden) -->
+    <div id="qr-modal-overlay" class="modal-overlay hidden">
+        <div id="qr-modal-content" class="modal-content">
+            <h2>みんなでBINGOしよう！</h2>
+            <p>QRコードを読み取って参加してください。</p>
+            <img src="images/qrcode.png" alt="QR Code for this page">
+            <p style="font-size: 0.9rem; color: #888;">画面のどこかをクリックして閉じます</p>
         </div>
     </div>
 
