@@ -47,8 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareBtn = document.getElementById('share-btn');
     const qrModalOverlay = document.getElementById('qr-modal-overlay');
 
+    // Lottery Overlay Elements
+    const lotteryOverlay = document.getElementById('lottery-overlay');
+    const lotteryNumberFullscreen = document.getElementById('lottery-number-fullscreen');
+    const lotteryOverlayControls = document.getElementById('lottery-overlay-controls');
+    const drawAgainBtn = document.getElementById('draw-again-btn');
+    const backToLotteryBtn = document.getElementById('back-to-lottery-btn');
+
     // --- GAME STATE ---
     let gameState = {};
+    let lotteryAnimationInterval = null; // To hold the interval ID for the lottery animation
 
     // --- FUNCTIONS ---
     /**
@@ -66,6 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset UI elements
         currentNumberDisplay.textContent = '?';
         drawnNumbersContainer.innerHTML = '';
+        lotteryNumberFullscreen.textContent = '?';
+        lotteryNumberFullscreen.classList.remove('decided', 'flickering');
+        lotteryOverlay.classList.add('hidden');
+        lotteryOverlayControls.classList.add('hidden');
         drawButton.disabled = false; // Re-enable the draw button
         bingoMessage.classList.remove('show');
 
@@ -168,55 +180,71 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Draws a new number from the available pool.
+     * Starts the full-screen lottery animation and draws a number.
      */
-    function drawNumber() {
+    function startLotteryAnimation() {
         // Prevent drawing if game is over or animation is running
-        if (gameState.isGameOver || drawButton.disabled) return;
+        if (gameState.isGameOver || lotteryAnimationInterval) return;
 
-        // Play the start sound immediately
-        if (drawStartSound && drawStartSound.readyState >= 1) {
-            drawStartSound.currentTime = 0;
-            // play() can return a promise, so we catch potential errors.
-            drawStartSound.play().catch(e => console.error("Error playing start sound:", e));
-        }
-
+        // Check if there are numbers left to draw
         if (gameState.availableNumbers.length === 0) {
             currentNumberDisplay.textContent = 'End';
-            drawButton.disabled = true; // Disable button when all numbers are drawn
+            lotteryNumberFullscreen.textContent = 'End';
+            lotteryNumberFullscreen.classList.remove('flickering');
+            lotteryNumberFullscreen.classList.add('decided');
+            lotteryOverlayControls.classList.add('hidden');
+            lotteryOverlay.classList.remove('hidden');
+            drawButton.disabled = true;
+            drawAgainBtn.disabled = true;
             return;
         }
 
-        drawButton.disabled = true; // Disable button during animation
-        currentNumberDisplay.classList.remove('decided'); // Remove red color from previous draw
+        // Show overlay and start animation
+        lotteryOverlay.classList.remove('hidden');
+        lotteryOverlayControls.classList.add('hidden'); // Hide controls during animation
+        lotteryNumberFullscreen.classList.remove('decided');
+        lotteryNumberFullscreen.classList.add('flickering');
 
-        const randIndex = Math.floor(Math.random() * gameState.availableNumbers.length);
-        const newNumber = gameState.availableNumbers.splice(randIndex, 1)[0];
-        gameState.drawnNumbers.push(newNumber);
+        // Play start sound
+        if (drawStartSound && drawStartSound.readyState >= 1) {
+            drawStartSound.currentTime = 0;
+            drawStartSound.play().catch(e => console.error("Error playing start sound:", e));
+        }
 
-        // Animate the number draw
+        // Disable buttons during animation
+        drawButton.disabled = true;
+        drawAgainBtn.disabled = true;
+
+        // Animate numbers flickering
         const animationDuration = 3000; // 3 seconds
         const intervalTime = 50; // Update every 50ms
-
-        const animationInterval = setInterval(() => {
+        lotteryAnimationInterval = setInterval(() => {
             const randomNumber = Math.floor(Math.random() * MAX_NUMBER) + 1;
-            currentNumberDisplay.textContent = randomNumber;
+            lotteryNumberFullscreen.textContent = randomNumber;
         }, intervalTime);
 
-        // After the animation, show the final number and update the game
+        // After the animation, decide the number
         setTimeout(() => {
-            clearInterval(animationInterval);
-            playRandomEndSound(); // Play a random end sound when number is decided
+            clearInterval(lotteryAnimationInterval);
+            lotteryAnimationInterval = null; // Clear interval ID
+
+            const randIndex = Math.floor(Math.random() * gameState.availableNumbers.length);
+            const newNumber = gameState.availableNumbers.splice(randIndex, 1)[0];
+            gameState.drawnNumbers.push(newNumber);
+
+            lotteryNumberFullscreen.textContent = newNumber;
+            lotteryNumberFullscreen.classList.remove('flickering');
+            lotteryNumberFullscreen.classList.add('decided');
             currentNumberDisplay.textContent = newNumber;
-            currentNumberDisplay.classList.add('reveal', 'decided'); // Add reveal animation and red color class
-            setTimeout(() => currentNumberDisplay.classList.remove('reveal'), 400); // Clean up animation class
+            currentNumberDisplay.classList.add('decided');
+
+            playRandomEndSound();
             updateDrawnNumbersHistory();
             checkCardForNumber(newNumber);
 
-            // Re-enable the draw button if the game is not over
-            if (!gameState.isGameOver) {
-                drawButton.disabled = false;
-            }
+            lotteryOverlayControls.classList.remove('hidden');
+            drawButton.disabled = gameState.isGameOver;
+            drawAgainBtn.disabled = gameState.isGameOver;
         }, animationDuration);
     }
 
@@ -268,11 +296,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (markedState.every((row, i) => row[BINGO_SIZE - 1 - i])) completedLines++;
 
         if (completedLines >= gameState.requiredLines && !gameState.isGameOver) {
-            gameState.isGameOver = true;
-            drawButton.disabled = true; // Disable draw button on BINGO
+            // Show BINGO message and confetti for anyone who gets a bingo.
             bingoMessage.textContent = 'BINGO!';
             bingoMessage.classList.add('show');
             if (typeof confetti === 'function') triggerConfetti();
+
+            // However, only stop the entire game if the user is a 'player'.
+            // The admin can continue drawing numbers for others.
+            if (gameState.role === 'player') {
+                gameState.isGameOver = true;
+                drawButton.disabled = true;
+                drawAgainBtn.disabled = true;
+            }
         }
     }
 
@@ -336,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        drawButton.addEventListener('click', drawNumber);
+        drawButton.addEventListener('click', startLotteryAnimation);
 
         resetGameBtn.addEventListener('click', () => {
             gameContainer.style.display = 'none';
@@ -358,6 +393,13 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmSoundBtn.addEventListener('click', () => {
             soundModalOverlay.classList.add('hidden');
             startGame();
+        });
+
+        // Lottery Overlay Listeners
+        drawAgainBtn.addEventListener('click', startLotteryAnimation);
+
+        backToLotteryBtn.addEventListener('click', () => {
+            lotteryOverlay.classList.add('hidden');
         });
 
         // QR Code Modal Listeners

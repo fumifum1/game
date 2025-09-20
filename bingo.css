@@ -10,6 +10,7 @@ body {
     align-items: center;
     min-height: 100vh;
     box-sizing: border-box;
+    overscroll-behavior-y: contain; /* Prevent pull-to-refresh on mobile */
 }
 
 .container {
@@ -437,4 +438,55 @@ button:hover {
 #confirm-sound-btn:hover {
     background-color: rgba(255, 255, 255, 0.3);
     transform: translateY(0); /* 上に動く効果を無効化 */
+}
+
+/* Lottery Fullscreen Overlay */
+#lottery-overlay {
+    /* .modal-overlay のスタイルを継承しつつ、一部上書き */
+    background-color: rgba(0, 0, 0, 0.9); /* 背景を少し濃くする */
+    flex-direction: column; /* 要素を縦に並べる */
+    z-index: 1500; /* 他のモーダルより手前に表示 */
+}
+
+#lottery-number-fullscreen {
+    font-family: 'Zen Dots', sans-serif;
+    /* 画面サイズに応じてフォントサイズを調整 */
+    font-size: clamp(150px, 40vw, 400px);
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    line-height: 1;
+    transition: color 0.3s, text-shadow 0.3s, transform 0.3s;
+}
+
+/* 数字がチカチカするアニメーション */
+#lottery-number-fullscreen.flickering {
+    animation: flicker 0.08s infinite;
+}
+
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+    75% { opacity: 0.9; }
+}
+
+/* 確定した数字のスタイル */
+#lottery-number-fullscreen.decided {
+    color: #ffc107; /* ゴールド */
+    text-shadow: 0 0 15px #ffc107, 0 0 40px rgba(255, 193, 7, 0.7);
+    transform: scale(1.05);
+}
+
+#lottery-overlay-controls {
+    margin-top: 40px;
+    display: flex;
+    gap: 20px;
+}
+
+#lottery-overlay-controls button {
+    padding: 15px 30px;
+    font-size: 1.2rem;
+}
+
+#back-to-lottery-btn {
+    background-color: #6c757d; /* 「戻る」ボタンはグレーに */
 }

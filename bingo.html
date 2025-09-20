@@ -18,8 +18,8 @@
         <div class="setup-section">
             <h2>1. Choose your role</h2>
             <div class="role-selection">
-                <label><input type="radio" name="role" value="admin" checked> 管理者（抽選）</label>
-                <label><input type="radio" name="role" value="player"> 一般プレイヤー</label>
+                <label><input type="radio" name="role" value="player" checked> 一般プレイヤー</label>
+                <label><input type="radio" name="role" value="admin"> 管理者（抽選）</label>
             </div>
         </div>
         <div class="setup-section">
@@ -75,6 +75,15 @@
 
     <!-- Share Button -->
     <button id="share-btn" title="このページをQRコードで共有">QR</button>
+
+    <!-- Lottery Animation Overlay (Initially Hidden) -->
+    <div id="lottery-overlay" class="modal-overlay hidden">
+        <div id="lottery-number-fullscreen">?</div>
+        <div id="lottery-overlay-controls" class="hidden">
+            <button id="draw-again-btn">再度抽選</button>
+            <button id="back-to-lottery-btn">戻る</button>
+        </div>
+    </div>
 
     <!-- Audio Elements for Sound Effects -->
     <audio id="sound1" src="sounds/sound1.mp3" preload="metadata"></audio>
