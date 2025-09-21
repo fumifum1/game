@@ -1,4 +1,8 @@
 /* General Body and Font Styles */
+html {
+    overscroll-behavior-y: contain; /* Prevent pull-to-refresh on mobile */
+}
+
 body {
     background-color: #f0f2f5; /* 基本の背景色 */
     font-family: 'Arial', sans-serif;

@@ -355,15 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Hides the game screen and shows the setup screen.
-     */
-    function returnToSetupScreen() {
-        gameContainer.style.display = 'none';
-        startScreen.style.display = 'block';
-        document.body.classList.remove('game-active');
-    }
-
-    /**
      * Sets up all the main event listeners for the application.
      */
     function setupEventListeners() {
@@ -394,11 +385,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }, { once: true }); // イベントリスナーを一度だけ実行し、自動で削除する
         });
 
-        resetGameBtn.addEventListener('click', returnToSetupScreen);
+        resetGameBtn.addEventListener('click', () => {
+            if (window.confirm('セットアップ画面に戻ります。ゲームの進行状況はリセットされますが、よろしいですか？')) {
+                location.reload();
+            }
+        });
 
         resetCardBtn.addEventListener('click', () => {
             if (gameState.role === 'player') {
-                returnToSetupScreen();
+                if (window.confirm('セットアップ画面に戻ります。ゲームの進行状況はリセットされますが、よろしいですか？')) {
+                    location.reload();
+                }
             } else { // For admins
                 // Show a confirmation dialog to prevent accidental clicks.
                 if (window.confirm('現在のカードはリセットされます。新しいカードを作成しますか？')) {
