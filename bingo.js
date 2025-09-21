@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const lotteryTabLink = document.querySelector('.tab-link[data-tab="lottery-view"]');
     const lotteryTabView = document.getElementById('lottery-view');
     const drawButton = document.getElementById('draw-button');
-    const currentNumberDisplay = document.getElementById('current-number-display');
     const drawnNumbersContainer = document.getElementById('drawn-numbers-container');
     const resetGameBtn = document.getElementById('reset-game-btn');
 
@@ -72,7 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // Reset UI elements
-        currentNumberDisplay.textContent = '?';
         drawnNumbersContainer.innerHTML = '';
         lotteryNumberFullscreen.textContent = '?';
         lotteryNumberFullscreen.classList.remove('decided', 'flickering');
@@ -188,7 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check if there are numbers left to draw
         if (gameState.availableNumbers.length === 0) {
-            currentNumberDisplay.textContent = 'End';
             lotteryNumberFullscreen.textContent = 'End';
             lotteryNumberFullscreen.classList.remove('flickering');
             lotteryNumberFullscreen.classList.add('decided');
@@ -235,8 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
             lotteryNumberFullscreen.textContent = newNumber;
             lotteryNumberFullscreen.classList.remove('flickering');
             lotteryNumberFullscreen.classList.add('decided');
-            currentNumberDisplay.textContent = newNumber;
-            currentNumberDisplay.classList.add('decided');
 
             playRandomEndSound();
             updateDrawnNumbersHistory();
@@ -354,6 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         startScreen.style.display = 'none';
         gameContainer.style.display = 'flex';
+        document.body.classList.add('game-active');
 
         initializeGame(selectedRole, selectedLines);
     }
@@ -371,17 +367,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        drawButton.addEventListener('click', startLotteryAnimation);
+        drawButton.addEventListener('click', () => {
+            // ボタンが無効、または既にアニメーション中なら何もしない
+            if (drawButton.disabled || drawButton.classList.contains('spin-on-click')) return;
+
+            drawButton.classList.add('spin-on-click');
+
+            // 回転アニメーション完了後に抽選を開始
+            drawButton.addEventListener('animationend', () => {
+                drawButton.classList.remove('spin-on-click');
+                startLotteryAnimation();
+            }, { once: true }); // イベントリスナーを一度だけ実行し、自動で削除する
+        });
 
         resetGameBtn.addEventListener('click', () => {
             gameContainer.style.display = 'none';
             startScreen.style.display = 'block';
+            document.body.classList.remove('game-active');
         });
         resetCardBtn.addEventListener('click', () => {
             if (gameState.role === 'player') {
                 // For players, go back to the setup screen without confirmation.
                 gameContainer.style.display = 'none';
                 startScreen.style.display = 'block';
+                document.body.classList.remove('game-active');
             } else { // For admins
                 // Show a confirmation dialog to prevent accidental clicks.
                 if (window.confirm('現在のカードはリセットされます。新しいカードを作成しますか？')) {

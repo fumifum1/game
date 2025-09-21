@@ -14,16 +14,16 @@
 <body>
     <!-- Initial Setup Screen -->
     <div id="start-screen">
-        <h1>BINGO Game Setup</h1>
+        <h1>BINGO Setup</h1>
         <div class="setup-section">
-            <h2>1. Choose your role</h2>
+            <h2>1. Your role</h2>
             <div class="role-selection">
                 <label><input type="radio" name="role" value="player" checked> 一般プレイヤー</label>
                 <label><input type="radio" name="role" value="admin"> 管理者（抽選）</label>
             </div>
         </div>
         <div class="setup-section">
-            <h2>2. Select BINGO rule</h2>
+            <h2>2. Select rule</h2>
             <div class="rule-selection">
                 <label><input type="radio" name="bingoRuleSetup" value="1" checked> 1 本</label>
                 <label><input type="radio" name="bingoRuleSetup" value="2"> 2 本</label>
@@ -46,8 +46,13 @@
             <div id="lottery-view" class="tab-content active">
                 <h1>BINGO Lottery</h1>
                 <div id="lottery-section">
-                    <div id="current-number-display">?</div>
-                    <button id="draw-button">DRAW</button>
+                    <button id="draw-button">
+                        <span class="draw-button-face draw-button-front">
+                            <span>DRAW</span>
+                            <small>抽選</small>
+                        </span>
+                        <span class="draw-button-face draw-button-back">🎰</span>
+                    </button>
                 </div>
                 <div id="history-section">
                     <h2>Drawn Numbers</h2>
@@ -68,10 +73,11 @@
                 </div>
             </div>
         </div>
-        <footer>
-            &copy; 2025 Synapse Creations. Sep.Bingo_ver1.1.0 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
-        </footer>
     </div>
+
+    <footer>
+        &copy; 2025 Synapse Creations. Sep.Bingo_ver1.2.0 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+    </footer>
 
     <!-- Share Button -->
     <button id="share-btn" title="このページをQRコードで共有">QR</button>
@@ -80,8 +86,8 @@
     <div id="lottery-overlay" class="modal-overlay hidden">
         <div id="lottery-number-fullscreen">?</div>
         <div id="lottery-overlay-controls" class="hidden">
-            <button id="draw-again-btn">再度抽選</button>
-            <button id="back-to-lottery-btn">戻る</button>
+            <button id="draw-again-btn">≫Re</button>
+            <button id="back-to-lottery-btn" title="戻る"></button>
         </div>
     </div>
 

@@ -1,7 +1,7 @@
 /* General Body and Font Styles */
 body {
+    background-color: #f0f2f5; /* 基本の背景色 */
     font-family: 'Arial', sans-serif;
-    background-color: #f0f2f5;
     color: #333;
     margin: 0;
     padding: 20px;
@@ -11,10 +11,34 @@ body {
     min-height: 100vh;
     box-sizing: border-box;
     overscroll-behavior-y: contain; /* Prevent pull-to-refresh on mobile */
+    position: relative; /* 背景の基準点として追加 */
+}
+
+/* ゲーム画面の背景デザイン */
+body.game-active::before {
+    content: '';
+    position: fixed; /* 画面に固定してスクロールしても追従しないようにする */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1; /* 全てのコンテンツの背面に配置 */
+    /* 複数の背景を重ねてデザインを作成 */
+    background-image:
+        /* 1. 上から広がる淡い色のグラデーション */
+        radial-gradient(circle at 50% 0, rgba(150, 190, 255, 0.3) 0%, transparent 50%),
+        /* 2. 青海波パターン (4つのグラデーションを重ねて忠実に描画) */
+        radial-gradient(circle at 50% 100%, transparent 23%, #e9ecef 24%, #e9ecef 25%, transparent 26%, transparent 33%, #e9ecef 34%, #e9ecef 35%, transparent 36%, transparent 43%, #e9ecef 44%, #e9ecef 45%, transparent 46%),
+        radial-gradient(circle at 0 50%, transparent 23%, #e9ecef 24%, #e9ecef 25%, transparent 26%, transparent 33%, #e9ecef 34%, #e9ecef 35%, transparent 36%, transparent 43%, #e9ecef 44%, #e9ecef 45%, transparent 46%),
+        radial-gradient(circle at 100% 50%, transparent 23%, #e9ecef 24%, #e9ecef 25%, transparent 26%, transparent 33%, #e9ecef 34%, #e9ecef 35%, transparent 36%, transparent 43%, #e9ecef 44%, #e9ecef 45%, transparent 46%),
+        radial-gradient(circle at 50% 0, transparent 23%, #e9ecef 24%, #e9ecef 25%, transparent 26%, transparent 33%, #e9ecef 34%, #e9ecef 35%, transparent 36%, transparent 43%, #e9ecef 44%, #e9ecef 45%, transparent 46%);
+    background-size: 100% 100%, 120px 120px, 120px 120px, 120px 120px, 120px 120px;
+    /* 上から下へ向かって透明になるマスクを適用 */
+    mask-image: linear-gradient(to bottom, black 30%, transparent 80%);
 }
 
 .container {
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.3); /* この数値を小さくすると、より透けます */
     padding: 20px 40px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -45,7 +69,9 @@ h2 {
 }
 
 footer {
-    margin-top: 40px;
+    width: 100%; /* テキストの中央揃えを確実にするため */
+    margin-top: auto; /* フッターをページ下部に押し出す */
+    padding: 20px 0; /* 上下の余白を調整 */
     color: #888;
     font-size: 0.9rem;
     text-align: center;
@@ -62,6 +88,8 @@ footer {
     max-width: 600px;
     text-align: center;
     box-sizing: border-box;
+    position: relative; /* 背景デザインの基準点として追加 */
+    overflow: hidden; /* はみ出したデザインを隠す */
 }
 
 .setup-section {
@@ -81,7 +109,8 @@ footer {
 
 .role-selection label,
 .rule-selection label {
-    display: block;
+    display: flex;
+    align-items: center;
     margin-bottom: 10px;
     font-size: 1.1rem;
     cursor: pointer;
@@ -91,18 +120,34 @@ footer {
 .role-selection input[type="radio"],
 .rule-selection input[type="radio"] {
     /* Change the color of the radio button when checked */
-    accent-color: #35393d;
+    accent-color: #6c757d; /* 他のUIと色を統一 */
     /* Adjust size and alignment for better visuals */
     width: 1.1em;
     height: 1.1em;
-    vertical-align: middle;
     margin-right: 8px;
+    margin-top: -2px; /* テキストとの垂直位置を微調整 */
 }
 
 #start-game-btn {
     width: 100%;
     padding: 15px;
     font-size: 1.2rem;
+    border-radius: 100px; /* 角をより丸くする */
+
+    /* 背景デザインを適用 */
+    border: none;
+    color: #fff;
+    background-color: #007bff; /* ベースとなる背景色 */
+    background-image:
+        /* 上層: パターンを隠すためのグラデーション */
+        linear-gradient(to right, transparent 40%, #007bff 85%),
+        /* 下層: 青海波パターン (線を太く) */
+        radial-gradient(circle at 50% 100%, transparent 22%, rgba(255,255,255,0.15) 23%, rgba(255,255,255,0.15) 25%, transparent 26%, transparent 32%, rgba(255,255,255,0.15) 33%, rgba(255,255,255,0.15) 35%, transparent 36%, transparent 42%, rgba(255,255,255,0.15) 43%, rgba(255,255,255,0.15) 45%, transparent 46%),
+        radial-gradient(circle at 0 50%, transparent 22%, rgba(255,255,255,0.15) 23%, rgba(255,255,255,0.15) 25%, transparent 26%, transparent 32%, rgba(255,255,255,0.15) 33%, rgba(255,255,255,0.15) 35%, transparent 36%, transparent 42%, rgba(255,255,255,0.15) 43%, rgba(255,255,255,0.15) 45%, transparent 46%),
+        radial-gradient(circle at 100% 50%, transparent 22%, rgba(255,255,255,0.15) 23%, rgba(255,255,255,0.15) 25%, transparent 26%, transparent 32%, rgba(255,255,255,0.15) 33%, rgba(255,255,255,0.15) 35%, transparent 36%, transparent 42%, rgba(255,255,255,0.15) 43%, rgba(255,255,255,0.15) 45%, transparent 46%),
+        radial-gradient(circle at 50% 0, transparent 22%, rgba(255,255,255,0.15) 23%, rgba(255,255,255,0.15) 25%, transparent 26%, transparent 32%, rgba(255,255,255,0.15) 33%, rgba(255,255,255,0.15) 35%, transparent 36%, transparent 42%, rgba(255,255,255,0.15) 43%, rgba(255,255,255,0.15) 45%, transparent 46%);
+    background-size: 100% 100%, 80px 80px, 80px 80px, 80px 80px, 80px 80px;
+    background-repeat: no-repeat, repeat, repeat, repeat, repeat;
 }
 
 /* Game Container (Initially Hidden) */
@@ -167,27 +212,71 @@ footer {
     margin-bottom: 10px;
 }
 
-#current-number-display {
-    font-family: 'Zen Dots', sans-serif;
-    font-size: 5rem; /* Adjusted for better fit */
-    font-weight: bold;
-    color: #007bff;
-    line-height: 1;
-    border: 5px solid #007bff;
-    border-radius: 50%;
-    width: 160px;
-    height: 160px;
+#draw-button {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%; /* 正円にする */
+    font-size: 1.5rem;
+    padding: 0; /* パディングをリセット */
+    margin: 20px 0; /* 上下のマージンを調整 */
+    position: relative; /* 3D回転のコンテキスト */
+    transform-style: preserve-3d; /* 子要素を3D空間に配置 */
+    /* グラデーションとアニメーションの設定 */
+    background: linear-gradient(135deg, #81b1ff 0%, #007bff 100%);
+    border: 3px solid #fff;
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+    transition: transform 0.3s ease-out, background 0.3s ease-out;
+}
+
+/* ボタンの表と裏のテキストのスタイル */
+.draw-button-face {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 20px auto;
-    background-color: #f8f9fa;
+    backface-visibility: hidden; /* 回転時に裏側になったら非表示 */
 }
 
-/* Style for the finalized number */
-#current-number-display.decided {
-    color: #dc3545; /* A bootstrap-like danger red */
-    border-color: #dc3545;
+.draw-button-front {
+    flex-direction: column; /* テキストを縦に並べる */
+    line-height: 1.1; /* 行間を詰める */
+}
+
+.draw-button-front small {
+    font-size: 0.8rem; /* "抽選"の文字を小さくする */
+    font-weight: normal; /* 通常の太さに */
+    font-family: 'Arial', sans-serif; /* ボタン全体のフォントと分ける */
+    margin-top: 5px; /* 上の文字との間隔 */
+}
+
+.draw-button-back {
+    transform: rotateY(180deg); /* 裏面は最初から180度回転させておく */
+    font-size: 3rem; /* 絵文字のサイズを調整 */
+}
+
+/* ホバー時にゆっくり回転するアニメーション（無効化されている時は除く） */
+#draw-button:hover:not(:disabled) {
+    animation: spin 4s linear infinite; /* 回転速度を上げる (10s -> 4s) */
+    background: linear-gradient(135deg, #007bff 0%, #81b1ff 100%); /* ホバー時にグラデーションを反転 */
+}
+
+/* クリック時に速く1回転するアニメーション */
+#draw-button.spin-on-click {
+    animation: spin-fast 0.5s ease-out;
+}
+
+@keyframes spin {
+    from { transform: rotateY(0deg); }
+    to { transform: rotateY(360deg); }
+}
+
+@keyframes spin-fast {
+    from { transform: rotateY(0deg); }
+    to { transform: rotateY(360deg); }
 }
 
 #history-section {
@@ -202,7 +291,38 @@ footer {
     border: 1px solid #ddd;
     border-radius: 8px;
     min-height: 50px;
-    background-color: #f9f9f9;
+    background-color: rgba(249, 249, 249, 0.7); /* この数値を小さくすると、より透けます */
+}
+
+/* セットアップ画面の背景デザイン（画面幅が広い場合のみ表示） */
+@media (min-width: 300px) {
+    #start-screen::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        /* 複数の背景を重ねてデザインを作成 */
+        background-image:
+            /* 1. 右から広がる淡い色のグラデーション */
+            radial-gradient(circle at 100% 50%, rgba(150, 190, 255, 0.3) 0%, transparent 50%),
+            /* 2. 青海波パターン (4つのグラデーションを重ねて忠実に描画) */
+            radial-gradient(circle at 50% 100%, transparent 23%, #e9ecef 24%, #e9ecef 25%, transparent 26%, transparent 33%, #e9ecef 34%, #e9ecef 35%, transparent 36%, transparent 43%, #e9ecef 44%, #e9ecef 45%, transparent 46%),
+            radial-gradient(circle at 0 50%, transparent 23%, #e9ecef 24%, #e9ecef 25%, transparent 26%, transparent 33%, #e9ecef 34%, #e9ecef 35%, transparent 36%, transparent 43%, #e9ecef 44%, #e9ecef 45%, transparent 46%),
+            radial-gradient(circle at 100% 50%, transparent 23%, #e9ecef 24%, #e9ecef 25%, transparent 26%, transparent 33%, #e9ecef 34%, #e9ecef 35%, transparent 36%, transparent 43%, #e9ecef 44%, #e9ecef 45%, transparent 46%),
+            radial-gradient(circle at 50% 0, transparent 23%, #e9ecef 24%, #e9ecef 25%, transparent 26%, transparent 33%, #e9ecef 34%, #e9ecef 35%, transparent 36%, transparent 43%, #e9ecef 44%, #e9ecef 45%, transparent 46%);
+        background-size: 100% 100%, 120px 120px, 120px 120px, 120px 120px, 120px 120px;
+        /* 左側（文字側）に向かって透明になるマスクを適用 */
+        mask-image: linear-gradient(to left, black 30%, transparent 80%);
+        z-index: 0;
+    }
+
+    /* コンテンツが背景の上に表示されるようにする */
+    #start-screen > * {
+        position: relative;
+        z-index: 1;
+    }
 }
 
 /* Card View Container - for positioning context */
@@ -219,14 +339,14 @@ footer {
     grid-template-columns: repeat(5, 1fr);
     grid-template-rows: repeat(5, 1fr);
     gap: 4px;
-    background-color: #ccc; /* This color will show through the gaps */
+    background-color: rgba(204, 204, 204, 0.6); /* マスの隙間の背景 */
     padding: 4px;
     border-radius: 8px;
     box-sizing: border-box;
 }
 
 .bingo-cell {
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.75); /* この数値を小さくすると、より透けます */
     /* Responsive font size to prevent overflow */
     font-size: clamp(1.4rem, 5vw, 2rem);
     font-family: 'Zen Dots', sans-serif;
@@ -239,7 +359,7 @@ footer {
 }
 
 .bingo-cell.free {
-    background-color: #e9ecef;
+    background-color: rgba(233, 236, 239, 0.75); /* この数値を小さくすると、より透けます */
     color: #495057;
     cursor: default;
 }
@@ -259,10 +379,6 @@ footer {
 
 .rule-selection {
     margin: 20px 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
 }
 
 .rule-selection p {
@@ -288,6 +404,7 @@ button:hover {
 
 #reset-game-btn, #reset-card-btn {
     background-color: #6c757d;
+    border-radius: 100px; /* 角をより丸くする */
 }
 
 #reset-game-btn:hover, #reset-card-btn:hover {
@@ -433,6 +550,7 @@ button:hover {
     /* ガラスのような質感のボタンに変更 */
     border: 2px solid rgba(255, 255, 255, 0.8);
     background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 100px; /* 角をより丸くする */
 }
 
 #confirm-sound-btn:hover {
@@ -482,11 +600,38 @@ button:hover {
     gap: 20px;
 }
 
-#lottery-overlay-controls button {
-    padding: 15px 30px;
-    font-size: 1.2rem;
+#draw-again-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    padding: 0;
+    background-color: rgba(220, 53, 69, 0.2); /* 赤系の色に変更 */
+    border: 2px solid rgba(220, 53, 69, 0.7); /* 赤系の色に変更 */
+    font-size: 1rem;
+    line-height: 1;
+}
+
+#draw-again-btn:hover {
+    background-color: rgba(220, 53, 69, 0.4); /* 赤系の色に変更 */
+    transform: scale(1.05) translateY(-2px); /* Animate like the back button */
 }
 
 #back-to-lottery-btn {
-    background-color: #6c757d; /* 「戻る」ボタンはグレーに */
+    /* ガラスのような質感の円形ボタンに変更 */
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    padding: 0;
+    /* SVGアイコンを背景として設定し、中央に配置 */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='9 18 15 12 9 6'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 40%; /* アイコンのサイズを調整 */
+}
+
+#back-to-lottery-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05) translateY(-2px); /* 少し大きく、上に動かす */
 }
