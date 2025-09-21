@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const lotteryOverlayControls = document.getElementById('lottery-overlay-controls');
     const drawAgainBtn = document.getElementById('draw-again-btn');
     const backToLotteryBtn = document.getElementById('back-to-lottery-btn');
+    const overlayAdminBingoNotification = document.getElementById('overlay-admin-bingo-notification');
 
     // --- GAME STATE ---
     let gameState = {};
@@ -79,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lotteryOverlay.classList.add('hidden');
         lotteryOverlayControls.classList.add('hidden');
         drawButton.disabled = false; // Re-enable the draw button
+        overlayAdminBingoNotification.classList.add('hidden');
         bingoMessage.classList.remove('show');
 
         setupUIForRole();
@@ -127,6 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function createBingoCard() {
         bingoGrid.innerHTML = '';
         bingoMessage.classList.remove('show');
+        if (overlayAdminBingoNotification) {
+            overlayAdminBingoNotification.classList.add('hidden');
+        }
 
         // --- New Fully Random Number Generation ---
         // Create an array of all possible numbers (1-75)
@@ -297,6 +302,11 @@ document.addEventListener('DOMContentLoaded', () => {
             bingoMessage.textContent = 'BINGO!';
             bingoMessage.classList.add('show');
             if (typeof confetti === 'function') triggerConfetti();
+
+            // If the user is an admin, show a notification on the lottery screen.
+            if (gameState.role === 'admin' && overlayAdminBingoNotification) {
+                overlayAdminBingoNotification.classList.remove('hidden');
+            }
 
             // However, only stop the entire game if the user is a 'player'.
             // The admin can continue drawing numbers for others.

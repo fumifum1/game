@@ -650,3 +650,17 @@ button:hover {
     background-color: rgba(255, 255, 255, 0.25);
     transform: scale(1.05) translateY(-2px); /* 少し大きく、上に動かす */
 }
+ 
+/* Admin Bingo Notification on Lottery Overlay */
+.overlay-admin-notification {
+    color: #ffc107; /* Gold color to match the decided number */
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 20px; /* Space from the buttons above */
+    text-shadow: 0 0 5px rgba(255, 193, 7, 0.7);
+}
+ 
+.overlay-admin-notification.hidden {
+    display: none;
+}
