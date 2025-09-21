@@ -445,6 +445,44 @@ button:hover {
     transform: translateY(-2px);
 }
 
+/* Bingo Message */
+.bingo-message {
+    /* Positioning to overlay on the card */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10; /* Ensure it's above the table */
+
+    /* Hide it by default */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Allow clicks to pass through */
+    transition: opacity 0.3s, visibility 0.3s;
+
+    /* Appearance */
+    font-family: 'Zen Dots', sans-serif;
+    /* Responsive font size */
+    font-size: clamp(3rem, 18vw, 8rem);
+    text-align: center;
+    color: #28a745;
+    font-weight: bold;
+    text-shadow: 3px 3px 0 #fff, 6px 6px 0 rgba(0,0,0,0.2);
+}
+
+.bingo-message.show {
+    /* Show it with animation */
+    opacity: 1;
+    visibility: visible;
+    animation: pop-in 0.5s ease-out;
+}
+
+@keyframes pop-in {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    80% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
 /* Modal Styles */
 .modal-overlay {
     position: fixed;
