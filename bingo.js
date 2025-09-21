@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CONSTANTS ---
     const BINGO_SIZE = 5;
     const MAX_NUMBER = 75;
+    const LOTTERY_ANIMATION_DURATION = 3000; // ms
+    const LOTTERY_FLICKER_INTERVAL = 50;   // ms
 
     // --- DOM ELEMENT REFERENCES ---
     // Setup Screen
@@ -213,8 +215,8 @@ document.addEventListener('DOMContentLoaded', () => {
         drawAgainBtn.disabled = true;
 
         // Animate numbers flickering
-        const animationDuration = 3000; // 3 seconds
-        const intervalTime = 50; // Update every 50ms
+        const animationDuration = LOTTERY_ANIMATION_DURATION;
+        const intervalTime = LOTTERY_FLICKER_INTERVAL;
         lotteryAnimationInterval = setInterval(() => {
             const randomNumber = Math.floor(Math.random() * MAX_NUMBER) + 1;
             lotteryNumberFullscreen.textContent = randomNumber;
@@ -248,8 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function updateDrawnNumbersHistory() {
         const numEl = document.createElement('div');
+        numEl.classList.add('drawn-number-item');
         numEl.textContent = gameState.drawnNumbers[gameState.drawnNumbers.length - 1];
-        numEl.style.textAlign = 'center';
         drawnNumbersContainer.appendChild(numEl);
     }
 
@@ -341,17 +343,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Gathers settings and starts the game.
+     * Hides the setup screen, shows the game screen, and initializes the game.
+     * @param {string} role The selected role ('player' or 'admin').
+     * @param {number} lines The selected number of BINGO lines required.
      */
-    function startGame() {
-        const selectedRole = document.querySelector('input[name="role"]:checked').value;
-        const selectedLines = parseInt(document.querySelector('input[name="bingoRuleSetup"]:checked').value, 10);
-
+    function startGame(role, lines) {
         startScreen.style.display = 'none';
         gameContainer.style.display = 'flex';
         document.body.classList.add('game-active');
+        initializeGame(role, lines);
+    }
 
-        initializeGame(selectedRole, selectedLines);
+    /**
+     * Hides the game screen and shows the setup screen.
+     */
+    function returnToSetupScreen() {
+        gameContainer.style.display = 'none';
+        startScreen.style.display = 'block';
+        document.body.classList.remove('game-active');
     }
 
     /**
@@ -360,10 +369,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupEventListeners() {
         startGameBtn.addEventListener('click', () => {
             const selectedRole = document.querySelector('input[name="role"]:checked').value;
+            const selectedLines = parseInt(document.querySelector('input[name="bingoRuleSetup"]:checked').value, 10);
+
             if (selectedRole === 'admin') {
+                // Store settings for the confirmation modal to use
+                confirmSoundBtn.dataset.role = selectedRole;
+                confirmSoundBtn.dataset.lines = selectedLines;
                 soundModalOverlay.classList.remove('hidden');
             } else {
-                startGame();
+                startGame(selectedRole, selectedLines);
             }
         });
 
@@ -380,17 +394,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }, { once: true }); // イベントリスナーを一度だけ実行し、自動で削除する
         });
 
-        resetGameBtn.addEventListener('click', () => {
-            gameContainer.style.display = 'none';
-            startScreen.style.display = 'block';
-            document.body.classList.remove('game-active');
-        });
+        resetGameBtn.addEventListener('click', returnToSetupScreen);
+
         resetCardBtn.addEventListener('click', () => {
             if (gameState.role === 'player') {
-                // For players, go back to the setup screen without confirmation.
-                gameContainer.style.display = 'none';
-                startScreen.style.display = 'block';
-                document.body.classList.remove('game-active');
+                returnToSetupScreen();
             } else { // For admins
                 // Show a confirmation dialog to prevent accidental clicks.
                 if (window.confirm('現在のカードはリセットされます。新しいカードを作成しますか？')) {
@@ -401,7 +409,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         confirmSoundBtn.addEventListener('click', () => {
             soundModalOverlay.classList.add('hidden');
-            startGame();
+            const { role, lines } = confirmSoundBtn.dataset;
+            startGame(role, parseInt(lines, 10));
         });
 
         // Lottery Overlay Listeners

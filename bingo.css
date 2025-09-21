@@ -38,7 +38,7 @@ body.game-active::before {
 }
 
 .container {
-    background-color: rgba(255, 255, 255, 0.3); /* この数値を小さくすると、より透けます */
+    background-color: rgba(255, 255, 255, 0.85); /* 背景の透過度を調整 (0.0 - 1.0) */
     padding: 20px 40px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -150,6 +150,11 @@ footer {
     background-repeat: no-repeat, repeat, repeat, repeat, repeat;
 }
 
+/* Start Gameボタンのホバー効果を、汎用のものから上書き */
+#start-game-btn:hover {
+    filter: brightness(1.1);
+}
+
 /* Game Container (Initially Hidden) */
 #game-container {
     display: none;
@@ -204,12 +209,6 @@ footer {
 #lottery-section {
     text-align: center;
     margin-bottom: 30px;
-}
-
-#lottery-section p {
-    font-size: 1.2rem;
-    color: #555;
-    margin-bottom: 10px;
 }
 
 #draw-button {
@@ -294,7 +293,11 @@ footer {
     background-color: rgba(249, 249, 249, 0.7); /* この数値を小さくすると、より透けます */
 }
 
-/* セットアップ画面の背景デザイン（画面幅が広い場合のみ表示） */
+.drawn-number-item {
+    text-align: center;
+}
+
+/* セットアップ画面の背景デザイン */
 @media (min-width: 300px) {
     #start-screen::before {
         content: '';
@@ -416,59 +419,30 @@ button:hover {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 60px;
-    height: 60px;
+    /* Styled as a blue circular button */
+    width: 50px;
+    height: 50px;
+    padding: 0;
     border-radius: 50%;
-    font-size: 1.1rem;
+    font-family: 'Zen Dots', sans-serif;
+    font-size: 1rem;
+    background: linear-gradient(135deg, #81b1ff 0%, #007bff 100%);
+    color: #fff;
+    border: 2px solid #fff;
     z-index: 900;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    padding: 0;
     line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-/* Bingo Message */
-.bingo-message {
-    /* Positioning to overlay on the card */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10; /* Ensure it's above the table */
-
-    /* Hide it by default */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none; /* Allow clicks to pass through */
-    transition: opacity 0.3s, visibility 0.3s;
-
-    /* Appearance */
-    font-family: 'Zen Dots', sans-serif;
-    /* Responsive font size */
-    font-size: clamp(3rem, 18vw, 8rem);
-    text-align: center;
-    color: #28a745;
-    font-weight: bold;
-    text-shadow: 3px 3px 0 #fff, 6px 6px 0 rgba(0,0,0,0.2);
-}
-
-.bingo-message.show {
-    /* Show it with animation */
-    opacity: 1;
-    visibility: visible;
-    animation: pop-in 0.5s ease-out;
-}
-
-@keyframes pop-in {
-    0% {
-        transform: translate(-50%, -50%) scale(0.5);
-        opacity: 0;
-    }
-    80% {
-        transform: translate(-50%, -50%) scale(1.1);
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1);
-    }
+/* Override generic hover for the share button */
+#share-btn:hover {
+    background: linear-gradient(135deg, #007bff 0%, #81b1ff 100%);
+    transform: translateY(-2px);
 }
 
 /* Modal Styles */
@@ -550,7 +524,6 @@ button:hover {
     /* ガラスのような質感のボタンに変更 */
     border: 2px solid rgba(255, 255, 255, 0.8);
     background-color: rgba(255, 255, 255, 0.15);
-    border-radius: 100px; /* 角をより丸くする */
 }
 
 #confirm-sound-btn:hover {
@@ -600,11 +573,15 @@ button:hover {
     gap: 20px;
 }
 
-#draw-again-btn {
+#draw-again-btn,
+#back-to-lottery-btn {
     width: 60px;
     height: 60px;
     border-radius: 50%;
     padding: 0;
+}
+
+#draw-again-btn {
     background-color: rgba(220, 53, 69, 0.2); /* 赤系の色に変更 */
     border: 2px solid rgba(220, 53, 69, 0.7); /* 赤系の色に変更 */
     font-size: 1rem;
@@ -620,10 +597,6 @@ button:hover {
     /* ガラスのような質感の円形ボタンに変更 */
     background-color: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.5);
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    padding: 0;
     /* SVGアイコンを背景として設定し、中央に配置 */
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='9 18 15 12 9 6'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
