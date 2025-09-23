@@ -565,25 +565,47 @@ button:hover {
     color: #fff;
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
     line-height: 1;
-    transition: color 0.3s, text-shadow 0.3s, transform 0.3s;
+    /* アニメーションで制御するため、transformのtransitionは削除 */
+    transition: color 0.3s, text-shadow 0.3s;
 }
 
-/* 数字がチカチカするアニメーション */
+/* 抽選中の数字が激しく変化するアニメーション */
 #lottery-number-fullscreen.flickering {
-    animation: flicker 0.08s infinite;
+    animation: drum-roll 0.2s infinite;
 }
 
-@keyframes flicker {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-    75% { opacity: 0.9; }
+@keyframes drum-roll {
+    0% {
+        transform: scale(0.9) rotate(-3deg);
+        opacity: 0.8;
+        text-shadow: 0 0 10px #fff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+    }
+    50% {
+        transform: scale(1.1) rotate(3deg);
+        opacity: 1;
+        text-shadow: 0 0 10px #fff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+    }
+    100% {
+        transform: scale(0.9) rotate(-3deg);
+        opacity: 0.8;
+        text-shadow: 0 0 10px #fff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+    }
 }
 
-/* 確定した数字のスタイル */
+/* 確定した数字のスタイルと、登場時のアニメーション */
 #lottery-number-fullscreen.decided {
     color: #ffc107; /* ゴールド */
     text-shadow: 0 0 15px #ffc107, 0 0 40px rgba(255, 193, 7, 0.7);
-    transform: scale(1.05);
+    transform: scale(1.05); /* アニメーションの最終状態 */
+    animation: reveal-number 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 数字が決定した際の登場アニメーション */
+@keyframes reveal-number {
+    0% { transform: scale(3); opacity: 0; filter: blur(10px); }
+    60% { transform: scale(1); opacity: 1; filter: blur(0); }
+    80% { transform: scale(1.1); }
+    100% { transform: scale(1.05); }
 }
 
 #lottery-overlay-controls {

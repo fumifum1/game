@@ -322,23 +322,57 @@ document.addEventListener('DOMContentLoaded', () => {
      * Triggers a celebratory confetti animation.
      */
     function triggerConfetti() {
-        const duration = 3 * 1000;
+        const duration = 3 * 1000; // 3秒間に短縮
         const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+        const defaults = {
+            startVelocity: 45, // 紙吹雪の初速を速くする
+            spread: 360,       // 全方向に広がる
+            ticks: 100,        // 紙吹雪が画面に残る時間を長くする
+            zIndex: 100,
+            colors: ['#ffc107', '#007bff', '#28a745', '#dc3545', '#6f42c1', '#ffffff'] // 鮮やかな色を追加
+        };
 
         function randomInRange(min, max) {
             return Math.random() * (max - min) + min;
         }
 
+        // BINGOになった瞬間に中央から大きなバースト
+        confetti(Object.assign({}, defaults, {
+            particleCount: 200, // 大量の紙吹雪
+            scalar: 1.5,        // 大きめの紙吹雪
+            origin: { x: 0.5, y: 0.5 } // 画面中央から
+        }));
+
+        // その後、継続的に様々な場所から紙吹雪を降らせる
         const interval = setInterval(function() {
             const timeLeft = animationEnd - Date.now();
-            if (timeLeft <= 0) return clearInterval(interval);
-            const particleCount = 50 * (timeLeft / duration);
-            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-        }, 250);
-    }
+            if (timeLeft <= 0) {
+                return clearInterval(interval);
+            }
 
+            const particleCount = 50; // 継続的なバーストの紙吹雪の数
+            // 左側からバースト
+            confetti(Object.assign({}, defaults, {
+                particleCount,
+                origin: { x: randomInRange(0.1, 0.3), y: randomInRange(0.3, 0.7) },
+                scalar: randomInRange(0.8, 1.2) // 紙吹雪のサイズをランダムに
+            }));
+            // 右側からバースト
+            confetti(Object.assign({}, defaults, {
+                particleCount,
+                origin: { x: randomInRange(0.7, 0.9), y: randomInRange(0.3, 0.7) },
+                scalar: randomInRange(0.8, 1.2)
+            }));
+            // 上部中央から少しゆっくり落ちる紙吹雪
+            confetti(Object.assign({}, defaults, {
+                particleCount: 30,
+                origin: { x: randomInRange(0.4, 0.6), y: randomInRange(0, 0.2) },
+                scalar: randomInRange(0.7, 1.0),
+                gravity: 0.5 // 重力を弱めてゆっくり落ちるように
+            }));
+
+        }, 250); // バーストの間隔を少し長くする
+    }
     /**
      * Plays a random sound from the end sounds pool.
      */
