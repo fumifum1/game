@@ -219,67 +219,44 @@ footer {
     width: 140px;
     height: 140px;
     border-radius: 50%; /* 正円にする */
-    font-size: 1.5rem;
+    font-size: 1.8rem; /* フォントサイズを少し調整 */
+    font-family: 'Zen Dots', sans-serif; /* 他の要素とフォントを統一 */
+    font-weight: bold;
+    color: #fff;
     padding: 0; /* パディングをリセット */
-    margin: 20px 0; /* 上下のマージンを調整 */
-    position: relative; /* 3D回転のコンテキスト */
-    transform-style: preserve-3d; /* 子要素を3D空間に配置 */
-    /* グラデーションとアニメーションの設定 */
+    margin: 20px auto; /* 上下のマージンを維持しつつ、左右をautoにして中央寄せ */
+    /* グラデーションと影 */
     background: linear-gradient(135deg, #81b1ff 0%, #007bff 100%);
     border: 3px solid #fff;
-    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
-    transition: transform 0.3s ease-out, background 0.3s ease-out;
-}
-
-/* ボタンの表と裏のテキストのスタイル */
-.draw-button-face {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4), 0 2px 4px rgba(0,0,0,0.1) inset; /* 内側の影を追加して立体感を出す */
+    transition: all 0.2s ease-out; /* トランジションを簡略化 */
     display: flex;
+    flex-direction: column; /* テキストを縦に並べる */
     justify-content: center;
     align-items: center;
-    backface-visibility: hidden; /* 回転時に裏側になったら非表示 */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* テキストに影を追加 */
+    line-height: 1.2; /* 行間を少し調整 */
 }
 
-.draw-button-front {
-    flex-direction: column; /* テキストを縦に並べる */
-    line-height: 1.1; /* 行間を詰める */
+/* ボタン内の小さい文字のスタイル */
+#draw-button small {
+    font-size: 0.8rem;
+    font-family: 'Arial', sans-serif; /* メインのテキストとフォントを分ける */
+    font-weight: normal;
+    margin-top: 4px; /* 上の文字との間隔 */
 }
 
-.draw-button-front small {
-    font-size: 0.8rem; /* "抽選"の文字を小さくする */
-    font-weight: normal; /* 通常の太さに */
-    font-family: 'Arial', sans-serif; /* ボタン全体のフォントと分ける */
-    margin-top: 5px; /* 上の文字との間隔 */
-}
-
-.draw-button-back {
-    transform: rotateY(180deg); /* 裏面は最初から180度回転させておく */
-    font-size: 3rem; /* 絵文字のサイズを調整 */
-}
-
-/* ホバー時にゆっくり回転するアニメーション（無効化されている時は除く） */
+/* ホバー時のエフェクト */
 #draw-button:hover:not(:disabled) {
-    animation: spin 4s linear infinite; /* 回転速度を上げる (10s -> 4s) */
+    transform: scale(1.05); /* 少し拡大 */
+    box-shadow: 0 8px 20px rgba(0, 123, 255, 0.5), 0 2px 4px rgba(0,0,0,0.1) inset;
     background: linear-gradient(135deg, #007bff 0%, #81b1ff 100%); /* ホバー時にグラデーションを反転 */
 }
 
-/* クリック時に速く1回転するアニメーション */
-#draw-button.spin-on-click {
-    animation: spin-fast 0.5s ease-out;
-}
-
-@keyframes spin {
-    from { transform: rotateY(0deg); }
-    to { transform: rotateY(360deg); }
-}
-
-@keyframes spin-fast {
-    from { transform: rotateY(0deg); }
-    to { transform: rotateY(360deg); }
+/* クリック時のエフェクト */
+#draw-button:active:not(:disabled) {
+    transform: scale(0.98); /* 少し縮小して沈み込む感じを出す */
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4), 0 2px 4px rgba(0,0,0,0.1) inset;
 }
 
 #history-section {

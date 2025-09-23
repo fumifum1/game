@@ -382,17 +382,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        drawButton.addEventListener('click', () => {
-            // ボタンが無効、または既にアニメーション中なら何もしない
-            if (drawButton.disabled || drawButton.classList.contains('spin-on-click')) return;
-
-            drawButton.classList.add('spin-on-click');
-
-            // 回転アニメーション完了後に抽選を開始
-            drawButton.addEventListener('animationend', () => {
-                drawButton.classList.remove('spin-on-click');
-                startLotteryAnimation();
-            }, { once: true }); // イベントリスナーを一度だけ実行し、自動で削除する
+        drawButton.addEventListener('click', () => {            
+            // ボタンが無効なら何もしない
+            if (drawButton.disabled) return;
+            startLotteryAnimation();
         });
 
         resetGameBtn.addEventListener('click', () => {
