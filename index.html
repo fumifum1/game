@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arcade Invade</title>
-    <link rel="stylesheet" href="common.css"> <!-- 共通スタイル -->
-    <link rel="stylesheet" href="style.css"> <!-- ページ固有スタイル -->
-    <!-- レトロゲーム風フォントをGoogle Fontsから読み込み -->
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -22,27 +21,33 @@
             </ul>
         </nav>
     </div>
-    <h1>Arcade Invade</h1>
+
+    <!-- ゲーム情報（スコアなど）をコンテナの外に配置 -->
+    <div id="game-info" class="hidden">
+        <span id="score">0</span>
+        <span id="level">1</span>
+        <span id="powerup">---</span>
+        <span id="lives-display"></span>
+    </div>
+
+    <!-- ゲームコンテナ -->
     <div id="game-container">
+        <!-- canvasと各種スクリーンはコンテナ内で切り替える -->
         <canvas id="gameCanvas" width="360" height="440" class="hidden"></canvas>
-        <div id="game-info" class="hidden">
-            <span id="score">0</span>
-            <span id="level">1</span>
-            <span id="powerup">---</span>
-            <span id="lives-display"></span>
-        </div>
+
         <div id="start-screen">
-            <h2 id="start-title">Arcade Invade</h2>
+            <h2 id="game-title">Arcade Invade</h2>
             <p>Press START to play</p>
             <button id="start-button">START</button>
         </div>
+
         <div id="message-container" class="hidden">
             <h2 id="message-title"></h2>
             <p id="message-text"></p>
             <button id="restart-button">PLAY AGAIN</button>
         </div>
     </div>
-    <!-- メニューの開閉ロジックを共通ファイルに分離し、defer属性で読み込みます -->
+
     <script src="menu.js" defer></script>
     <script src="script.js" defer></script>
 </body>
