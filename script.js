@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const INVADER_OFFSET_TOP = 50;
     let INVADER_OFFSET_LEFT = (canvas.width - (INVADER_COLS * (INVADER_WIDTH + INVADER_PADDING))) / 2;
     const MAX_LEVEL = 10;
+    const BOSS_START_HP = 200;
     const INVADER_BULLET_SPEED = 4;
     const INVADER_SHOOT_PROBABILITY = 0.0008;
     const ITEM_DROP_CHANCE = 0.25;
@@ -60,23 +61,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const POWERUP_DURATION = 7000;
     const ITEM_TYPES = { SHIELD: 'SHIELD', DOUBLE_SHOT: '2-SHOT', RAPID_FIRE: 'RAPID' };
 
-    // SVG Paths (変更なし)
-    const WING_LEFT_PATH = new Path2D("M 14 20 L 2 28 L 2 36 L 14 32 Z");
-    const WING_RIGHT_PATH = new Path2D("M 26 20 L 38 28 L 38 36 L 26 32 Z");
-    const POD_LEFT_PATH = new Path2D("M 7 15 L 4 25 L 4 35 L 10 35 L 10 25 Z");
-    const POD_RIGHT_PATH = new Path2D("M 33 15 L 30 25 L 30 35 L 36 35 L 36 25 Z");
-    const FUSELAGE_PATH = new Path2D(`M 20 0 Q 25 10 25 25 L 25 35 L 28 38 L 22 40 L 20 38 L 18 40 L 12 38 L 15 35 L 15 25 Q 15 10 20 0 Z`);
-    const COCKPIT_PATH = new Path2D("M 20 10 Q 22 15 22 20 L 18 20 Q 18 15 20 10 Z");
+    // インベーダーの種類
+    const INVADER_TYPES = {
+        NORMAL: { color: '#f00', pathIndex: 0 },
+        RAPID:  { color: '#f0f', pathIndex: 0 }, // 弾を2連射
+        DIVE:   { color: '#0af', pathIndex: 1 }, // 突撃してくる
+    };
+    // SVG Path Strings (for UI)
+    const WING_LEFT_PATH_STR = "M 14 20 L 2 28 L 2 36 L 14 32 Z";
+    const WING_RIGHT_PATH_STR = "M 26 20 L 38 28 L 38 36 L 26 32 Z";
+    const FUSELAGE_PATH_STR = "M 20 0 Q 25 10 25 25 L 25 35 L 28 38 L 22 40 L 20 38 L 18 40 L 12 38 L 15 35 L 15 25 Q 15 10 20 0 Z";
+
+    // Path2D objects (for canvas drawing)
+    const WING_LEFT_PATH = new Path2D(WING_LEFT_PATH_STR);
+    const WING_RIGHT_PATH = new Path2D(WING_RIGHT_PATH_STR);
+    const FUSELAGE_PATH = new Path2D(FUSELAGE_PATH_STR);
+    const POD_LEFT_PATH_STR = "M 7 15 L 4 25 L 4 35 L 10 35 L 10 25 Z";
+    const POD_RIGHT_PATH_STR = "M 33 15 L 30 25 L 30 35 L 36 35 L 36 25 Z";
+    const COCKPIT_PATH_STR = "M 20 10 Q 22 15 22 20 L 18 20 Q 18 15 20 10 Z";
+    const POD_LEFT_PATH = new Path2D(POD_LEFT_PATH_STR);
+    const POD_RIGHT_PATH = new Path2D(POD_RIGHT_PATH_STR);
+    const COCKPIT_PATH = new Path2D(COCKPIT_PATH_STR);
     const INVADER_PATH_1 = new Path2D("M2 8 L2 20 L6 20 L6 24 L24 24 L24 20 L28 20 L28 8 L24 8 L24 4 L20 4 L20 0 L10 0 L10 4 L6 4 L6 8 Z M8 12 L12 12 L12 16 L8 16 Z M18 12 L22 12 L22 16 L18 16 Z");
     const INVADER_PATH_2 = new Path2D("M8 0 L22 0 L22 4 L26 4 L26 8 L30 8 L30 20 L26 20 L26 24 L22 24 L22 20 L18 20 L18 16 L12 16 L12 20 L8 20 L8 24 L4 24 L4 20 L0 20 L0 8 L4 8 L4 4 L8 4 Z M8 8 L12 8 L12 12 L8 12 Z M18 8 L22 8 L22 12 L18 12 Z");
+    const INVADER_PATH_3 = new Path2D("M15 0 L25 10 L25 18 L20 24 L10 24 L5 18 L5 10 Z M15 4 L21 10 L18 13 L12 13 L9 10 Z");
+    const INVADER_PATHS = [
+        [INVADER_PATH_1, INVADER_PATH_2], // NORMAL, RAPID用
+        [INVADER_PATH_3, INVADER_PATH_3]  // DIVE用
+    ];
+
+    // Boss Path
+    const BOSS_BASE_PATH = new Path2D("M 50 10 L 150 10 L 180 40 L 160 80 L 130 70 L 70 70 L 40 80 L 20 40 Z");
+    const BOSS_TURRET_PATH = new Path2D("M 90 50 L 110 50 L 115 70 L 85 70 Z");
+    const BOSS_WEAK_POINT_PATH = new Path2D("M 95 20 L 105 20 L 105 30 L 95 30 Z");
 
     // ゲーム状態
-    let ctx, player, bullets, invaderBullets, items, invaders, score, level, gameOver, lastShotTime, invaderDirection, invaderSpeed, animationFrameId;
-    let keys = { ArrowLeft: false, ArrowRight: false, ' ': false };
+    let ctx, player, bullets, invaderBullets, items, invaders, score, level, gameOver, lastShotTime, invaderDirection, invaderSpeed, animationFrameId, boss;
+    let keys = { ArrowLeft: false, ArrowRight: false };
 
     // ゲーム初期化
     function init() {
         ctx = canvas.getContext('2d');
+        boss = null; // ボスをリセット
         player = {
             x: canvas.width / 2 - PLAYER_WIDTH / 2,
             y: canvas.height - PLAYER_HEIGHT - 30,
@@ -112,34 +138,84 @@ document.addEventListener('DOMContentLoaded', () => {
         gameLoop();
     }
 
-    // レベル設定 (変更なし)
+    // レベル設定
     function setupLevel() {
+        if (level === MAX_LEVEL) { // レベル10はボス戦なので何もしない
+            setupBossFight();
+            return;
+        }
+
         invaders = [];
         for (let c = 0; c < INVADER_COLS; c++) {
             invaders[c] = [];
             for (let r = 0; r < INVADER_ROWS; r++) {
+                let type = 'NORMAL';
+                if (level >= 5 && r === 0) { // 最上段はDIVEタイプ
+                    type = 'DIVE';
+                } else if (level >= 3 && r === 1) { // 2段目はRAPIDタイプ
+                    type = 'RAPID';
+                }
+
                 invaders[c][r] = {
                     x: c * (INVADER_WIDTH + INVADER_PADDING) + INVADER_OFFSET_LEFT,
                     y: r * (INVADER_HEIGHT + INVADER_PADDING) + INVADER_OFFSET_TOP,
                     width: INVADER_WIDTH,
                     height: INVADER_HEIGHT,
-                    status: 1
+                    status: 1, // 1: 生存, 0: 死亡, 2: 突撃中
+                    type: type,
+                    diveTargetX: 0,
+                    diveTargetY: 0
                 };
             }
         }
         invaderDirection = 1;
         invaderSpeed = 0.5 + (level - 1) * 0.25;
+        if (invaderSpeed > 3) invaderSpeed = 3; // スピード上限
         player.x = canvas.width / 2 - PLAYER_WIDTH / 2;
         bullets = [];
         invaderBullets = [];
         items = [];
     }
 
+    // ボス戦設定
+    function setupBossFight() {
+        invaders = []; // 通常の敵はクリア
+        items = [];
+        bullets = [];
+        invaderBullets = [];
+        boss = {
+            x: canvas.width / 2 - 100,
+            y: -100, // 画面上部から登場
+            width: 200,
+            height: 80,
+            speed: 1.5,
+            direction: 1,
+            hp: BOSS_START_HP,
+            maxHp: BOSS_START_HP,
+            active: true,
+            pattern: 'spread',
+            patternTimer: Date.now(),
+            shootCooldown: 0,
+        };
+    }
     // UI更新 (変更なし)
     function updateUI() {
         scoreEl.textContent = score;
-        levelEl.textContent = level;
-        livesDisplayEl.textContent = '●'.repeat(player.lives > 0 ? player.lives : 0);
+        levelEl.textContent = `LV${level}`;
+
+        livesDisplayEl.innerHTML = ''; // ライフ表示をクリア
+        const livesCount = player.lives > 0 ? player.lives : 0;
+        for (let i = 0; i < livesCount; i++) {
+            const svgIcon = `
+                <svg width="20" height="20" viewBox="0 0 40 40" style="margin: 0 2px; vertical-align: middle;">
+                    <path d="${WING_LEFT_PATH_STR}" fill="#00aa00"></path>
+                    <path d="${WING_RIGHT_PATH_STR}" fill="#00aa00"></path>
+                    <path d="${FUSELAGE_PATH_STR}" fill="#0f0"></path>
+                </svg>
+            `;
+            livesDisplayEl.innerHTML += svgIcon;
+        }
+
         let powerUpDisplay = '---';
         switch (player.powerUp) {
             case ITEM_TYPES.SHIELD: powerUpDisplay = 'S'; break;
@@ -232,16 +308,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     function drawInvaders() {
-        const toggle = Math.floor(Date.now() / 500) % 2 === 0;
-        const currentPath = toggle ? INVADER_PATH_1 : INVADER_PATH_2;
+        const animToggle = Math.floor(Date.now() / 500) % 2 === 0;
         invaders.forEach(column => {
             column.forEach(invader => {
-                if (invader.status === 1) {
+                if (invader.status > 0) { // 生存または突撃中
+                    const invaderDef = INVADER_TYPES[invader.type];
+                    const pathSet = INVADER_PATHS[invaderDef.pathIndex];
+                    const currentPath = animToggle ? pathSet[0] : pathSet[1];
+
                     ctx.save();
                     ctx.translate(invader.x, invader.y);
                     ctx.scale(invader.width / 30, invader.height / 24);
-                    ctx.fillStyle = '#f00';
-                    ctx.shadowColor = '#f00';
+                    ctx.fillStyle = invaderDef.color;
+                    ctx.shadowColor = invaderDef.color;
                     ctx.shadowBlur = 5;
                     ctx.fill(currentPath);
                     ctx.restore();
@@ -249,28 +328,70 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+    function drawBoss() {
+        if (!boss || !boss.active) return;
 
-    // --- ゲームロジック関数群 (変更なし) ---
+        ctx.save();
+        ctx.translate(boss.x, boss.y);
+
+        // 本体
+        ctx.fillStyle = '#507';
+        ctx.shadowColor = '#a0f';
+        ctx.shadowBlur = 15;
+        ctx.fill(BOSS_BASE_PATH);
+
+        // 砲台
+        ctx.fillStyle = '#999';
+        ctx.shadowColor = '#fff';
+        ctx.shadowBlur = 5;
+        ctx.fill(BOSS_TURRET_PATH);
+
+        // 弱点
+        const weakPointColor = Math.floor(Date.now() / 200) % 2 === 0 ? '#f00' : '#ff0';
+        ctx.fillStyle = weakPointColor;
+        ctx.shadowColor = weakPointColor;
+        ctx.shadowBlur = 10;
+        ctx.fill(BOSS_WEAK_POINT_PATH);
+
+        ctx.restore();
+
+        // HPバー
+        const barWidth = 200;
+        const barHeight = 10;
+        const barX = canvas.width / 2 - barWidth / 2;
+        const barY = 15;
+        const hpRatio = boss.hp / boss.maxHp;
+
+        ctx.save();
+        ctx.fillStyle = '#500';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        ctx.fillStyle = '#f00';
+        ctx.shadowColor = '#f00';
+        ctx.shadowBlur = 5;
+        ctx.fillRect(barX, barY, barWidth * hpRatio, barHeight);
+        ctx.strokeStyle = '#fff';
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+        ctx.restore();
+    }
     function movePlayer() {
         if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
         if (keys.ArrowRight && player.x < canvas.width - player.width) player.x += player.speed;
     }
     function shoot() {
-        if (keys[' ']) {
-            const currentTime = Date.now();
-            const currentCooldown = player.powerUp === ITEM_TYPES.RAPID_FIRE ? BULLET_COOLDOWN / 2 : BULLET_COOLDOWN;
-            if (currentTime - lastShotTime > currentCooldown) {
-                if (player.powerUp === ITEM_TYPES.DOUBLE_SHOT) {
-                    bullets.push({ x: player.x, y: player.y, width: 5, height: 10, speed: BULLET_SPEED });
-                    bullets.push({ x: player.x + player.width - 5, y: player.y, width: 5, height: 10, speed: BULLET_SPEED });
-                } else {
-                    bullets.push({ x: player.x + player.width / 2 - 2.5, y: player.y, width: 5, height: 10, speed: BULLET_SPEED });
-                }
-                lastShotTime = currentTime;
-                playSound(sounds.shoot);
+        const currentTime = Date.now();
+        const currentCooldown = player.powerUp === ITEM_TYPES.RAPID_FIRE ? BULLET_COOLDOWN / 2 : BULLET_COOLDOWN;
+        if (currentTime - lastShotTime > currentCooldown) {
+            if (player.powerUp === ITEM_TYPES.DOUBLE_SHOT) {
+                bullets.push({ x: player.x, y: player.y, width: 5, height: 10, speed: BULLET_SPEED });
+                bullets.push({ x: player.x + player.width - 5, y: player.y, width: 5, height: 10, speed: BULLET_SPEED });
+            } else {
+                bullets.push({ x: player.x + player.width / 2 - 2.5, y: player.y, width: 5, height: 10, speed: BULLET_SPEED });
             }
+            lastShotTime = currentTime;
+            playSound(sounds.shoot);
         }
     }
+
     function moveBullets() {
         for (let i = bullets.length - 1; i >= 0; i--) {
             bullets[i].y -= bullets[i].speed;
@@ -290,25 +411,116 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     function invaderShoot() {
+        if (boss && boss.active) return; // ボス戦中はインベーダーは撃たない
         invaders.forEach(column => {
             column.forEach(invader => {
-                if (invader.status === 1 && Math.random() < INVADER_SHOOT_PROBABILITY * level) {
-                    invaderBullets.push({ x: invader.x + invader.width / 2 - 2, y: invader.y + invader.height, width: 4, height: 8, speed: INVADER_BULLET_SPEED });
+                if (invader.status !== 1) return; // 編隊にいる敵だけが対象
+
+                const shootChance = INVADER_SHOOT_PROBABILITY * (1 + level * 0.5);
+                if (Math.random() < shootChance) {
+                    if (invader.type === 'RAPID') {
+                        // 2連射
+                        invaderBullets.push({ x: invader.x + invader.width / 2 - 2, y: invader.y + invader.height, width: 4, height: 8, speed: INVADER_BULLET_SPEED });
+                        setTimeout(() => {
+                            // インベーダーがまだ生きていれば2発目を発射
+                            if (invader.status === 1) {
+                                invaderBullets.push({ x: invader.x + invader.width / 2 - 2, y: invader.y + invader.height, width: 4, height: 8, speed: INVADER_BULLET_SPEED });
+                            }
+                        }, 150);
+                    } else if (invader.type === 'NORMAL') {
+                        invaderBullets.push({ x: invader.x + invader.width / 2 - 2, y: invader.y + invader.height, width: 4, height: 8, speed: INVADER_BULLET_SPEED });
+                    }
                 }
             });
         });
     }
+    function bossShoot() {
+        if (!boss || !boss.active || boss.y < 0) return;
+
+        const now = Date.now();
+
+        // パターン切り替え
+        if (now - boss.patternTimer > 8000) {
+            const patterns = ['spread', 'snipe', 'laser'];
+            boss.pattern = patterns[Math.floor(Math.random() * patterns.length)];
+            boss.patternTimer = now;
+            boss.shootCooldown = now + 1000; // パターン変更後少し待つ
+        }
+
+        if (now < boss.shootCooldown) return;
+
+        switch (boss.pattern) {
+            case 'spread': // 拡散弾
+                boss.shootCooldown = now + 800;
+                for (let i = -2; i <= 2; i++) {
+                    const angle = i * (Math.PI / 12);
+                    invaderBullets.push({
+                        x: boss.x + boss.width / 2, y: boss.y + boss.height,
+                        width: 6, height: 6, speed: INVADER_BULLET_SPEED * 1.2,
+                        dx: Math.sin(angle) * INVADER_BULLET_SPEED,
+                        dy: Math.cos(angle) * INVADER_BULLET_SPEED
+                    });
+                }
+                break;
+            case 'snipe': // 狙い撃ち
+                boss.shootCooldown = now + 500;
+                const angle = Math.atan2(player.y - (boss.y + boss.height), player.x - (boss.x + boss.width / 2));
+                invaderBullets.push({
+                    x: boss.x + boss.width / 2, y: boss.y + boss.height,
+                    width: 8, height: 8, speed: INVADER_BULLET_SPEED * 1.5,
+                    dx: Math.cos(angle) * INVADER_BULLET_SPEED * 1.5,
+                    dy: Math.sin(angle) * INVADER_BULLET_SPEED * 1.5
+                });
+                break;
+            case 'laser':
+                boss.shootCooldown = now + 3000;
+                invaderBullets.push({
+                    x: boss.x + boss.width / 2 - 5, y: boss.y + boss.height,
+                    width: 10, height: canvas.height, speed: 0,
+                    isLaser: true,
+                    timer: now
+                });
+                break;
+        }
+    }
     function moveInvaders() {
+        if (boss && boss.active) { // ボス戦の動き
+            if (boss.y < 50) {
+                boss.y += 1; // 登場シーン
+            } else {
+                boss.x += boss.speed * boss.direction;
+                if (boss.x < 0 || boss.x + boss.width > canvas.width) boss.direction *= -1;
+            }
+            return;
+        }
         let edgeReached = false;
+        const diveChance = 0.0005 * (1 + level * 0.1);
+
         for (const column of invaders) {
             for (const invader of column) {
-                if (invader.status === 1) {
+                if (invader.status === 1) { // 編隊行動
                     invader.x += invaderSpeed * invaderDirection;
                     if (invader.x + invader.width > canvas.width || invader.x < 0) edgeReached = true;
-                    if (invader.y + invader.height > player.y) {
-                        endGame(false);
-                        return;
+
+                    // DIVEタイプの突撃判定
+                    if (invader.type === 'DIVE' && Math.random() < diveChance) {
+                        invader.status = 2; // 突撃モードへ
+                        invader.diveTargetX = player.x + player.width / 2;
+                        invader.diveTargetY = canvas.height;
                     }
+                } else if (invader.status === 2) { // 突撃行動
+                    const angle = Math.atan2(invader.diveTargetY - invader.y, invader.diveTargetX - invader.x);
+                    const diveSpeed = invaderSpeed * 2;
+                    invader.x += Math.cos(angle) * diveSpeed;
+                    invader.y += Math.sin(angle) * diveSpeed;
+
+                    if (invader.y > canvas.height) {
+                        invader.status = 0; // 画面外で消滅
+                    }
+                }
+                if (invader.status > 0 && invader.y + invader.height > player.y) {
+                    endGame(false); // プレイヤーライン到達
+                    return;
                 }
             }
         }
@@ -318,11 +530,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     function checkCollisions() {
+        // プレイヤーの弾とボスの衝突判定
+        if (boss && boss.active) {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                if (bullet.x > boss.x && bullet.x < boss.x + boss.width && bullet.y > boss.y && bullet.y < boss.y + boss.height) {
+                    bullets.splice(i, 1);
+                    boss.hp--;
+                    score += 50;
+                    if (boss.hp <= 0) endGame(true); // ボス撃破
+                }
+            }
+        }
         for (let i = bullets.length - 1; i >= 0; i--) {
             const bullet = bullets[i];
             for (const column of invaders) {
                 for (const invader of column) {
-                    if (invader.status === 1 && bullet.x > invader.x && bullet.x < invader.x + invader.width && bullet.y > invader.y && bullet.y < invader.y + invader.height) {
+                    if (invader.status > 0 && bullet.x > invader.x && bullet.x < invader.x + invader.width && bullet.y > invader.y && bullet.y < invader.y + invader.height) {
                         invader.status = 0;
                         bullets.splice(i, 1);
                         score += 10 * level;
@@ -338,8 +562,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
+        // 突撃インベーダーとプレイヤーの衝突判定
+        for (const column of invaders) {
+            for (const invader of column) {
+                if (invader.status === 2 && invader.x < player.x + player.width && invader.x + invader.width > player.x && invader.y < player.y + player.height && invader.y + invader.height > player.y) {
+                    invader.status = 0; // 衝突したら消滅
+                    if (player.invincible) return;
+                    if (player.powerUp === ITEM_TYPES.SHIELD) {
+                        activatePowerUp('---');
+                    } else {
+                        playSound(sounds.playerHit);
+                        player.lives--;
+                        updateUI();
+                        if (player.lives <= 0) {
+                            endGame(false);
+                        } else {
+                            activateInvincibility();
+                        }
+                    }
+                }
+            }
+        }
         for (let i = invaderBullets.length - 1; i >= 0; i--) {
             const bullet = invaderBullets[i];
+
+            // レーザーの処理
+            if (bullet.isLaser) {
+                const laserActiveTime = 1000;
+                const now = Date.now();
+                if (now - bullet.timer > laserActiveTime) {
+                    invaderBullets.splice(i, 1);
+                    continue;
+                }
+                // レーザーの描画はdrawInvaderBulletsで行う
+                const laserX = bullet.x;
+                const laserWidth = bullet.width;
+                if (player.x < laserX + laserWidth && player.x + player.width > laserX) {
+                    // 当たり判定
+                    if (!player.invincible && player.powerUp !== ITEM_TYPES.SHIELD) {
+                        player.lives = 0; // レーザーは即死
+                        endGame(false);
+                    }
+                }
+                continue; // 通常の弾の処理はスキップ
+            }
+
             if (bullet.x > player.x && bullet.x < player.x + player.width && bullet.y > player.y && bullet.y < player.y + player.height) {
                 invaderBullets.splice(i, 1);
                 if (player.invincible) return;
@@ -370,13 +637,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function checkLevelClear() {
         const allDead = invaders.every(column => column.every(invader => invader.status === 0));
-        if (allDead) {
+        if (allDead && !(boss && boss.active)) {
             playSound(sounds.levelClear);
-            if (level === MAX_LEVEL) {
-                endGame(true);
-            } else {
+            if (level < MAX_LEVEL) {
                 level++;
                 updateUI();
+                // レベル9クリア後はボス戦へ
+                if (level === MAX_LEVEL) setupBossFight();
                 setupLevel();
             }
         }
@@ -422,17 +689,28 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         movePlayer();
         shoot();
-        invaderShoot();
         moveBullets();
         moveInvaderBullets();
         moveItems();
-        moveInvaders();
+
+        if (boss && boss.active) {
+            moveBoss();
+            bossShoot();
+            drawBoss();
+        } else {
+            moveInvaders();
+            invaderShoot();
+            drawInvaders();
+        }
+
         checkCollisions();
-        checkLevelClear();
+        if (!boss || !boss.active) {
+            checkLevelClear();
+        }
+
         drawPlayer();
         drawBullets();
         drawInvaderBullets();
-        drawInvaders();
         drawItems();
         if (!gameOver) {
             animationFrameId = requestAnimationFrame(gameLoop);
