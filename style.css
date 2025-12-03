@@ -49,6 +49,30 @@ body {
     animation: bgAnim 20s ease-in-out infinite alternate;
 }
 
+#pause-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #0f0;
+    border: 1px solid #0f0;
+    border-radius: 5px;
+    font-family: sans-serif; /* アイコン表示のため */
+    font-size: 18px;
+    line-height: 28px; /* 中央揃え */
+    text-align: center;
+    cursor: pointer;
+    z-index: 5; /* canvasより手前 */
+    display: none; /* ゲーム開始時に表示 */
+}
+
+#pause-button:hover {
+    background-color: #0f0;
+    color: #000;
+}
+
 @keyframes bgAnim {
     0% { transform: rotate(-2deg) scale(1.1); }
     100% { transform: rotate(2deg) scale(1.2); }

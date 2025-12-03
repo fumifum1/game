@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageTitleEl = document.getElementById('message-title');
     const messageTextEl = document.getElementById('message-text');
     const restartButton = document.getElementById('restart-button');
+    const pauseButton = document.getElementById('pause-button');
 
     // オーディオ要素
     const sounds = {
@@ -96,12 +97,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const BOSS_TURRET_PATH = new Path2D("M 90 50 L 110 50 L 115 70 L 85 70 Z");
     const BOSS_WEAK_POINT_PATH = new Path2D("M 95 20 L 105 20 L 105 30 L 95 30 Z");
 
+    // Boss Image
+    const bossImage = new Image();
+    bossImage.src = 'images/Boss.png';
+
     // ゲーム状態
-    let ctx, player, bullets, invaderBullets, items, invaders, score, level, gameOver, lastShotTime, invaderDirection, invaderSpeed, animationFrameId, boss;
+    let ctx, player, bullets, invaderBullets, items, invaders, score, level, gameOver, lastShotTime, invaderDirection, invaderSpeed, animationFrameId, boss, isPaused;
     let keys = { ArrowLeft: false, ArrowRight: false };
 
     // ゲーム初期化
     function init() {
+        isPaused = false;
         ctx = canvas.getContext('2d');
         boss = null; // ボスをリセット
         player = {
@@ -184,11 +190,20 @@ document.addEventListener('DOMContentLoaded', () => {
         items = [];
         bullets = [];
         invaderBullets = [];
+
+        const bossWidth = 200;
+        let bossHeight = 160; // デフォルトの高さ
+        // 画像が読み込み済みであれば、アスペクト比を維持して高さを計算
+        if (bossImage.complete && bossImage.naturalWidth > 0) {
+            const aspectRatio = bossImage.naturalHeight / bossImage.naturalWidth;
+            bossHeight = bossWidth * aspectRatio;
+        }
+
         boss = {
-            x: canvas.width / 2 - 100,
-            y: -100, // 画面上部から登場
-            width: 200,
-            height: 80,
+            x: canvas.width / 2 - bossWidth / 2,
+            y: -bossHeight, // 画面上部から登場
+            width: bossWidth,
+            height: bossHeight,
             speed: 1.5,
             direction: 1,
             hp: BOSS_START_HP,
@@ -334,27 +349,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!boss || !boss.active) return;
 
         ctx.save();
-        ctx.translate(boss.x, boss.y);
-
-        // 本体
-        ctx.fillStyle = '#507';
-        ctx.shadowColor = '#a0f';
-        ctx.shadowBlur = 15;
-        ctx.fill(BOSS_BASE_PATH);
-
-        // 砲台
-        ctx.fillStyle = '#999';
-        ctx.shadowColor = '#fff';
-        ctx.shadowBlur = 5;
-        ctx.fill(BOSS_TURRET_PATH);
-
-        // 弱点
-        const weakPointColor = Math.floor(Date.now() / 200) % 2 === 0 ? '#f00' : '#ff0';
-        ctx.fillStyle = weakPointColor;
-        ctx.shadowColor = weakPointColor;
-        ctx.shadowBlur = 10;
-        ctx.fill(BOSS_WEAK_POINT_PATH);
-
+        // ボス画像が読み込み済みの場合のみ描画
+        if (bossImage.complete) {
+            ctx.shadowColor = '#a0f';
+            ctx.shadowBlur = 20;
+            ctx.drawImage(bossImage, boss.x, boss.y, boss.width, boss.height);
+        }
         ctx.restore();
 
         // HPバー
@@ -375,6 +375,37 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.strokeRect(barX, barY, barWidth, barHeight);
         ctx.restore();
     }
+    function drawPauseScreen() {
+        if (!isPaused) return;
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = "30px 'Press Start 2P'";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#fff';
+        ctx.shadowBlur = 10;
+        ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
+        ctx.restore();
+    }
+    // 一時停止機能
+    function togglePause() {
+        if (gameOver) return;
+        isPaused = !isPaused;
+        if (isPaused) {
+            sounds.bgm.pause();
+            pauseButton.textContent = '▶'; // 再開アイコン
+            // ポーズした瞬間にオーバーレイを描画
+            drawPauseScreen();
+        } else {
+            sounds.bgm.play().catch(e => console.error("BGM play failed on resume:", e));
+            pauseButton.textContent = '❚❚'; // 一時停止アイコン
+            // ゲームループを再開
+            gameLoop();
+        }
+    }
+
     function movePlayer() {
         if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
         if (keys.ArrowRight && player.x < canvas.width - player.width) player.x += player.speed;
@@ -485,7 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = -2; i <= 2; i++) {
                     const angle = i * (Math.PI / 12);
                     invaderBullets.push({
-                        x: boss.x + boss.width / 2, y: boss.y + boss.height,
+                        x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, // 発射位置をボスの中心に変更
                         width: 6, height: 6, speed: INVADER_BULLET_SPEED * 1.2,
                         dx: Math.sin(angle) * INVADER_BULLET_SPEED,
                         dy: Math.cos(angle) * INVADER_BULLET_SPEED
@@ -494,9 +525,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'snipe': // 狙い撃ち
                 boss.shootCooldown = now + 500;
-                const angle = Math.atan2(player.y - (boss.y + boss.height), player.x - (boss.x + boss.width / 2));
+                const angle = Math.atan2(player.y - (boss.y + boss.height / 2), player.x - (boss.x + boss.width / 2));
                 invaderBullets.push({
-                    x: boss.x + boss.width / 2, y: boss.y + boss.height,
+                    x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, // 発射位置をボスの中心に変更
                     width: 8, height: 8, speed: INVADER_BULLET_SPEED * 1.5,
                     dx: Math.cos(angle) * INVADER_BULLET_SPEED * 1.5,
                     dy: Math.sin(angle) * INVADER_BULLET_SPEED * 1.5
@@ -559,6 +590,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     boss.hp--;
                     score += 50;
                     if (boss.hp <= 0) endGame(true); // ボス撃破
+
+                    // ボスヒット時に低確率でアイテムをドロップ
+                    if (Math.random() < 0.05) { // 5%の確率
+                        let itemType;
+                        if (Math.random() < 0.25) { // ライフアップはさらに低確率(全体の約1.25%)
+                            itemType = ITEM_TYPES.LIFE_UP;
+                        } else {
+                            const powerUpTypes = [ITEM_TYPES.SHIELD, ITEM_TYPES.DOUBLE_SHOT, ITEM_TYPES.RAPID_FIRE];
+                            itemType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+                        }
+                        items.push({ x: bullet.x - 10, y: bullet.y, width: 20, height: 20, speed: ITEM_SPEED, type: itemType });
+                    }
                 }
             }
         }
@@ -698,16 +741,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 状態更新
-        movePlayer();
-        shoot();
-        moveBullets();
-        moveInvaderBullets();
-        moveItems();
-        moveInvaders(); // ボスがいてもいなくてもインベーダー（またはボス）の移動処理は必要
-        invaderShoot(); // 通常インベーダーの射撃
-        bossShoot();    // ボスの射撃
-
+        if (!isPaused) {
+            movePlayer(); // プレイヤーの移動
+            shoot();      // プレイヤーの射撃
+            moveBullets();
+            moveInvaderBullets();
+            moveItems();
+            moveInvaders(); // ボスがいてもいなくてもインベーダー（またはボス）の移動処理は必要
+            invaderShoot(); // 通常インベーダーの射撃
+            bossShoot();    // ボスの射撃
+        }
+        
         // 描画
         if (boss && boss.active) {
             drawBoss();
@@ -715,19 +759,26 @@ document.addEventListener('DOMContentLoaded', () => {
             drawInvaders();
         }
 
-        checkCollisions();
-        if (!boss || !boss.active) {
-            checkLevelClear();
+        if (!isPaused) {
+            checkCollisions();
+            if (!boss || !boss.active) {
+                checkLevelClear();
+            }
         }
 
         drawPlayer();
         drawBullets();
         drawInvaderBullets();
         drawItems();
-        if (!gameOver) {
+
+        drawPauseScreen(); // ポーズ中ならオーバーレイを描画
+        
+        // isPausedがtrueの場合、またはgameOverがtrueの場合、次のフレームの要求を停止する
+        if (!gameOver && !isPaused) {
             animationFrameId = requestAnimationFrame(gameLoop);
         }
     }
+
 
     // --- タッチ操作ハンドラ (変更なし) ---
     function handleTouch(e) {
@@ -768,6 +819,8 @@ document.addEventListener('DOMContentLoaded', () => {
     startButton.addEventListener('touchstart', (e) => { e.preventDefault(); startGame(); });
     restartButton.addEventListener('click', init);
     restartButton.addEventListener('touchstart', (e) => { e.preventDefault(); init(); });
+    pauseButton.addEventListener('click', togglePause);
+    pauseButton.addEventListener('touchstart', (e) => { e.preventDefault(); togglePause(); });
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -779,6 +832,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (e.key in keys) {
             keys[e.key] = true;
+        }
+        if (e.key.toLowerCase() === 'p') {
+            togglePause();
         }
     });
 
