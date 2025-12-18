@@ -4,35 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reversi</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/fumifum1/main/main/jpg/ico.ico">
+    <!-- Google Fonts (Righteous) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 外部CSSファイル -->
+    <link rel="stylesheet" href="common.css"> <!-- 共通スタイル（メニュー用） -->
     <link rel="stylesheet" href="rv.css">
 </head>
-<body class="min-h-screen flex flex-col items-center p-4 bg-gray-100">
+<body class="min-h-screen flex flex-col items-center p-4 bg-gray-900 text-gray-100">
+
+    <!-- ハンバーガーメニュー -->
+    <div id="menu-container">
+        <div id="menu-icon">
+            <span></span><span></span><span></span>
+        </div>
+        <nav id="menu-content" class="hidden">
+            <ul>
+                <li><a href="../main/index.html">Profile</a></li>
+                <li><a href="https://fumifum1.github.io/main/game.html">Game</a></li>
+            </ul>
+        </nav>
+    </div>
 
     <div id="game-container" class="w-full max-w-md flex flex-col items-center space-y-4">
-        <h1 class="text-3xl font-bold text-gray-800 mb-4">Reversi</h1>
+        <h1 class="text-3xl font-bold text-white" style="font-family: 'Righteous', cursive;">Reversi</h1>
 
         <!-- スコア表示 -->
-        <div class="w-full flex justify-around p-3 bg-white rounded-xl shadow-lg text-lg">
-            <div class="score-box flex items-center font-semibold text-gray-800">
+        <div class="w-full flex justify-around p-3 bg-gray-800 rounded-xl shadow-lg text-lg">
+            <div class="score-box flex items-center font-semibold text-gray-200">
                 <div class="piece black w-5 h-5 mr-2"></div>
                 <span>あなた (黒):</span>
-                <span id="score-player" class="ml-2 font-extrabold text-black">2</span>
+                <span id="score-player" class="ml-2 font-extrabold">2</span>
             </div>
-            <div class="score-box flex items-center font-semibold text-gray-800">
+            <div class="score-box flex items-center font-semibold text-gray-200">
                 <div class="piece white w-5 h-5 mr-2"></div>
                 <span>COM (白):</span>
-                <span id="score-ai" class="ml-2 font-extrabold text-gray-600">2</span>
+                <span id="score-ai" class="ml-2 font-extrabold">2</span>
             </div>
         </div>
 
-        <!-- ゲームボード -->
-        <div id="game-board" class="mt-4">
-            <!-- JavaScriptでセルが挿入されます -->
-        </div>
-        
         <!-- AIコメント表示エリア (キャラクターと吹き出し) -->
         <div id="ai-comment-container" class="w-full mt-4 p-2">
             
@@ -43,21 +58,26 @@
 
             <!-- 吹き出し -->
             <div id="ai-comment-box">
-                <p id="ai-comment-text" class="text-gray-700 text-sm font-medium">難易度を選び「ゲーム開始」を押してください。</p>
+                <p id="ai-comment-text" class="text-gray-800 text-sm font-medium">難易度を選び「ゲーム開始」を押してください。</p>
             </div>
         </div>
 
+        <!-- ゲームボード -->
+        <div id="game-board" class="mt-4">
+            <!-- JavaScriptでセルが挿入されます -->
+        </div>
+
         <!-- ゲームコントロールモーダル (初期設定とゲームオーバーを兼ねる) -->
-        <div id="gameControlModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div class="bg-white p-6 rounded-xl shadow-2xl text-center w-full max-w-sm">
+        <div id="gameControlModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-800 p-6 rounded-xl shadow-2xl text-center w-full max-w-sm">
                 <!-- 初期設定セクション -->
                 <div id="initialSetupSection">
-                    <h2 class="text-2xl font-bold mb-4 text-gray-800">ゲーム設定</h2>
+                    <h2 class="text-2xl font-bold mb-4 text-white">ゲーム設定</h2>
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0 mb-4">
-                        <label for="difficulty" class="text-sm font-medium text-gray-700">難易度を選択:</label>
-                        <select id="difficulty" class="px-3 py-1 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm">
+                        <label for="difficulty" class="text-sm font-medium text-gray-200">難易度を選択:</label>
+                        <select id="difficulty" class="px-3 py-1 border border-gray-600 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm bg-gray-700 text-white">
                             <option value="1">1: かんたん</option>
-                            <option value="2" selected>2: ふつう</option>
+                            <option value="2" selected class="text-white">2: ふつう</option>
                             <option value="3">3: むずかしい</option>
                         </select>
                     </div>
@@ -67,9 +87,9 @@
                 </div>
 
                 <!-- ゲームオーバーセクション (初期は非表示) -->
-                <div id="gameOverSection" class="hidden">
-                    <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-gray-800">ゲーム終了</h2>
-                    <p id="modalMessage" class="text-lg mb-6 text-gray-600">結果メッセージ</p>
+                <div id="gameOverSection" class="hidden text-white">
+                    <h2 id="modalTitle" class="text-2xl font-bold mb-4">ゲーム終了</h2>
+                    <p id="modalMessage" class="text-lg mb-6 text-gray-300">結果メッセージ</p>
                     <button id="replayButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
                         もう一度プレイ
                     </button>
@@ -80,5 +100,6 @@
 
     <!-- 外部JavaScriptファイル -->
     <script src="rv.js"></script>
+    <script src="menu.js" defer></script> <!-- メニュー用スクリプト -->
 </body>
 </html>

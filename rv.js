@@ -183,14 +183,13 @@ function setComment(key, lastFlips = 0) {
     if (!comments || comments.length === 0) return;
 
     // 特定の状況では、より具体的なキーを優先して選択
-    if (key === 'START' || key === 'PLAYER_TURN' || key === 'SMALL_FLIP') {
-         // 状況コメントが必要な場合、現在の盤面からコメントキーを再評価する
-         const bestKey = getAICommentKey(lastFlips);
-         if (bestKey !== 'START' && bestKey !== 'PLAYER_TURN') {
-            actualKey = bestKey; // 優勢/劣勢コメントを優先
-         }
-         const newComments = AI_COMMENTS[actualKey];
-         if (!newComments || newComments.length === 0) actualKey = key; // コメントが見つからない場合は元のキーに戻す
+    // AIのターン開始時、またはプレイヤーが手を打った直後に戦況を判断する
+    if (key === 'START' || key === 'PLAYER_TURN') {
+        const situationKey = getAICommentKey(lastFlips);
+        // 'START'は汎用キーなので、より具体的な状況キーがあれば上書きする
+        if (situationKey !== 'START') {
+            actualKey = situationKey;
+        }
     }
     
     const messageList = AI_COMMENTS[actualKey];
@@ -347,7 +346,7 @@ function nextTurn() {
         // プレイヤーが打った直後 (次はAIの番を想定)
         if (aiHasMoves) {
             currentPlayer = AI; // AIのターンへ
-            setComment('START'); // AIのターン開始時に状況コメントを出す
+            setComment('START'); // AIのターン開始時に状況コメントを出す (内部でgetAICommentKeyが呼ばれる)
         } else if (playerHasMoves) {
             // AIがパス -> プレイヤー連続ターン
             setComment('AI_PASS'); // AIがパスしたことを通知
@@ -421,11 +420,11 @@ function updateScore() {
     scorePlayerEl.textContent = player;
     scoreAIEl.textContent = ai;
 
-    scorePlayerEl.classList.toggle('text-black', player > ai);
-    scorePlayerEl.classList.toggle('text-gray-800', player <= ai);
+    scorePlayerEl.classList.toggle('text-white', player > ai); // プレイヤーが優勢なら白文字
+    scorePlayerEl.classList.toggle('text-gray-200', player <= ai); // それ以外は薄いグレー
 
-    scoreAIEl.classList.toggle('text-gray-800', ai > player);
-    scoreAIEl.classList.toggle('text-gray-600', ai <= player);
+    scoreAIEl.classList.toggle('text-white', ai > player); // AIが優勢なら白文字
+    scoreAIEl.classList.toggle('text-gray-400', ai <= player); // それ以外は少し濃いグレー
 }
 
 /**
