@@ -1,0 +1,118 @@
+/* カスタムスタイル */
+:root {
+    --board-size: 8;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #e2e8f0; /* Gray 200 */
+}
+
+#game-board {
+    display: grid;
+    grid-template-columns: repeat(var(--board-size), 1fr);
+    grid-template-rows: repeat(var(--board-size), 1fr);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 4px solid #166534; /* 濃緑色 (例: Green 800) */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.cell {
+    width: 100%;
+    height: 100%;
+    background-color: #48bb78; /* Green 500 */
+    border: 1px solid #38a169; /* Green 600 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.1s;
+    position: relative;
+}
+
+.cell:hover:not(.occupied):not(.disabled) {
+    background-color: #68d391; /* Green 400 */
+}
+
+.possible-move {
+    background-color: #68d391; /* Green 400 */
+}
+
+.possible-move::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent dot */
+}
+
+.piece {
+    width: 90%;
+    height: 90%;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    transform: scale(0.8);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.piece.black { background-color: black; }
+.piece.white { background-color: white; }
+
+@keyframes flip {
+    0% { transform: scaleX(0.8) rotateY(0deg); }
+    50% { transform: scaleX(0) rotateY(90deg); }
+    51% { background-color: transparent; }
+    100% { transform: scaleX(0.8) rotateY(180deg); }
+}
+
+/* -------------------------------------------------------- */
+/* AIキャラクターと吹き出しのスタイル */
+/* -------------------------------------------------------- */
+
+#ai-comment-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+#ai-character {
+    width: 72px; /* w-18 */
+    height: 72px; /* h-18 */
+    min-width: 72px;
+    border-radius: 50%;
+    background-color: #ffffff; /* キャラクターの背景色 (白) */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border: 3px solid #cbd5e1; /* リング (Gray 300) */
+    font-size: 48px; /* 絵文字のサイズ */
+    line-height: 1;
+}
+
+/* 吹き出しの本体 */
+#ai-comment-box {
+    position: relative;
+    background: #ffffff;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+    flex-grow: 1;
+}
+
+/* 吹き出しの三角部分 */
+#ai-comment-box::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 10px 10px 10px 0;
+    border-color: transparent #ffffff transparent transparent;
+}
