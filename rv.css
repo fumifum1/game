@@ -7,7 +7,8 @@ body {
     font-family: 'Inter', sans-serif;
     /* Tailwind CSS bg-gray-900が背景色を制御するため、CSSでのbackground-colorは不要 */
     background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='star-pattern' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 20,0 Q 20,20 40,20 Q 20,20 20,40 Q 20,20 0,20 Q 20,20 20,0 Z' fill='rgba(255,255,255,0.07)'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23star-pattern)'/%3E%3C/svg%3E");
-    background-attachment: fixed; /* 背景を固定 */
+    background-attachment: fixed;
+    /* 背景を固定 */
 }
 
 #game-board {
@@ -16,15 +17,18 @@ body {
     grid-template-rows: repeat(var(--board-size), 1fr);
     width: 100%;
     aspect-ratio: 1 / 1;
-    border: 4px solid #166534; /* 濃緑色 (例: Green 800) */
+    border: 4px solid #166534;
+    /* 濃緑色 (例: Green 800) */
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .cell {
     width: 100%;
     height: 100%;
-    background-color: #48bb78; /* Green 500 */
-    border: 1px solid #38a169; /* Green 600 */
+    background-color: #48bb78;
+    /* Green 500 */
+    border: 1px solid #38a169;
+    /* Green 600 */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -34,11 +38,13 @@ body {
 }
 
 .cell:hover:not(.occupied):not(.disabled) {
-    background-color: #68d391; /* Green 400 */
+    background-color: #68d391;
+    /* Green 400 */
 }
 
 .possible-move {
-    background-color: #68d391; /* Green 400 */
+    background-color: #68d391;
+    /* Green 400 */
 }
 
 .possible-move::after {
@@ -47,27 +53,74 @@ body {
     width: 15px;
     height: 15px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent dot */
+    background-color: rgba(255, 255, 255, 0.5);
+    /* Semi-transparent dot */
 }
 
 .piece {
     width: 90%;
     height: 90%;
+    perspective: 600px;
+    /* 3D空間の奥行き */
+    background-color: transparent;
+    box-shadow: none;
+    transform: none;
+    /* 古いtransformをリセット */
+}
+
+/* ピースの内部コンテナ（これを回転させる） */
+.piece-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+/* 表面（黒） */
+.piece-inner.black-side {
+    transform: rotateY(0deg);
+}
+
+/* 裏面（白） */
+.piece-inner.white-side {
+    transform: rotateY(180deg);
+}
+
+/* ピースの面（共通） */
+.face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    /* 裏側を見せない */
     border-radius: 50%;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-    transform: scale(0.8);
-    transition: transform 0.2s, background-color 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    /* 影を少し強調 */
+    display: flex;
+    /* 中央揃え用（もし中に何か入れるなら） */
+    justify-content: center;
+    align-items: center;
 }
 
-.piece.black { background-color: black; }
-.piece.white { background-color: white; }
-
-@keyframes flip {
-    0% { transform: scaleX(0.8) rotateY(0deg); }
-    50% { transform: scaleX(0) rotateY(90deg); }
-    51% { background-color: transparent; }
-    100% { transform: scaleX(0.8) rotateY(180deg); }
+/* 表面のデザイン */
+.face.front {
+    background-color: black;
+    transform: rotateY(0deg);
+    /* 黒石の質感 */
+    background: radial-gradient(circle at 30% 30%, #404040, #000000);
 }
+
+/* 裏面のデザイン */
+.face.back {
+    background-color: white;
+    transform: rotateY(180deg);
+    /* 白石の質感 */
+    background: radial-gradient(circle at 30% 30%, #ffffff, #d0d0d0);
+}
+
+/* 以前の@keyframes flipは不要になったので削除 */
 
 /* -------------------------------------------------------- */
 /* AIキャラクターと吹き出しのスタイル */
@@ -80,18 +133,23 @@ body {
 }
 
 #ai-character {
-    width: 72px; /* w-18 */
-    height: 72px; /* h-18 */
+    width: 72px;
+    /* w-18 */
+    height: 72px;
+    /* h-18 */
     min-width: 72px;
     border-radius: 50%;
-    background-color: #ffffff; /* キャラクターの背景色 (白) */
+    background-color: #ffffff;
+    /* キャラクターの背景色 (白) */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    border: 3px solid #cbd5e1; /* リング (Gray 300) */
-    font-size: 48px; /* 絵文字のサイズ */
+    border: 3px solid #cbd5e1;
+    /* リング (Gray 300) */
+    font-size: 48px;
+    /* 絵文字のサイズ */
     line-height: 1;
 }
 
@@ -135,18 +193,24 @@ body {
 
 /* メニューコンテンツの背景とボーダーをリバーシのテーマに合わせる */
 #menu-content {
-    background-color: rgba(31, 41, 55, 0.95); /* bg-gray-800 with opacity */
-    border: 1px solid #4b5563; /* gray-600 */
+    background-color: rgba(31, 41, 55, 0.95);
+    /* bg-gray-800 with opacity */
+    border: 1px solid #4b5563;
+    /* gray-600 */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px); /* 背景をぼかす */
+    backdrop-filter: blur(4px);
+    /* 背景をぼかす */
 }
 
 /* メニューのフォントをページ全体と合わせる */
 #menu-content a {
-    font-family: 'Raleway', sans-serif; /* メインページで使われているフォント */
+    font-family: 'Raleway', sans-serif;
+    /* メインページで使われているフォント */
     font-size: 1rem;
-    color: #e5e7eb; /* gray-200 */
-    text-shadow: none; /* レトロ風のテキストシャドウを削除 */
+    color: #e5e7eb;
+    /* gray-200 */
+    text-shadow: none;
+    /* レトロ風のテキストシャドウを削除 */
 }
 
 /* ホバー時の色を明るくする */
@@ -157,7 +221,66 @@ body {
 
 /* Gameページへのリンクを少し目立たせる */
 #menu-content a[href="index.html"] {
-    color: #60a5fa; /* blue-400 */
+    color: #60a5fa;
+    /* blue-400 */
     font-weight: bold;
 }
+
+/* ローディング画面のアニメーション */
+@keyframes loading-flip {
+    0% {
+        transform: rotateY(0deg);
+    }
+
+    50% {
+        transform: rotateY(180deg);
+    }
+
+    100% {
+        transform: rotateY(360deg);
+    }
+}
+
+.loading-anim {
+    animation: loading-flip 2s infinite ease-in-out;
+}
+
+#loading-screen {
+    transition: opacity 0.5s ease-out;
+}
+
+#loading-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ラベルの均等割り付け */
+.text-justify-label {
+    text-align: justify;
+    text-align-last: justify;
+    width: 100%;
+    /* 後ろにスペースを確保して調整 */
+    display: inline-block;
+}
+
+/* タイトル文字のアニメーション (白 -> 黒 -> 白) */
+@keyframes text-color-flip {
+
+    0%,
+    100% {
+        color: #fff;
+        text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+    }
+
+    50% {
+        color: #111;
+        /* ほぼ黒 */
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+        /* 黒になっても見えるように白の光彩 */
+    }
+}
+
+.loading-char {
+    display: inline-block;
+    animation: text-color-flip 2s infinite ease-in-out;
 }

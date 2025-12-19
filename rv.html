@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +17,7 @@
     <link rel="stylesheet" href="common.css"> <!-- 共通スタイル（メニュー用） -->
     <link rel="stylesheet" href="rv.css">
 </head>
+
 <body class="min-h-screen flex flex-col items-center p-4 bg-gray-900 text-gray-100">
 
     <!-- ハンバーガーメニュー -->
@@ -29,6 +31,46 @@
                 <li><a href="https://fumifum1.github.io/main/game.html">Game</a></li>
             </ul>
         </nav>
+    </div>
+
+    <!-- ローディング画面 -->
+    <div id="loading-screen" class="fixed inset-0 bg-gray-900 z-[100] flex flex-col items-center justify-center">
+        <h1 class="text-6xl font-bold text-white mb-8 flex space-x-1"
+            style="font-family: 'Righteous', cursive; text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);">
+            <span class="loading-char" style="animation-delay: 0s;">R</span>
+            <span class="loading-char" style="animation-delay: 0.1s;">e</span>
+            <span class="loading-char" style="animation-delay: 0.2s;">v</span>
+            <span class="loading-char" style="animation-delay: 0.3s;">e</span>
+            <span class="loading-char" style="animation-delay: 0.4s;">r</span>
+            <span class="loading-char" style="animation-delay: 0.5s;">s</span>
+            <span class="loading-char" style="animation-delay: 0.6s;">i</span>
+        </h1>
+        <div id="loading-pieces" class="flex space-x-6">
+            <div class="loading-piece-container w-12 h-12">
+                <div class="piece-inner loading-anim" style="animation-delay: 0s;">
+                    <div class="face front"></div>
+                    <div class="face back"></div>
+                </div>
+            </div>
+            <div class="loading-piece-container w-12 h-12">
+                <div class="piece-inner loading-anim" style="animation-delay: 0.2s;">
+                    <div class="face front"></div>
+                    <div class="face back"></div>
+                </div>
+            </div>
+            <div class="loading-piece-container w-12 h-12">
+                <div class="piece-inner loading-anim" style="animation-delay: 0.4s;">
+                    <div class="face front"></div>
+                    <div class="face back"></div>
+                </div>
+            </div>
+            <div class="loading-piece-container w-12 h-12">
+                <div class="piece-inner loading-anim" style="animation-delay: 0.6s;">
+                    <div class="face front"></div>
+                    <div class="face back"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="game-container" class="w-full max-w-md flex flex-col items-center space-y-4">
@@ -50,7 +92,7 @@
 
         <!-- AIコメント表示エリア (キャラクターと吹き出し) -->
         <div id="ai-comment-container" class="w-full mt-4 p-2">
-            
+
             <!-- AIキャラクターアイコン (新しいSVG構造) -->
             <div id="ai-character">
                 <!-- JavaScriptによって絵文字がここに挿入されます -->
@@ -68,20 +110,49 @@
         </div>
 
         <!-- ゲームコントロールモーダル (初期設定とゲームオーバーを兼ねる) -->
-        <div id="gameControlModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div id="gameControlModal"
+            class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div class="bg-gray-800 p-6 rounded-xl shadow-2xl text-center w-full max-w-sm">
                 <!-- 初期設定セクション -->
                 <div id="initialSetupSection">
                     <h2 class="text-2xl font-bold mb-4 text-white">ゲーム設定</h2>
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0 mb-4">
-                        <label for="difficulty" class="text-sm font-medium text-gray-200">難易度を選択:</label>
-                        <select id="difficulty" class="px-3 py-1 border border-gray-600 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm bg-gray-700 text-white">
-                            <option value="1">1: かんたん</option>
-                            <option value="2" selected class="text-white">2: ふつう</option>
-                            <option value="3">3: むずかしい</option>
-                        </select>
+                    <div class="flex flex-col space-y-4 mb-4">
+                        <!-- ゲームモード選択 -->
+                        <div class="grid grid-cols-[5rem_1fr] gap-4 items-center">
+                            <label for="gameMode"
+                                class="text-sm font-medium text-gray-200 text-justify-label">モード</label>
+                            <select id="gameMode"
+                                class="px-3 py-1 border border-gray-700 rounded-lg shadow-inner focus:ring-emerald-600 focus:border-emerald-600 text-sm bg-gray-900 text-gray-200 w-full">
+                                <option value="pve" selected>AI対戦</option>
+                                <option value="pvp">プレイヤー対戦</option>
+                            </select>
+                        </div>
+
+                        <!-- プレイヤーの手番選択 (AI対戦時のみ有効) -->
+                        <div id="colorSelection" class="grid grid-cols-[5rem_1fr] gap-4 items-center">
+                            <label for="playerColor"
+                                class="text-sm font-medium text-gray-200 text-justify-label">自分の色</label>
+                            <select id="playerColor"
+                                class="px-3 py-1 border border-gray-700 rounded-lg shadow-inner focus:ring-emerald-600 focus:border-emerald-600 text-sm bg-gray-900 text-gray-200 w-full">
+                                <option value="1" selected>黒 (先攻)</option>
+                                <option value="2">白 (後攻)</option>
+                            </select>
+                        </div>
+
+                        <!-- 難易度選択 (AI対戦時のみ有効) -->
+                        <div id="difficultySelection" class="grid grid-cols-[5rem_1fr] gap-4 items-center">
+                            <label for="difficulty"
+                                class="text-sm font-medium text-gray-200 text-justify-label">難易度</label>
+                            <select id="difficulty"
+                                class="px-3 py-1 border border-gray-700 rounded-lg shadow-inner focus:ring-emerald-600 focus:border-emerald-600 text-sm bg-gray-900 text-gray-200 w-full">
+                                <option value="1">1: かんたん</option>
+                                <option value="2" selected>2: ふつう</option>
+                                <option value="3">3: むずかしい</option>
+                            </select>
+                        </div>
                     </div>
-                    <button id="startButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-xl transition duration-150 shadow-md">
+                    <button id="startButton"
+                        class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-2 rounded-xl transition duration-150 shadow-lg shadow-emerald-900/50 border border-emerald-600/30">
                         ゲーム開始 (プレイヤー先手)
                     </button>
                 </div>
@@ -90,7 +161,8 @@
                 <div id="gameOverSection" class="hidden text-white">
                     <h2 id="modalTitle" class="text-2xl font-bold mb-4">ゲーム終了</h2>
                     <p id="modalMessage" class="text-lg mb-6 text-gray-300">結果メッセージ</p>
-                    <button id="replayButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                    <button id="replayButton"
+                        class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
                         もう一度プレイ
                     </button>
                 </div>
@@ -102,4 +174,5 @@
     <script src="rv.js"></script>
     <script src="menu.js" defer></script> <!-- メニュー用スクリプト -->
 </body>
+
 </html>
