@@ -2,8 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- UI要素の取得 ---
     const canvas = document.getElementById('gameCanvas');
     const gameContainer = document.getElementById('game-container');
-    const startScreen = document.getElementById('start-screen');
-    const startButton = document.getElementById('start-button');
     const gameInfoEl = document.getElementById('game-info');
     const scoreEl = document.getElementById('score');
     const levelEl = document.getElementById('level');
@@ -135,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // UIの表示切り替え
         messageContainer.classList.add('hidden');
-        startScreen.classList.add('hidden');
         gameInfoEl.classList.remove('hidden');
         canvas.classList.remove('hidden');
 
@@ -782,7 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- タッチ操作ハンドラ (変更なし) ---
     function handleTouch(e) {
-        if (gameOver || !startScreen.classList.contains('hidden')) {
+        if (gameOver) {
             keys.ArrowLeft = false;
             keys.ArrowRight = false;
             return;
@@ -815,8 +812,9 @@ document.addEventListener('DOMContentLoaded', () => {
         init();
     }
 
-    startButton.addEventListener('click', startGame);
-    startButton.addEventListener('touchstart', (e) => { e.preventDefault(); startGame(); });
+    // ローディング画面からの開始イベントをリッスン
+    document.addEventListener('start-game-event', startGame);
+
     restartButton.addEventListener('click', init);
     restartButton.addEventListener('touchstart', (e) => { e.preventDefault(); init(); });
     pauseButton.addEventListener('click', togglePause);
@@ -824,9 +822,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            if (!startScreen.classList.contains('hidden')) {
-                startGame();
-            } else if (gameOver) {
+            if (gameOver) {
                 init();
             }
         }
