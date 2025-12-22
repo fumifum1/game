@@ -114,8 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
             width: PLAYER_WIDTH,
             height: PLAYER_HEIGHT,
             speed: PLAYER_SPEED,
-            powerUp: '---',
-            powerUpTimer: null,
+            activePowerUps: [], // 複数のパワーアップを管理
             lives: LIVES_START,
             invincible: false,
             invincibleTimer: null,
@@ -229,13 +228,15 @@ document.addEventListener('DOMContentLoaded', () => {
             livesDisplayEl.innerHTML += svgIcon;
         }
 
-        let powerUpDisplay = '---';
-        switch (player.powerUp) {
-            case ITEM_TYPES.SHIELD: powerUpDisplay = 'S'; break;
-            case ITEM_TYPES.DOUBLE_SHOT: powerUpDisplay = 'D'; break;
-            case ITEM_TYPES.RAPID_FIRE: powerUpDisplay = 'R'; break;
-        }
-        powerupEl.textContent = powerUpDisplay;
+        const powerUpTexts = player.activePowerUps.map(p => {
+            switch (p.type) {
+                case ITEM_TYPES.SHIELD: return 'S';
+                case ITEM_TYPES.DOUBLE_SHOT: return 'D';
+                case ITEM_TYPES.RAPID_FIRE: return 'R';
+                default: return '';
+            }
+        });
+        powerupEl.textContent = powerUpTexts.length > 0 ? powerUpTexts.join(' ') : '---';
     }
 
     // --- 描画関数群 (変更なし) ---
@@ -244,7 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.save();
         ctx.translate(player.x, player.y);
         ctx.scale(player.width / 40, player.height / 40);
-        if (player.powerUp === ITEM_TYPES.SHIELD) {
+        const hasShield = player.activePowerUps.some(p => p.type === ITEM_TYPES.SHIELD);
+        if (hasShield) {
             ctx.fillStyle = 'rgba(0, 255, 255, 0.3)';
             ctx.beginPath();
             ctx.arc(20, 20, 25, 0, Math.PI * 2);
@@ -355,7 +357,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.restore();
 
         // HPバー
-        const barWidth = 200;
+        if (!gameOver) { // ゲームオーバー（エンディング含む）時はHPバーを表示しない
+            const barWidth = 200;
         const barHeight = 10;
         const barX = canvas.width / 2 - barWidth / 2;
         const barY = 15;
@@ -371,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.strokeStyle = '#fff';
         ctx.strokeRect(barX, barY, barWidth, barHeight);
         ctx.restore();
+        }
     }
     function drawPauseScreen() {
         if (!isPaused) return;
@@ -409,9 +413,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function shoot() {
         const currentTime = Date.now();
-        const currentCooldown = player.powerUp === ITEM_TYPES.RAPID_FIRE ? BULLET_COOLDOWN / 2 : BULLET_COOLDOWN;
+        const hasRapid = player.activePowerUps.some(p => p.type === ITEM_TYPES.RAPID_FIRE);
+        const hasDouble = player.activePowerUps.some(p => p.type === ITEM_TYPES.DOUBLE_SHOT);
+        const currentCooldown = hasRapid ? BULLET_COOLDOWN / 2 : BULLET_COOLDOWN;
         if (currentTime - lastShotTime > currentCooldown) {
-            if (player.powerUp === ITEM_TYPES.DOUBLE_SHOT) {
+            if (hasDouble) {
                 bullets.push({ x: player.x, y: player.y, width: 5, height: 10, speed: BULLET_SPEED });
                 bullets.push({ x: player.x + player.width - 5, y: player.y, width: 5, height: 10, speed: BULLET_SPEED });
             } else {
@@ -513,7 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = -2; i <= 2; i++) {
                     const angle = i * (Math.PI / 12);
                     invaderBullets.push({
-                        x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, // 発射位置をボスの中心に変更
+                        x: boss.x + boss.width / 2, y: boss.y + boss.height / 2 - 40, // 発射位置を少し上に変更
                         width: 6, height: 6, speed: INVADER_BULLET_SPEED * 1.2,
                         dx: Math.sin(angle) * INVADER_BULLET_SPEED,
                         dy: Math.cos(angle) * INVADER_BULLET_SPEED
@@ -644,7 +650,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const laserWidth = bullet.width;
                 if (player.x < laserX + laserWidth && player.x + player.width > laserX) {
                     // 当たり判定
-                    if (!player.invincible && player.powerUp !== ITEM_TYPES.SHIELD) {
+                    const hasShield = player.activePowerUps.some(p => p.type === ITEM_TYPES.SHIELD);
+                    if (!player.invincible && !hasShield) {
                         player.lives = 0; // レーザーは即死
                         endGame(false);
                     }
@@ -655,8 +662,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (bullet.x > player.x && bullet.x < player.x + player.width && bullet.y > player.y && bullet.y < player.y + player.height) {
                 invaderBullets.splice(i, 1);
                 if (player.invincible) return;
-                if (player.powerUp === ITEM_TYPES.SHIELD) {
-                    activatePowerUp('---');
+                const hasShield = player.activePowerUps.some(p => p.type === ITEM_TYPES.SHIELD);
+                if (hasShield) {
+                    removePowerUp(ITEM_TYPES.SHIELD);
                 } else {
                     playSound(sounds.playerHit);
                     player.lives--;
@@ -676,10 +684,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 items.splice(i, 1);
                 playSound(sounds.itemGet);
                 if (item.type === ITEM_TYPES.LIFE_UP) {
-                    player.lives++;
-                    updateUI();
+                    if (player.lives < 6) { // ライフ上限を6に設定
+                        player.lives++;
+                        updateUI();
+                    }
                 } else {
-                    activatePowerUp(item.type);
+                    addPowerUp(item.type);
                 }
                 return;
             }
@@ -703,12 +713,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (player.invincibleTimer) clearTimeout(player.invincibleTimer);
         player.invincibleTimer = setTimeout(() => { player.invincible = false; }, 1500);
     }
-    function activatePowerUp(type) {
-        player.powerUp = type;
+    function addPowerUp(type) {
+        const existingIndex = player.activePowerUps.findIndex(p => p.type === type);
+        if (existingIndex !== -1) {
+            clearTimeout(player.activePowerUps[existingIndex].timer);
+            player.activePowerUps.splice(existingIndex, 1);
+        } else if (player.activePowerUps.length >= 2) { // 最大2つまで
+            const removed = player.activePowerUps.shift();
+            clearTimeout(removed.timer);
+        }
+        const timer = setTimeout(() => removePowerUp(type), POWERUP_DURATION);
+        player.activePowerUps.push({ type, timer });
         updateUI();
-        if (player.powerUpTimer) clearTimeout(player.powerUpTimer);
-        if (type !== '---') {
-            player.powerUpTimer = setTimeout(() => activatePowerUp('---'), POWERUP_DURATION);
+    }
+    function removePowerUp(type) {
+        const index = player.activePowerUps.findIndex(p => p.type === type);
+        if (index !== -1) {
+            clearTimeout(player.activePowerUps[index].timer);
+            player.activePowerUps.splice(index, 1);
+            updateUI();
         }
     }
 
@@ -716,22 +739,159 @@ document.addEventListener('DOMContentLoaded', () => {
     function endGame(isWin) {
         sounds.bgm.pause();
         gameOver = true;
-        if (player.powerUpTimer) clearTimeout(player.powerUpTimer);
+        player.activePowerUps.forEach(p => clearTimeout(p.timer));
+        player.activePowerUps = [];
         if (player.invincibleTimer) clearTimeout(player.invincibleTimer);
         cancelAnimationFrame(animationFrameId);
 
-        gameInfoEl.classList.add('hidden');
-        canvas.classList.add('hidden');
-
         if (isWin) {
-            messageTitleEl.textContent = 'GAME CLEAR!';
-            messageTextEl.textContent = `CONGRATULATIONS! YOUR SCORE: ${score}`;
+            startEndingSequence();
         } else {
+            gameInfoEl.classList.add('hidden');
+            canvas.classList.add('hidden');
             playSound(sounds.gameOver);
             messageTitleEl.textContent = 'GAME OVER';
             messageTextEl.textContent = `YOUR SCORE: ${score}`;
+            messageContainer.classList.remove('hidden');
         }
-        messageContainer.classList.remove('hidden');
+    }
+
+    let endingStartTime = 0;
+
+    function startEndingSequence() {
+        endingStartTime = Date.now();
+        
+        // エンディング用にプレイヤーとボスを再配置
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 30;
+        bullets = [];
+        invaderBullets = [];
+        items = [];
+        
+        // ボスを少し上に再配置
+        if (boss) {
+            boss.x = canvas.width / 2 - boss.width / 2;
+            boss.y = 50;
+            boss.hp = boss.maxHp; 
+            boss.active = true;
+        }
+
+        // UIを隠す (canvasは表示したまま)
+        gameInfoEl.classList.add('hidden');
+        
+        // クリア音
+        playSound(sounds.levelClear);
+
+        endingLoop();
+    }
+
+    function endingLoop() {
+        const currentTime = Date.now();
+        const elapsedTime = currentTime - endingStartTime;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (elapsedTime < 6000) {
+            // Phase 1: 自動戦闘デモ (0-6秒)
+            // GAME CLEAR テキスト
+            ctx.save();
+            ctx.fillStyle = '#ff0';
+            ctx.font = "40px 'Press Start 2P'";
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#f00';
+            ctx.shadowBlur = 10;
+            ctx.fillText('GAME CLEAR!', canvas.width / 2, canvas.height / 2 - 80);
+            ctx.restore();
+
+            // プレイヤー自動操作 (左右に揺れる)
+            player.x = canvas.width / 2 - player.width / 2 + Math.sin(elapsedTime / 400) * 100;
+            // プレイヤー射撃
+            if (elapsedTime % 400 < 20) { 
+                 bullets.push({ x: player.x + player.width / 2 - 2.5, y: player.y, width: 5, height: 10, speed: BULLET_SPEED });
+                 playSound(sounds.shoot);
+            }
+            
+            // ボス自動操作 (左右に揺れる)
+            if (boss) {
+                boss.x = canvas.width / 2 - boss.width / 2 + Math.sin(elapsedTime / 600) * 50;
+                // ボス射撃
+                if (elapsedTime % 600 < 20) {
+                     invaderBullets.push({
+                        x: boss.x + boss.width / 2, y: boss.y + boss.height / 2,
+                        width: 6, height: 6, speed: INVADER_BULLET_SPEED,
+                        dx: 0, dy: INVADER_BULLET_SPEED
+                    });
+                }
+            }
+
+            // 移動処理
+            moveBullets();
+            moveInvaderBullets();
+            
+            // 描画処理
+            drawBullets();
+            drawInvaderBullets();
+            drawPlayer();
+            if (boss) drawBoss();
+
+        } else if (elapsedTime < 12000) {
+            // Phase 2: ボス紹介 (6-12秒)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; // 背景を暗く
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            if (boss) {
+                const centerX = canvas.width / 2 - boss.width / 2;
+                const centerY = canvas.height / 2 - boss.height / 2 - 60;
+                ctx.save();
+                if (bossImage.complete) {
+                    ctx.shadowColor = '#a0f';
+                    ctx.shadowBlur = 20;
+                    ctx.drawImage(bossImage, centerX, centerY, boss.width, boss.height);
+                }
+                ctx.restore();
+            }
+
+            ctx.save();
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 5;
+            
+            ctx.font = "20px 'Press Start 2P'";
+            ctx.fillText("BOSS: MOTHERSHIP", canvas.width / 2, canvas.height / 2 + 60);
+            
+            ctx.font = "10px 'Press Start 2P'";
+            ctx.fillStyle = '#aaa';
+            ctx.fillText("The ultimate weapon", canvas.width / 2, canvas.height / 2 + 90);
+            ctx.fillText("of the invader fleet.", canvas.width / 2, canvas.height / 2 + 110);
+            ctx.restore();
+
+        } else if (elapsedTime < 16000) {
+            // Phase 3: THE END (12-16秒)
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.save();
+            ctx.fillStyle = '#fff';
+            ctx.font = "40px 'Press Start 2P'";
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#0f0';
+            ctx.shadowBlur = 10;
+            ctx.fillText("THE END", canvas.width / 2, canvas.height / 2);
+            
+            ctx.font = "15px 'Press Start 2P'";
+            ctx.fillStyle = '#ff0';
+            ctx.shadowColor = '#ff0';
+            ctx.fillText(`FINAL SCORE: ${score}`, canvas.width / 2, canvas.height / 2 + 50);
+            ctx.restore();
+
+        } else {
+            // Phase 4: リセット
+            location.reload();
+            return;
+        }
+
+        animationFrameId = requestAnimationFrame(endingLoop);
     }
 
     // ゲームループ
