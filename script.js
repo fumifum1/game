@@ -682,6 +682,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = items[i];
             if (item.x < player.x + player.width && item.x + item.width > player.x && item.y < player.y + player.height && item.y + item.height > player.y) {
                 items.splice(i, 1);
+                score += 100;
+                updateUI();
                 playSound(sounds.itemGet);
                 if (item.type === ITEM_TYPES.LIFE_UP) {
                     if (player.lives < 6) { // ライフ上限を6に設定
@@ -858,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.shadowBlur = 5;
             
             ctx.font = "20px 'Press Start 2P'";
-            ctx.fillText("BOSS: MOTHERSHIP", canvas.width / 2, canvas.height / 2 + 60);
+            ctx.fillText("BOSS: CNP/MITAMA", canvas.width / 2, canvas.height / 2 + 60);
             
             ctx.font = "10px 'Press Start 2P'";
             ctx.fillStyle = '#aaa';
