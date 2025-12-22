@@ -761,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startEndingSequence() {
         endingStartTime = Date.now();
         
-        // エンディング用にプレイヤーとボスを再配置
+        // エンディング用にプレイヤーとボスを再配置//
         player.x = canvas.width / 2 - player.width / 2;
         player.y = canvas.height - player.height - 30;
         bullets = [];
