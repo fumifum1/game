@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classic Minesweeper Offline</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/fumifum1/main/main/jpg/ico.ico">
+    <style>
+        /* --- 標準CSS変数 --- */
+        :root {
+            --bg-classic: #bdbdbd;
+            --border-light: #ffffff;
+            --border-dark: #7b7b7b;
+            --cell-size: 30px;
+            --win-blue: #000080;
+            --text-main: #000000;
+        }
+
+        /* --- 基本レイアウト --- */
+        body {
+            background-color: #2c3e50;
+            /* 背景画像を設定する場合は、以下のコメントを外して画像のパスを指定してください */
+            /* background-image: url('Image/background.png'); */
+            background-image: linear-gradient(to bottom, #0f2027, #203a43, #2c5364); /* デフォルトの背景 */
+            background-size: cover;
+            background-attachment: fixed;
+            font-family: 'Tahoma', 'MS PGothic', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow: auto;
+        }
+
+        /* --- ローディング画面 --- */
+        #loading-screen {
+            position: fixed;
+            inset: 0;
+            background-color: #000;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loader-bar {
+            width: 200px;
+            height: 20px;
+            border: 2px solid #fff;
+            padding: 2px;
+            margin-top: 20px;
+        }
+
+        #loader-progress {
+            height: 100%;
+            background-color: #3b82f6;
+            width: 0%;
+        }
+
+        .loading-title {
+            font-size: 24px;
+            font-weight: bold;
+            font-style: italic;
+            margin-bottom: 16px;
+            color: #60a5fa;
+        }
+
+        /* --- 立体ボーダー (Windows 95スタイル) --- */
+        .outset {
+            border: 3px solid;
+            border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
+        }
+
+        .inset {
+            border: 3px solid;
+            border-color: var(--border-dark) var(--border-light) var(--border-light) var(--border-dark);
+        }
+
+        /* --- メインコンテナ --- */
+        .game-container {
+            background-color: var(--bg-classic);
+            padding: 10px;
+            display: inline-block;
+            position: relative;
+            box-shadow: 10px 10px 20px rgba(0,0,0,0.2);
+            margin: auto;
+        }
+
+        .header-panel {
+            padding: 5px 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .digit-display {
+            background-color: #000;
+            color: #ff0000;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 24px;
+            padding: 2px 5px;
+            min-width: 60px;
+            text-align: right;
+            border: 2px inset #7b7b7b;
+        }
+
+        .smiley-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: var(--bg-classic);
+            outline: none;
+            padding: 0;
+        }
+
+        .smiley-btn:active {
+            border-color: var(--border-dark) var(--border-light) var(--border-light) var(--border-dark);
+        }
+
+        /* --- 盤面 --- */
+        .grid-container {
+            display: grid;
+            background-color: var(--border-dark);
+            border: 3px inset var(--border-dark);
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: var(--bg-classic);
+            border: 3px solid;
+            border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
+        }
+
+        .cell.revealed {
+            border: 1px solid var(--border-dark);
+            background-color: var(--bg-classic);
+            cursor: default;
+        }
+
+        .cell.mine { background-color: #ff0000 !important; }
+        .cell.flagged::after { content: "🚩"; font-size: 14px; }
+
+        /* 数字の色 */
+        .n-1 { color: #0000ff; } .n-2 { color: #008000; } .n-3 { color: #ff0000; }
+        .n-4 { color: #000080; } .n-5 { color: #800000; } .n-6 { color: #008080; }
+        .n-7 { color: #000000; } .n-8 { color: #808080; }
+
+        #status-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            height: 16px;
+            color: #334155;
+        }
+
+        /* --- メニュー --- */
+        #menu-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 60;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-classic);
+            font-size: 20px;
+        }
+
+        #side-menu {
+            position: fixed;
+            top: 0;
+            right: -310px;
+            width: 300px;
+            height: 100%;
+            background-color: var(--bg-classic);
+            z-index: 50;
+            transition: right 0.3s ease;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+            overflow-y: auto;
+        }
+
+        #side-menu.open {
+            right: 0;
+        }
+
+        .menu-header {
+            background-color: var(--win-blue);
+            color: white;
+            padding: 10px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .menu-content {
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .menu-section-title {
+            font-weight: bold;
+            border-bottom: 1px solid #666;
+            margin-bottom: 8px;
+            margin-top: 20px;
+        }
+
+        .difficulty-btn {
+            width: 100%;
+            text-align: left;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            background: var(--bg-classic);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .difficulty-btn:hover {
+            background-color: #d1d1d1;
+        }
+
+        /* --- フッター --- */
+        footer {
+            padding: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            text-align: center;
+        }
+        footer a {
+            color: inherit;
+        }
+
+        /* --- モバイル対応 --- */
+        @media (max-width: 640px) {
+            :root { --cell-size: 26px; }
+            #menu-toggle { top: 10px; right: 10px; }
+            .digit-display { font-size: 18px; min-width: 40px; padding: 2px; }
+            .smiley-btn { width: 32px; height: 32px; font-size: 18px; }
+            .header-panel { padding: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-title">MINESWEEPER OS</div>
+        <div id="loading-status" style="font-size: 12px;">システムを初期化中...</div>
+        <div class="loader-bar">
+            <div id="loader-progress"></div>
+        </div>
+        <div id="level-selection" style="display: none; flex-direction: column; gap: 10px; margin-top: 20px; width: 220px;">
+            <button id="btn-level-easy" onclick="selectLevel('easy')" class="outset" style="padding: 10px; cursor: pointer; background: #bdbdbd; font-weight:bold; display: flex; justify-content: space-between; align-items: center;">初級 (9x9)</button>
+            <button id="btn-level-medium" onclick="selectLevel('medium')" class="outset" style="padding: 10px; cursor: pointer; background: #bdbdbd; font-weight:bold; display: flex; justify-content: space-between; align-items: center;">中級 (16x16)</button>
+            <button id="btn-level-hard" onclick="selectLevel('hard')" class="outset" style="padding: 10px; cursor: pointer; background: #bdbdbd; font-weight:bold; display: flex; justify-content: space-between; align-items: center;">上級 (16x30)</button>
+        </div>
+    </div>
+
+    <!-- Menu Toggle (Bomb Icon) -->
+    <button id="menu-toggle" class="outset" onclick="toggleMenu()" title="メニュー">
+        <span>💣</span>
+    </button>
+
+    <!-- Side Menu -->
+    <div id="side-menu" class="outset">
+        <div class="menu-header">
+            <span>GAME MENU</span>
+            <span style="cursor: pointer;" onclick="toggleMenu()">×</span>
+        </div>
+        <div class="menu-content">
+            <div class="menu-section-title" style="margin-top: 0;">難易度設定</div>
+            <button id="btn-menu-easy" onclick="startGame('easy'); toggleMenu()" class="difficulty-btn outset">初級 (9x9 10地雷)</button>
+            <button id="btn-menu-medium" onclick="startGame('medium'); toggleMenu()" class="difficulty-btn outset">中級 (16x16 40地雷)</button>
+            <button id="btn-menu-hard" onclick="startGame('hard'); toggleMenu()" class="difficulty-btn outset">上級 (16x30 99地雷)</button>
+
+            <div class="menu-section-title">遊び方</div>
+            <p>1. パネルを左クリック（タップ）で開きます。</p>
+            <p>2. 数字は周囲8マスの地雷の数です。</p>
+            <p>3. 地雷を予測して右クリック（長押し）で旗を立てます。</p>
+            
+            <div class="menu-section-title">操作</div>
+            <ul style="padding-left: 20px;">
+                <li>左クリック: パネルを開く</li>
+                <li>右クリック/長押し: 旗を立てる</li>
+                <li>😊ボタン: 最初からやり直す</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Game UI -->
+    <div class="game-container outset">
+        <div class="header-panel inset">
+            <div id="mine-count" class="digit-display">000</div>
+            <div style="display: flex; gap: 8px;">
+                <button id="reset-btn" class="smiley-btn outset" onclick="resetGameAction()">😊</button>
+                <button id="flag-mode-btn" class="smiley-btn outset" onclick="toggleFlagMode()" title="旗モード切替">🚩</button>
+            </div>
+            <div id="timer" class="digit-display">000</div>
+        </div>
+
+        <div id="board" class="grid-container"></div>
+        <div id="status-text"></div>
+    </div>
+
+    <footer>
+        &copy; 2025 Synapse Creations. Dec.Minesweeper_ver1.1.1 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+    </footer>
+
+    <script>
+        // --- 起動シーケンス ---
+        window.addEventListener('load', () => {
+            const progress = document.getElementById('loader-progress');
+            const statusText = document.getElementById('loading-status');
+            const loaderBar = document.querySelector('.loader-bar');
+            const levelSelect = document.getElementById('level-selection');
+            let width = 0;
+            const interval = setInterval(() => {
+                width += Math.random() * 25;
+                if (width >= 100) {
+                    width = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        loaderBar.style.display = 'none';
+                        statusText.textContent = "難易度を選択してください";
+                        levelSelect.style.display = 'flex';
+                        updateBestTimes();
+                    }, 300);
+                }
+                progress.style.width = width + '%';
+            }, 100);
+        });
+
+        function selectLevel(difficulty) {
+            startGame(difficulty);
+            const screen = document.getElementById('loading-screen');
+            screen.style.opacity = '0';
+            setTimeout(() => screen.style.display = 'none', 500);
+        }
+
+        // --- ゲームロジック ---
+        const config = {
+            easy: { rows: 9, cols: 9, mines: 10 },
+            medium: { rows: 16, cols: 16, mines: 40 },
+            hard: { rows: 16, cols: 30, mines: 99 }
+        };
+
+        let currentConfig = config.easy, isFlagMode = false;
+        let currentLevelKey = 'easy';
+        let board = [];
+        let revealedCount = 0, flaggedCount = 0, isGameOver = false, timerInterval = null, timeElapsed = 0, firstClick = true;
+
+        function toggleMenu() {
+            document.getElementById('side-menu').classList.toggle('open');
+        }
+
+        function startGame(difficulty) {
+            currentLevelKey = difficulty;
+            currentConfig = config[difficulty];
+            resetGameAction();
+        }
+
+        function resetGameAction() {
+            clearInterval(timerInterval);
+            timeElapsed = 0; revealedCount = 0; flaggedCount = 0; isGameOver = false; firstClick = true;
+            document.getElementById('timer').textContent = "000";
+            document.getElementById('reset-btn').textContent = "😊";
+            document.getElementById('status-text').textContent = "";
+            
+            isFlagMode = false;
+            updateFlagBtnVisual();
+
+            updateMineDisplay();
+            
+            board = Array(currentConfig.rows).fill().map(() => 
+                Array(currentConfig.cols).fill().map(() => ({
+                    isMine: false, revealed: false, flagged: false, neighborCount: 0
+                }))
+            );
+            renderBoard();
+        }
+
+        function updateBestTimes() {
+            const levels = ['easy', 'medium', 'hard'];
+            const labels = { easy: "初級 (9x9)", medium: "中級 (16x16)", hard: "上級 (16x30)" };
+            const menuLabels = { easy: "初級 (9x9 10地雷)", medium: "中級 (16x16 40地雷)", hard: "上級 (16x30 99地雷)" };
+
+            levels.forEach(lvl => {
+                const best = localStorage.getItem(`mines_best_${lvl}`);
+                const bestText = best ? `Best: ${best.toString().padStart(3, '0')}` : 'Best: ---';
+                
+                const btn = document.getElementById(`btn-level-${lvl}`);
+                if(btn) {
+                    btn.innerHTML = `<span>${labels[lvl]}</span><span style="font-size:0.8em; color:#000080;">${bestText}</span>`;
+                }
+
+                const menuBtn = document.getElementById(`btn-menu-${lvl}`);
+                if(menuBtn) {
+                    menuBtn.innerHTML = `<span>${menuLabels[lvl]}</span><span style="font-size:0.8em; color:#000080;">${bestText}</span>`;
+                }
+            });
+        }
+
+        function toggleFlagMode() {
+            isFlagMode = !isFlagMode;
+            updateFlagBtnVisual();
+        }
+
+        function updateFlagBtnVisual() {
+            const btn = document.getElementById('flag-mode-btn');
+            if (isFlagMode) {
+                btn.className = 'smiley-btn inset';
+                btn.style.backgroundColor = '#999';
+            } else {
+                btn.className = 'smiley-btn outset';
+                btn.style.backgroundColor = '';
+            }
+        }
+
+        function updateMineDisplay() {
+            const display = Math.max(0, currentConfig.mines - flaggedCount);
+            document.getElementById('mine-count').textContent = display.toString().padStart(3, '0');
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeElapsed++;
+                document.getElementById('timer').textContent = Math.min(999, timeElapsed).toString().padStart(3, '0');
+            }, 1000);
+        }
+
+        function plantMines(safeR, safeC) {
+            let minesPlanted = 0;
+            while (minesPlanted < currentConfig.mines) {
+                const r = Math.floor(Math.random() * currentConfig.rows);
+                const c = Math.floor(Math.random() * currentConfig.cols);
+                // 初手とその周囲8マスには地雷を置かない
+                if (!board[r][c].isMine && (Math.abs(r - safeR) > 1 || Math.abs(c - safeC) > 1)) {
+                    board[r][c].isMine = true;
+                    minesPlanted++;
+                }
+            }
+            // 各セルの隣接地雷数を計算
+            for (let r = 0; r < currentConfig.rows; r++) {
+                for (let c = 0; c < currentConfig.cols; c++) {
+                    if (!board[r][c].isMine) board[r][c].neighborCount = countNeighborMines(r, c);
+                }
+            }
+        }
+
+        function countNeighborMines(r, c) {
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    const nr = r + i, nc = c + j;
+                    if (nr >= 0 && nr < currentConfig.rows && nc >= 0 && nc < currentConfig.cols) {
+                        if (board[nr][nc].isMine) count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function renderBoard() {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            boardElement.style.gridTemplateColumns = `repeat(${currentConfig.cols}, var(--cell-size))`;
+
+            for (let r = 0; r < currentConfig.rows; r++) {
+                for (let c = 0; c < currentConfig.cols; c++) {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'cell';
+                    cellDiv.id = `cell-${r}-${c}`;
+                    
+                    cellDiv.addEventListener('mousedown', (e) => {
+                        if (!isGameOver && e.button === 0 && !board[r][c].flagged && !board[r][c].revealed) 
+                            document.getElementById('reset-btn').textContent = "😮";
+                    });
+                    
+                    cellDiv.addEventListener('mouseup', () => { 
+                        if (!isGameOver) document.getElementById('reset-btn').textContent = "😊"; 
+                    });
+
+                    cellDiv.addEventListener('click', () => handleCellClick(r, c));
+                    cellDiv.addEventListener('contextmenu', (e) => { 
+                        e.preventDefault(); 
+                        handleRightClick(r, c); 
+                    });
+
+                    // モバイル長押し対応
+                    let touchTimer;
+                    cellDiv.addEventListener('touchstart', (e) => { 
+                        if (!isGameOver) touchTimer = setTimeout(() => handleRightClick(r, c), 500); 
+                    });
+                    cellDiv.addEventListener('touchend', () => clearTimeout(touchTimer));
+                    cellDiv.addEventListener('touchmove', () => clearTimeout(touchTimer));
+
+                    boardElement.appendChild(cellDiv);
+                }
+            }
+        }
+
+        function handleCellClick(r, c) {
+            if (isGameOver || board[r][c].revealed) return;
+
+            if (isFlagMode) {
+                handleRightClick(r, c);
+                return;
+            }
+
+            if (board[r][c].flagged) return;
+
+            if (firstClick) { 
+                firstClick = false; 
+                plantMines(r, c); 
+                startTimer(); 
+            }
+            revealCell(r, c);
+            checkWin();
+        }
+
+        function handleRightClick(r, c) {
+            if (isGameOver || board[r][c].revealed) return;
+            board[r][c].flagged = !board[r][c].flagged;
+            const cellDiv = document.getElementById(`cell-${r}-${c}`);
+            if (board[r][c].flagged) { 
+                cellDiv.classList.add('flagged'); 
+                flaggedCount++; 
+            } else { 
+                cellDiv.classList.remove('flagged'); 
+                flaggedCount--; 
+            }
+            updateMineDisplay();
+        }
+
+        function revealCell(r, c) {
+            const cell = board[r][c];
+            if (cell.revealed || cell.flagged) return;
+            
+            cell.revealed = true; 
+            revealedCount++;
+            const cellDiv = document.getElementById(`cell-${r}-${c}`);
+            cellDiv.classList.add('revealed');
+
+            if (cell.isMine) { 
+                gameOver(false, r, c); 
+                return; 
+            }
+
+            if (cell.neighborCount > 0) {
+                cellDiv.textContent = cell.neighborCount;
+                cellDiv.classList.add(`n-${cell.neighborCount}`);
+            } else {
+                // 空白マスの連鎖オープン
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        const nr = r + i, nc = c + j;
+                        if (nr >= 0 && nr < currentConfig.rows && nc >= 0 && nc < currentConfig.cols) revealCell(nr, nc);
+                    }
+                }
+            }
+        }
+
+        function checkWin() {
+            if (revealedCount === (currentConfig.rows * currentConfig.cols) - currentConfig.mines) gameOver(true);
+        }
+
+        function gameOver(isWin, r, c) {
+            isGameOver = true; 
+            clearInterval(timerInterval);
+            document.getElementById('reset-btn').textContent = isWin ? "😎" : "😵";
+            document.getElementById('status-text').textContent = isWin ? "Victory!" : "Game Over";
+            
+            if (isWin) {
+                const best = localStorage.getItem(`mines_best_${currentLevelKey}`);
+                if (!best || timeElapsed < parseInt(best)) {
+                    localStorage.setItem(`mines_best_${currentLevelKey}`, timeElapsed);
+                    updateBestTimes();
+                    document.getElementById('status-text').textContent = "New Record!";
+                }
+            } else {
+                revealAllMines(r, c);
+            }
+        }
+
+        function revealAllMines(hitR, hitC) {
+            for (let r = 0; r < currentConfig.rows; r++) {
+                for (let c = 0; c < currentConfig.cols; c++) {
+                    const cell = board[r][c];
+                    const cellDiv = document.getElementById(`cell-${r}-${c}`);
+                    if (cell.isMine) {
+                        cellDiv.classList.add('revealed');
+                        if (r === hitR && c === hitC) cellDiv.classList.add('mine');
+                        cellDiv.textContent = "💣";
+                    } else if (cell.flagged) {
+                        cellDiv.textContent = "❌";
+                    }
+                }
+            }
+        }
+
+        // 初期化
+        startGame('easy');
+    </script>
+</body>
+</html>

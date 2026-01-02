@@ -4,11 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arcade Invade</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/fumifum1/main/main/jpg/ico.ico">
     <link rel="stylesheet" href="common.css">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@300..700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- ローディング画面 -->
+    <div id="loading-screen">
+        <div id="loading-bg"></div>
+        <h1 id="loading-title">
+            <span class="title-char">A</span><span class="title-char">r</span><span class="title-char">c</span><span class="title-char">a</span><span class="title-char">d</span><span class="title-char">e</span><br>
+            <span class="title-char">I</span><span class="title-char">n</span><span class="title-char">v</span><span class="title-char">a</span><span class="title-char">d</span><span class="title-char">e</span>
+        </h1>
+        <div id="loading-ship-container">
+            <!-- SVG戦闘機を描画するキャンバス -->
+            <canvas id="loading-ship-canvas" width="40" height="40"></canvas>
+            <p id="loading-text">loading...</p>
+        </div>
+        <div id="loading-message" class="hidden">
+            <button id="loading-play-btn">PLAY GAME</button>
+        </div>
+        <p id="sound-warning">♪このゲームは効果音がありますご注意ください。</p>
+    </div>
+
     <div id="menu-container">
         <div id="menu-icon">
             <span></span><span></span><span></span>
@@ -36,20 +56,17 @@
         <canvas id="gameCanvas" width="360" height="440" class="hidden"></canvas>
         <button id="pause-button" class="hidden">❚❚</button>
 
-        <div id="start-screen">
-            <h2 id="game-title">Arcade Invade</h2>
-            <p>Press START to play</p>
-            <button id="start-button">START</button>
-        </div>
-
         <div id="message-container" class="hidden">
             <h2 id="message-title"></h2>
             <p id="message-text"></p>
             <button id="restart-button">PLAY AGAIN</button>
         </div>
     </div>
-
+    <footer>
+        &copy; 2025 Synapse Creations. Sep.Arcade Invade_ver2.1.0 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+    </footer>
     <script src="menu.js" defer></script>
     <script src="script.js" defer></script>
+    <script src="loading.js" defer></script>
 </body>
 </html>
