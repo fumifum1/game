@@ -184,6 +184,7 @@
                 <li><a href="../main/index.html">Profile</a></li>
                 <li><a href="https://fumifum1.github.io/main/game.html">Game</a></li>
                 <li style="border-top: 1px solid var(--btn-border); margin: 4px 0;"></li>
+                <li><a href="np_play.html">Play Mode</a></li>
                 <li><a href="#" onclick="toggleHelp(); return false;">Help Guide</a></li>
                 <li class="menu-item-row">
                     <span>Dark Mode</span>
@@ -206,6 +207,9 @@
 
     <div class="controls">
         <div class="num-pad" id="num-pad"></div>
+        <div style="margin-top: 10px;">
+            <a href="np_play.html" class="btn btn-secondary" style="text-decoration: none; display: block; text-align: center; background-color: var(--cell-selected-bg); color: var(--primary);">🎮 問題作成・プレイモードへ</a>
+        </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
             <button class="btn btn-secondary" onclick="openCamera()">📷 スキャン起動</button>
             <label class="btn btn-secondary" style="cursor:pointer">
@@ -263,8 +267,8 @@
             </div>
         </div>
     </div>
-        <footer class="mt-8 text-xs text-gray-400 text-center">
-            &copy; 2026 Synapse Creations. Jan.SUDOKU AI_ver1.0.1 <a href="https://fumifum1.github.io/main/index.html" class="hover:text-white transition-colors">Creator/fumifumi</a>
+        <footer style="margin-top: 2rem; font-size: 0.7rem; color: #94a3b8; text-align: center;">
+            &copy; 2026 Synapse Creations. Jan.SUDOKU AI_ver1.0.1 <a href="https://fumifum1.github.io/main/index.html" style="color: inherit; text-decoration: none;">Creator/fumifumi</a>
         </footer>
     <script src="menu.js" defer></script>
     <script>
@@ -346,6 +350,12 @@
         function handleFile(e) {
             const file = e.target.files[0];
             if(!file) return;
+
+            if(!apiKey) { 
+                apiKey = prompt("Gemini APIキーを入力してください:"); 
+                if(apiKey) localStorage.setItem('gemini_key', apiKey.trim());
+            }
+
             const reader = new FileReader();
             reader.onload = (ev) => sendToAI(ev.target.result.split(',')[1]);
             reader.readAsDataURL(file);
