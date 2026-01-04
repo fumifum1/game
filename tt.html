@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tamagotchi - Branching Evolution</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap');
+        
+        body {
+            background-color: #f3f4f6;
+            font-family: 'DotGothic16', sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .pixel-canvas {
+            image-rendering: pixelated;
+            background-color: #a8b888;
+            border: 2px solid #7c8a66;
+            transition: filter 0.5s;
+        }
+
+        .lcd-screen {
+            position: relative;
+            width: 280px;
+            height: 220px;
+            background-color: #a8b888;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            padding: 8px 5px;
+        }
+
+        .egg-body {
+            background: linear-gradient(145deg, #ff99cc, #ff66aa);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            border: 8px solid #333;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        }
+
+        .btn-round {
+            width: 55px;
+            height: 55px;
+            background: #fecaca;
+            border: 4px solid #333;
+            border-radius: 50%;
+            box-shadow: 0 4px 0 #333;
+            transition: all 0.1s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .btn-round:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #333;
+        }
+
+        .icon-row {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 0 2px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .icon-indicator {
+            font-size: 16px;
+            opacity: 0.2;
+            transition: all 0.2s;
+            filter: grayscale(100%);
+        }
+
+        .icon-active {
+            opacity: 1 !important;
+            filter: grayscale(0%) !important;
+            transform: scale(1.2);
+        }
+
+        #status-overlay {
+            background-color: rgba(168, 184, 136, 0.98);
+        }
+
+        .char-grid-canvas {
+            image-rendering: pixelated;
+            background-color: transparent;
+        }
+
+        #status-overlay::-webkit-scrollbar {
+            width: 4px;
+        }
+        #status-overlay::-webkit-scrollbar-thumb {
+            background: #7c8a66;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="egg-body w-80 h-[500px] p-6 flex flex-col items-center justify-between relative">
+        <div class="mt-2 text-[10px] text-white drop-shadow-md text-center font-bold tracking-widest uppercase">Digital Pet Console</div>
+
+        <div class="lcd-screen border-4 border-gray-700">
+            <div class="icon-row">
+                <span id="icon-0" class="icon-indicator">🍙</span>
+                <span id="icon-1" class="icon-indicator">💡</span>
+                <span id="icon-2" class="icon-indicator">🎮</span>
+                <span id="icon-3" class="icon-indicator">💉</span>
+                <span id="icon-4" class="icon-indicator">🚽</span>
+                <span id="icon-5" class="icon-indicator">📊</span>
+                <span id="icon-6" class="icon-indicator">📢</span>
+                <span id="icon-7" class="icon-indicator">🔔</span>
+            </div>
+
+            <canvas id="gameCanvas" width="240" height="140" class="pixel-canvas mx-auto flex-grow"></canvas>
+            
+            <div id="menu-text" class="h-6 text-[14px] text-gray-800 font-bold px-2 mt-1 text-center"></div>
+
+            <!-- キャラクター名鑑 & ステータス -->
+            <div id="status-overlay" class="absolute inset-0 flex flex-col items-center hidden z-20 p-2 border-4 border-gray-600 rounded m-2 shadow-lg overflow-y-auto">
+                <h3 class="font-bold border-b border-gray-600 mb-2 w-full text-center text-sm">キャラクターずかん</h3>
+                
+                <div id="character-showcase" class="flex flex-col gap-2 w-full mb-3">
+                    <!-- JSで形態と解説を描画 -->
+                </div>
+
+                <div class="w-full text-[11px] space-y-1 border-t border-gray-400 pt-2 mb-2 bg-black/5 p-1 rounded">
+                    <p class="font-bold text-center border-b border-gray-400 mb-1">げんざいのステータス</p>
+                    <p id="stat-stage"></p>
+                    <p id="stat-hungry"></p>
+                    <p id="stat-happy"></p>
+                    <p id="stat-discipline"></p>
+                    <p id="stat-care-miss"></p>
+                    <p id="stat-age" class="text-[9px] text-right"></p>
+                </div>
+                <p class="text-[12px] mt-2 animate-bounce font-bold text-red-800">Bボタンで もどる</p>
+            </div>
+
+            <div id="msg-box" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 text-white hidden z-30 p-4 text-center text-lg rounded-lg">
+                メッセージ
+            </div>
+        </div>
+
+        <div class="flex justify-between w-full px-4 pb-8 items-end">
+            <div class="flex flex-col items-center gap-1">
+                <button id="btnA" class="btn-round">A</button>
+                <span class="text-[10px] font-bold text-gray-800">SELECT</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 pb-4">
+                <button id="btnB" class="btn-round">B</button>
+                <span class="text-[10px] font-bold text-gray-800">EXEC</span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+                <button id="btnC" class="btn-round">C</button>
+                <span class="text-[10px] font-bold text-gray-800">CANCEL</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const msgBox = document.getElementById('msg-box');
+        const menuText = document.getElementById('menu-text');
+        const statusOverlay = document.getElementById('status-overlay');
+        const showcase = document.getElementById('character-showcase');
+
+        const STAGES = { 
+            EGG: 'たまご', 
+            BABY: 'ベビっち', 
+            CHILD: 'まるっち',
+            // アダルト分岐
+            TEEN_GOOD: 'たまっち', 
+            TEEN_BAD: 'くちたまっち',
+            // おとな分岐
+            ADULT_EXCELLENT: 'まめっち',
+            ADULT_GOOD: 'ぎんじろっち',
+            ADULT_NORMAL: 'くちぱっち',
+            ADULT_BAD: 'たらこっち'
+        };
+
+        const MENU_NAMES = ['ごはん', 'でんき', 'あそぶ', 'ちゅうしゃ', 'トイレ', 'きろく', 'しつけ', 'よびだし'];
+        const MENU_ICONS = ['🍙', '💡', '🎮', '💉', '🚽', '📊', '📢', '🔔'];
+
+        const PIXEL_DATA = {
+            [STAGES.EGG]: ["  XXXX  "," X    X ","X      X","X      X"," X    X ","  XXXX  "],
+            [STAGES.BABY]: ["  XXXX  "," X O O X","X      X","X  --  X"," X    X ","  XXXX  "],
+            [STAGES.CHILD]: ["  XXXX  "," XXXXXX ","X O  O X","X      X","X  --  X"," XXXXXX "],
+            [STAGES.TEEN_GOOD]: [" X    X "," XXXXXX ","X O  O X","X      X","X  --  X"," XXXXXX "],
+            [STAGES.TEEN_BAD]: ["  XXXX  "," X O O X","XXXXXXXX","X  --  X"," X    X "," X    X "],
+            [STAGES.ADULT_EXCELLENT]: ["  XXXX  "," XXXXXX ","XX O O X","X      X","X ---- X"," X XX X "],
+            [STAGES.ADULT_GOOD]: ["  XXXX  "," X O O X","XXXXXXXX","X      X","X ---- X"," X    X "],
+            [STAGES.ADULT_NORMAL]: ["  XXXX  "," X O O X","X      X","X ---- X","XXXXXXXX","  XXXX  "],
+            [STAGES.ADULT_BAD]: ["  XXXX  "," X O O X","X      X","X ---- X","X  XX  X"," X XX X "]
+        };
+
+        const CHAR_DESC = {
+            [STAGES.EGG]: "すべての始まり。Aボタンで孵化します。",
+            [STAGES.BABY]: "お世話が必要な赤ちゃん。分岐はありません。",
+            [STAGES.CHILD]: "少し成長しました。ここからのお世話で分岐が決まります。",
+            [STAGES.TEEN_GOOD]: "【まじめ派】しつけをしっかりすると進化します。",
+            [STAGES.TEEN_BAD]: "【やんちゃ派】お世話を少しサボると進化します。",
+            [STAGES.ADULT_EXCELLENT]: "【最高ランク】完璧なお世話としつけの証です。",
+            [STAGES.ADULT_GOOD]: "【優秀ランク】バランスよくお世話すると進化します。",
+            [STAGES.ADULT_NORMAL]: "【普通ランク】のんびり育てるとこうなります。",
+            [STAGES.ADULT_BAD]: "【ワイルドランク】お世話を放置しすぎると…？"
+        };
+
+        let state = {
+            stage: STAGES.EGG, 
+            hungry: 2, 
+            happy: 2,
+            discipline: 0, 
+            careMiss: 0, 
+            evolutionTimer: 0, 
+            isCalling: false,
+            isSick: false, 
+            lightsOff: false,
+            poopCount: 0, 
+            age: 0, 
+            lastSaveTime: Date.now()
+        };
+
+        let uiState = { animFrame: 0, selectedMenu: -1, messageTimer: 0, showStats: false };
+
+        function saveLocal() {
+            state.lastSaveTime = Date.now();
+            localStorage.setItem('tamagotchi_save_v5', JSON.stringify(state));
+        }
+
+        function loadLocal() {
+            const saved = localStorage.getItem('tamagotchi_save_v5');
+            if (saved) state = JSON.parse(saved);
+            updateIcons();
+        }
+
+        function showTextMessage(text, duration = 1500) {
+            msgBox.innerText = text;
+            msgBox.classList.remove('hidden');
+            uiState.messageTimer = duration / 1000;
+        }
+
+        function renderShowcase() {
+            showcase.innerHTML = "";
+            Object.keys(PIXEL_DATA).forEach(stageKey => {
+                const row = document.createElement('div');
+                row.className = "flex items-start bg-white/30 p-2 rounded gap-2 border border-black/10";
+                const miniCanvas = document.createElement('canvas');
+                miniCanvas.width = 40; miniCanvas.height = 30;
+                miniCanvas.className = "shrink-0 image-render-pixelated";
+                const mCtx = miniCanvas.getContext('2d');
+                mCtx.fillStyle = "#2d3436";
+                PIXEL_DATA[stageKey].forEach((r, i) => {
+                    for (let j = 0; j < r.length; j++) if (r[j] !== ' ') mCtx.fillRect(5 + j * 3, 5 + i * 3, 3, 3);
+                });
+                const textCol = document.createElement('div');
+                textCol.innerHTML = `<p class="text-[10px] font-bold">${stageKey}</p><p class="text-[8px] leading-tight">${CHAR_DESC[stageKey]}</p>`;
+                row.appendChild(miniCanvas);
+                row.appendChild(textCol);
+                showcase.appendChild(row);
+            });
+        }
+
+        function toggleStats() {
+            uiState.showStats = !uiState.showStats;
+            if (uiState.showStats) {
+                renderShowcase();
+                document.getElementById('stat-stage').innerText = `しゅるい: ${state.stage}`;
+                document.getElementById('stat-hungry').innerText = `おなか: ${"🍙".repeat(state.hungry)}${"○".repeat(4-state.hungry)}`;
+                document.getElementById('stat-happy').innerText = `ごきげん: ${"💖".repeat(state.happy)}${"○".repeat(4-state.happy)}`;
+                document.getElementById('stat-discipline').innerText = `しつけ: ${state.discipline}%`;
+                document.getElementById('stat-care-miss').innerText = `ミス回数: ${state.careMiss}回`;
+                document.getElementById('stat-age').innerText = `${state.age}さい`;
+                statusOverlay.classList.remove('hidden');
+            } else {
+                statusOverlay.classList.add('hidden');
+            }
+        }
+
+        function updateIcons() {
+            MENU_ICONS.forEach((_, i) => {
+                const el = document.getElementById(`icon-${i}`);
+                let active = (i === uiState.selectedMenu);
+                if (i === 1 && state.lightsOff) active = true;
+                if (i === 3 && state.isSick) active = true;
+                if (active) el.classList.add('icon-active');
+                else el.classList.remove('icon-active');
+            });
+            menuText.innerText = uiState.selectedMenu !== -1 ? `▶ ${MENU_NAMES[uiState.selectedMenu]}` : "";
+        }
+
+        function drawPixelChar(x, y, frame) {
+            ctx.fillStyle = "#2d3436";
+            const s = 4;
+            let pixels = PIXEL_DATA[state.stage] || PIXEL_DATA[STAGES.EGG];
+            let bounce = (frame % 2 === 0) ? 0 : 1;
+            if (state.lightsOff) {
+                ctx.font = "16px sans-serif"; ctx.fillText("💤", x + 35, y);
+                pixels = ["        ","  XXXX  "," X    X ","X      X"," X    X ","  XXXX  "];
+                bounce = 0;
+            }
+            y -= bounce * s;
+            pixels.forEach((row, i) => {
+                for (let j = 0; j < row.length; j++) if (row[j] !== ' ') ctx.fillRect(x + j * s, y + i * s, s, s);
+            });
+            if (state.isSick) { ctx.font = "20px sans-serif"; ctx.fillText("🤢", x + 40, y + 20); }
+            for(let i=0; i < state.poopCount; i++) { ctx.font = "18px sans-serif"; ctx.fillText("💩", 15 + (i * 35), 115); }
+        }
+
+        function update(dt) {
+            uiState.animFrame += dt;
+            if (uiState.messageTimer > 0) {
+                uiState.messageTimer -= dt;
+                if (uiState.messageTimer <= 0) msgBox.classList.add('hidden');
+            }
+
+            state.evolutionTimer += dt;
+            // 30秒ごとに1歳
+            if (state.evolutionTimer > 30) {
+                state.age++;
+                state.evolutionTimer = 0;
+                checkEvolution();
+                saveLocal();
+            }
+
+            // お世話ミス判定
+            if (state.stage !== STAGES.EGG && !state.lightsOff) {
+                if (Math.random() < 0.0005) {
+                    if (state.hungry > 0) state.hungry--;
+                    else state.careMiss++; 
+                    if (state.happy > 0) state.happy--;
+                    updateIcons();
+                }
+                if (Math.random() < 0.0002) {
+                    state.poopCount = Math.min(4, state.poopCount + 1);
+                    updateIcons();
+                }
+            }
+            state.isCalling = (state.hungry === 0 || state.happy === 0 || state.isSick);
+            updateIcons();
+        }
+
+        function checkEvolution() {
+            const age = state.age;
+            const disc = state.discipline;
+            const miss = state.careMiss;
+
+            if (age === 1 && state.stage === STAGES.EGG) evolve(STAGES.BABY);
+            else if (age === 2 && state.stage === STAGES.BABY) evolve(STAGES.CHILD);
+            else if (age === 4 && state.stage === STAGES.CHILD) {
+                // アダルト分岐
+                if (disc >= 50) evolve(STAGES.TEEN_GOOD);
+                else evolve(STAGES.TEEN_BAD);
+            }
+            else if (age === 7) {
+                // おとな分岐
+                if (state.stage === STAGES.TEEN_GOOD) {
+                    if (disc >= 80 && miss <= 1) evolve(STAGES.ADULT_EXCELLENT);
+                    else evolve(STAGES.ADULT_GOOD);
+                } else {
+                    if (miss <= 3) evolve(STAGES.ADULT_NORMAL);
+                    else evolve(STAGES.ADULT_BAD);
+                }
+            }
+        }
+
+        function evolve(next) {
+            if (state.stage !== next) {
+                state.stage = next;
+                showTextMessage(`しんか！\n${next}になった！`, 3000);
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPixelChar(canvas.width/2 - 20, canvas.height/2 - 10, Math.floor(uiState.animFrame * 2));
+        }
+
+        function gameLoop() {
+            const now = Date.now();
+            update((now - (state.lastTick || now)) / 1000);
+            state.lastTick = now;
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.getElementById('btnA').addEventListener('click', () => {
+            if (uiState.showStats) return;
+            if (state.stage === STAGES.EGG) { checkEvolution(); return; }
+            uiState.selectedMenu = (uiState.selectedMenu + 1) % MENU_NAMES.length;
+            updateIcons();
+        });
+
+        document.getElementById('btnB').addEventListener('click', () => {
+            if (uiState.showStats) { toggleStats(); return; }
+            if (uiState.selectedMenu === -1) return;
+            const idx = uiState.selectedMenu;
+            if (idx === 0) { if (state.hungry < 4) state.hungry++; showTextMessage("🍙おいしい！"); }
+            if (idx === 1) { state.lightsOff = !state.lightsOff; showTextMessage(state.lightsOff ? "💤おやすみ" : "☀️おはよう"); }
+            if (idx === 2) { state.happy = Math.min(4, state.happy + 1); showTextMessage("🎮たのしい！"); }
+            if (idx === 3) { if (state.isSick) { state.isSick = false; showTextMessage("💉なおった"); } else showTextMessage("元気だよ！"); }
+            if (idx === 4) { state.poopCount = 0; showTextMessage("🚽スッキリ"); }
+            if (idx === 5) { toggleStats(); }
+            if (idx === 6) { state.discipline = Math.min(100, state.discipline + 20); showTextMessage("📢きりっ！"); }
+            uiState.selectedMenu = -1;
+            updateIcons();
+            saveLocal();
+        });
+
+        document.getElementById('btnC').addEventListener('click', () => {
+            if (uiState.showStats) toggleStats();
+            uiState.selectedMenu = -1;
+            updateIcons();
+        });
+
+        window.onload = () => { loadLocal(); gameLoop(); };
+    </script>
+</body>
+</html>
