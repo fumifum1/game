@@ -23,6 +23,7 @@
             --modal-bg: #ffffff;
             --guide: rgba(79, 70, 229, 0.8);
             --imported-text: #4f46e5;
+            --danger: #ef4444;
         }
         body.dark-mode {
             --bg: #0f172a;
@@ -46,7 +47,7 @@
         h1 { font-family: 'Monoton', cursive; font-size: 2rem; font-weight: 400; margin: 10px 0; letter-spacing: 2px; }
         h1 span { color: var(--primary); }
 
-        /* メイングリッド */
+        /* Main Grid */
         .grid-wrapper {
             background-color: var(--grid-bg);
             padding: 3px; border-radius: 8px;
@@ -62,12 +63,12 @@
         .cell.selected { background-color: var(--cell-selected-bg); box-shadow: inset 0 0 0 2px var(--primary); z-index: 2; }
         .cell.imported { color: var(--imported-text); background-color: var(--cell-imported-bg); }
         
-        /* 区切り線 */
+        /* Grid Lines */
         .cell:nth-child(3n) { border-right: 2px solid var(--grid-bg); }
         .cell:nth-child(9n) { border-right: none; }
         .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--grid-bg); }
 
-        /* 操作エリア */
+        /* Controls */
         .controls { width: 100%; max-width: 360px; margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
         .num-pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
         .btn {
@@ -78,40 +79,41 @@
         .btn-primary { background: var(--primary); color: white; padding: 15px; }
         .btn-secondary { background: var(--btn-bg); border: 1px solid var(--btn-border); color: var(--text); font-size: 0.8rem; }
 
-        /* ステータス */
+        /* Status */
         #status { font-size: 0.75rem; color: #64748b; margin-bottom: 5px; font-weight: bold; }
 
-        /* カメラオーバーレイ */
+        /* Camera UI */
         #camera-ui {
             position: fixed; inset: 0; background: black; z-index: 100; display: none;
             flex-direction: column; align-items: center; justify-content: center;
         }
         #video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* 9x9 ガイド格子 */
+        /* 9x9 Guide Grid */
         .guide-grid {
             position: absolute; width: 300px; height: 300px;
             display: grid; grid-template-columns: repeat(9, 1fr);
             border: 4px solid var(--guide);
             box-shadow: 0 0 20px rgba(79, 70, 229, 0.5);
             pointer-events: none;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
         }
         .guide-cell { border: 0.5px solid rgba(255,255,255,0.2); }
         .guide-cell.block-r { border-right: 2.5px solid var(--guide); }
         .guide-cell.block-b { border-bottom: 2.5px solid var(--guide); }
 
-        /* スキャン線アニメーション */
+        /* Laser Animation */
         .laser {
-            position: absolute; top: 0; left: 0; width: 100%; hieght: 2px;
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
             background: var(--primary); box-shadow: 0 0 15px var(--primary);
-            height: 2px; z-index: 10;
+            z-index: 10;
             animation: scanMove 2s linear infinite;
         }
         @keyframes scanMove { 
             0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; }
         }
 
-        /* 解析中ローディング */
+        /* Loading */
         #loading {
             position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200;
             display: none; flex-direction: column; align-items: center; justify-content: center; color: white;
@@ -119,19 +121,10 @@
         .spinner { width: 40px; height: 40px; border: 4px solid white; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* シンプルハンバーガーメニュー */
-        #menu-container {
-            position: fixed; top: 15px; right: 15px; z-index: 1000;
-        }
-        #menu-icon {
-            width: 24px; height: 20px; cursor: pointer;
-            display: flex; flex-direction: column; justify-content: space-between;
-        }
-        #menu-icon span {
-            display: block; height: 2px; width: 100%; background: var(--text);
-            border-radius: 2px; transition: all 0.3s ease;
-        }
-        /* メニュー開閉アニメーション */
+        /* Menu */
+        #menu-container { position: fixed; top: 15px; right: 15px; z-index: 1000; }
+        #menu-icon { width: 24px; height: 20px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; }
+        #menu-icon span { display: block; height: 2px; width: 100%; background: var(--text); border-radius: 2px; transition: all 0.3s ease; }
         #menu-container.open #menu-icon span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
         #menu-container.open #menu-icon span:nth-child(2) { opacity: 0; }
         #menu-container.open #menu-icon span:nth-child(3) { transform: translateY(-9px) rotate(-45deg); }
@@ -140,37 +133,23 @@
             position: absolute; top: 30px; right: 0;
             background: var(--modal-bg); border: 1px solid var(--btn-border); border-radius: 8px;
             padding: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            min-width: 140px; display: block;
+            min-width: 180px;
         }
         #menu-content.hidden { display: none; }
         #menu-content ul { list-style: none; padding: 0; margin: 0; }
-        #menu-content li { margin: 0; }
-        #menu-content a {
-            text-decoration: none; color: var(--text); font-size: 0.9rem; font-weight: bold;
-            display: block; padding: 8px 12px; border-radius: 6px; transition: background 0.2s;
-        }
-        #menu-content a:hover {
-            background-color: var(--bg); color: var(--primary);
-        }
+        #menu-content a { text-decoration: none; color: var(--text); font-size: 0.9rem; font-weight: bold; display: block; padding: 8px 12px; border-radius: 6px; }
+        #menu-content a:hover { background-color: var(--bg); color: var(--primary); }
 
-        /* トグルスイッチ */
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
+        .menu-item-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; color: var(--text); font-size: 0.9rem; font-weight: bold; }
         
-        /* メニューアイテムの調整 */
-        .menu-item-row {
-            display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; color: var(--text); font-size: 0.9rem; font-weight: bold;
-        }
+        /* Danger button in menu */
+        .btn-danger-menu { color: var(--danger) !important; font-size: 0.8rem !important; border-top: 1px solid var(--btn-border); margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -184,8 +163,8 @@
                 <li><a href="../main/index.html">Profile</a></li>
                 <li><a href="https://fumifum1.github.io/main/game.html">Game</a></li>
                 <li style="border-top: 1px solid var(--btn-border); margin: 4px 0;"></li>
-                <li><a href="np_play.html">Play Mode</a></li>
-                <li><a href="#" onclick="toggleHelp(); return false;">Help Guide</a></li>
+                <li><a href="np_play.html">puzzlegame Mode</a></li>
+                <li><a href="#" onclick="toggleHelp(); return false;">ヘルプガイド</a></li>
                 <li class="menu-item-row">
                     <span>Dark Mode</span>
                     <label class="switch">
@@ -193,6 +172,8 @@
                         <span class="slider"></span>
                     </label>
                 </li>
+                <li><a href="#" id="api-status-display" onclick="return false;" style="font-size: 0.75rem; color: #64748b; pointer-events: none;">APIキー: 未設定</a></li>
+                <li><a href="#" onclick="resetApiKey(); return false;" class="btn-danger-menu">APIキーを削除 (ログアウト)</a></li>
             </ul>
         </nav>
     </div>
@@ -207,38 +188,32 @@
 
     <div class="controls">
         <div class="num-pad" id="num-pad"></div>
-        <div style="margin-top: 10px;">
-            <a href="np_play.html" class="btn btn-secondary" style="text-decoration: none; display: block; text-align: center; background-color: var(--cell-selected-bg); color: var(--primary);">🎮 問題作成・プレイモードへ</a>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
             <button class="btn btn-secondary" onclick="openCamera()">📷 スキャン起動</button>
             <label class="btn btn-secondary" style="cursor:pointer">
                 📁 画像を選択
-                <input type="file" accept="image/*" style="display:none" onchange="handleFile(event)">
+                <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFile(event)">
             </label>
         </div>
         <button class="btn btn-primary" onclick="solveBoard()">▶ 解析</button>
-        <button class="btn btn-secondary" onclick="resetBoard()" style="opacity:0.5; border:none">リセット</button>
+        <button class="btn btn-secondary" onclick="resetBoard()" style="opacity:0.5; border:none">盤面リセット</button>
     </div>
 
-    <!-- カメラ画面 -->
     <div id="camera-ui">
         <video id="video" autoplay playsinline muted></video>
         <div class="guide-grid" id="guide-grid">
             <div class="laser"></div>
-            <!-- 格子線はJSで生成 -->
         </div>
         <div style="position: absolute; bottom: 120px; color: white; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px;">
-            枠に合わせて撮影してください
+            枠内にパズルを合わせてください
         </div>
         <button onclick="capture()" style="position: absolute; bottom: 30px; width: 70px; height: 70px; border-radius: 50%; border: 5px solid white; background: rgba(255,255,255,0.3);"></button>
         <button onclick="closeCamera()" style="position: absolute; top: 20px; right: 20px; color: white; background: none; border: none; font-size: 1.5rem;">✕</button>
     </div>
 
-    <!-- 解析中画面 -->
     <div id="loading">
         <div class="spinner"></div>
-        <p style="margin-top:15px; font-weight:bold;">AIが数字を読み取り中...</p>
+        <p style="margin-top:15px; font-weight:bold;">AIが構造を最適化して解析中...</p>
     </div>
 
     <!-- ヘルプ画面 -->
@@ -267,17 +242,40 @@
             </div>
         </div>
     </div>
-        <footer style="margin-top: 2rem; font-size: 0.7rem; color: #94a3b8; text-align: center;">
-            &copy; 2026 Synapse Creations. Jan.SUDOKU AI_ver1.0.1 <a href="https://fumifum1.github.io/main/index.html" style="color: inherit; text-decoration: none;">Creator/fumifumi</a>
-        </footer>
-    <script src="menu.js" defer></script>
+
+    <footer style="margin-top: 2rem; font-size: 0.7rem; color: #94a3b8; text-align: center;">
+        &copy; 2026 Synapse Creations. SUDOKU AI v1.1.2
+    </footer>
+
     <script>
         let gridData = Array(81).fill(0);
         let imported = new Set();
         let selected = null;
         let apiKey = localStorage.getItem('gemini_key') || "";
 
-        // 初期化：グリッド
+        function updateApiStatusDisplay() {
+            const display = document.getElementById('api-status-display');
+            if (apiKey) {
+                display.innerText = "APIキー: 設定済み (****" + apiKey.slice(-4) + ")";
+                display.style.color = "#10b981"; // Green
+            } else {
+                display.innerText = "APIキー: 未設定";
+                display.style.color = "#64748b"; // Gray
+            }
+        }
+
+        // APIキーのリセット機能
+        function resetApiKey() {
+            if (confirm("ブラウザに保存されているAPIキーを削除しますか？\n次回使用時に再度入力が必要になります。")) {
+                localStorage.removeItem('gemini_key');
+                apiKey = "";
+                updateApiStatusDisplay();
+                alert("APIキーを削除しました。");
+                location.reload(); // 状態をクリーンにするためリロード
+            }
+        }
+
+        // UI Initialization
         const gridEl = document.getElementById('grid');
         function drawGrid() {
             gridEl.innerHTML = '';
@@ -290,7 +288,6 @@
             });
         }
 
-        // 初期化：ボタン
         const padEl = document.getElementById('num-pad');
         [1,2,3,4,5,6,7,8,9,0].forEach(n => {
             const btn = document.createElement('button');
@@ -306,7 +303,6 @@
             padEl.appendChild(btn);
         });
 
-        // カメラガイド格子の生成
         const guideEl = document.getElementById('guide-grid');
         for(let i=0; i<81; i++) {
             const div = document.createElement('div');
@@ -317,81 +313,133 @@
             guideEl.appendChild(div);
         }
 
-        // カメラ制御
+        // Camera Control
         const camUI = document.getElementById('camera-ui');
         const video = document.getElementById('video');
         async function openCamera() {
             if(!apiKey) { 
-                apiKey = prompt("Gemini APIキーを入力してください:"); 
-                if(apiKey) localStorage.setItem('gemini_key', apiKey.trim());
+                const input = prompt("Gemini APIキーを入力してください（このキーはブラウザのLocalStorageにのみ保存されます）:"); 
+                if(input) {
+                    apiKey = input.trim();
+                    localStorage.setItem('gemini_key', apiKey);
+                    updateApiStatusDisplay();
+                }
             }
+            if(!apiKey) return;
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } });
                 video.srcObject = stream;
                 camUI.style.display = 'flex';
-            } catch(e) { alert("カメラを起動できませんでした。ブラウザの権限を確認するか、写真選択を使ってください。"); }
+            } catch(e) { alert("カメラを起動できません。権限を確認してください。"); }
         }
+
         function closeCamera() {
             if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
             camUI.style.display = 'none';
         }
 
-        // 写真撮影
         function capture() {
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const base64 = canvas.toDataURL('image/png').split(',')[1];
+            const ctx = canvas.getContext('2d');
+            const vW = video.videoWidth;
+            const vH = video.videoHeight;
+            const rect = document.getElementById('guide-grid').getBoundingClientRect();
+            const container = camUI.getBoundingClientRect();
+            
+            const xRatio = rect.left / container.width;
+            const yRatio = rect.top / container.height;
+            const wRatio = rect.width / container.width;
+            const hRatio = rect.height / container.height;
+
+            canvas.width = 600;
+            canvas.height = 600;
+
+            const sourceX = vW * xRatio;
+            const sourceY = vH * yRatio;
+            const sourceW = vW * wRatio;
+            const sourceH = vH * hRatio;
+
+            ctx.drawImage(video, sourceX, sourceY, sourceW, sourceH, 0, 0, 600, 600);
+            const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
             closeCamera();
             sendToAI(base64);
         }
 
-        // ファイルアップロード
         function handleFile(e) {
             const file = e.target.files[0];
             if(!file) return;
-
             if(!apiKey) { 
-                apiKey = prompt("Gemini APIキーを入力してください:"); 
-                if(apiKey) localStorage.setItem('gemini_key', apiKey.trim());
+                const input = prompt("Gemini APIキーを入力してください:"); 
+                if(input) {
+                    apiKey = input.trim();
+                    localStorage.setItem('gemini_key', apiKey);
+                    updateApiStatusDisplay();
+                }
             }
-
+            if(!apiKey) return;
             const reader = new FileReader();
-            reader.onload = (ev) => sendToAI(ev.target.result.split(',')[1]);
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const size = Math.min(img.width, img.height);
+                    canvas.width = 600; canvas.height = 600;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, (img.width-size)/2, (img.height-size)/2, size, size, 0, 0, 600, 600);
+                    sendToAI(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                };
+                img.src = ev.target.result;
+            };
             reader.readAsDataURL(file);
         }
 
-        // AI解析
         async function sendToAI(base64) {
-            if(!apiKey) return;
             document.getElementById('loading').style.display = 'flex';
             try {
+                const promptText = `
+                    Analyze this Sudoku puzzle image carefully. 
+                    Identify all numbers in the 9x9 grid. 
+                    Ensure you do not skip any rows or columns, especially the middle ones.
+                    Return ONLY a JSON object with a single key "grid" containing exactly 81 integers.
+                    Use 0 for empty cells. 
+                    Format example: {"grid": [0,0,5,3,0,0,0,0,0,...]}
+                `;
+
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [
-                            { text: "Analyze Sudoku. Return JSON ONLY: {\"grid\": [81 numbers]}. Use 0 for empty." },
-                            { inlineData: { mimeType: "image/png", data: base64 } }
+                            { text: promptText },
+                            { inlineData: { mimeType: "image/jpeg", data: base64 } }
                         ]}]
                     })
                 });
+                
                 const data = await res.json();
-                const json = JSON.parse(data.candidates[0].content.parts[0].text.match(/\{.*\}/s)[0]);
-                if(json.grid) {
-                    gridData = json.grid;
-                    imported.clear();
-                    gridData.forEach((n, i) => { if(n) imported.add(i); });
-                    drawGrid();
-                    document.getElementById('status').innerText = "取り込み完了！確認してSOLVEを押してください";
+                if (data.error) throw new Error(data.error.message);
+                
+                const textOutput = data.candidates[0].content.parts[0].text;
+                const jsonMatch = textOutput.match(/\{.*\}/s);
+                
+                if(jsonMatch) {
+                    const json = JSON.parse(jsonMatch[0]);
+                    if(json.grid && json.grid.length === 81) {
+                        gridData = json.grid;
+                        imported.clear();
+                        gridData.forEach((n, i) => { if(n) imported.add(i); });
+                        drawGrid();
+                        document.getElementById('status').innerText = "読み取り完了！内容を確認してください";
+                    }
                 }
-            } catch(e) { alert("AI解析エラー。画像がぼやけていないか確認してください。"); }
-            finally { document.getElementById('loading').style.display = 'none'; }
+            } catch(e) { 
+                console.error(e);
+                alert("AI解析に失敗しました。APIキーが正しいか、画像が鮮明か確認してください。\nエラー: " + e.message); 
+            } finally { 
+                document.getElementById('loading').style.display = 'none'; 
+            }
         }
 
-        function resetBoard() { gridData.fill(0); imported.clear(); drawGrid(); }
-
-        // 数独を解く
         function solveBoard() {
             const b = [...gridData];
             const check = (idx, n) => {
@@ -407,37 +455,37 @@
                 for(let n=1; n<=9; n++) if(check(i, n)) { b[i]=n; if(rec()) return true; b[i]=0; }
                 return false;
             };
-            if(rec()) { gridData = b; drawGrid(); document.getElementById('status').innerText = "正解を表示しました"; }
-            else alert("この配置は解けません。数字が正しいか確認してください。");
+            if(rec()) { gridData = b; drawGrid(); document.getElementById('status').innerText = "解析完了"; }
+            else alert("解けませんでした。入力された数字が間違っていないか確認してください。");
         }
 
+        function resetBoard() { if(confirm("盤面をリセットしますか？")) { gridData.fill(0); imported.clear(); drawGrid(); } }
         function toggleHelp() {
             const el = document.getElementById('help-modal');
             el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
-            closeMenu();
         }
+        function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
+        
+        document.getElementById('menu-icon').onclick = () => {
+            const container = document.getElementById('menu-container');
+            const content = document.getElementById('menu-content');
+            container.classList.toggle('open');
+            content.classList.toggle('hidden');
+            if (!content.classList.contains('hidden')) {
+                updateApiStatusDisplay();
+            }
+        };
 
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('sudoku_dark_mode', isDark ? 'true' : 'false');
-            
-            const checkbox = document.getElementById('dark-mode-toggle');
-            if(checkbox) checkbox.checked = isDark;
-        }
-
-        function closeMenu() {
-            document.getElementById('menu-container').classList.remove('open');
-            document.getElementById('menu-content').classList.add('hidden');
-        }
-
-        if (localStorage.getItem('sudoku_dark_mode') === 'true') {
-            document.body.classList.add('dark-mode');
-            const checkbox = document.getElementById('dark-mode-toggle');
-            if(checkbox) checkbox.checked = true;
-        }
+        // Close menu when clicking outside
+        window.onclick = (e) => {
+            if (!e.target.closest('#menu-container')) {
+                document.getElementById('menu-container').classList.remove('open');
+                document.getElementById('menu-content').classList.add('hidden');
+            }
+        };
 
         drawGrid();
+        updateApiStatusDisplay();
     </script>
 </body>
 </html>
