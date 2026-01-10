@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第26回 午年令和ダービー - 同期版</title>
+    <style>
+        :root {
+            --primary: #3e2723;
+            --bg-paper: #f4e7d3;
+            --accent: #8b0000;
+            --track-light: #8d6e63;
+            --track-dark: #5d4037;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: "serif", "YuMincho", "Yu Mincho", "MS Mincho", serif;
+            background-color: var(--bg-paper);
+            color: var(--primary);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            border: 8px solid var(--primary);
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                border-width: 12px;
+            }
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .btn {
+            display: inline-block;
+            cursor: pointer;
+            font-weight: 900;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: 4px solid var(--primary);
+            padding: 10px 20px;
+            margin: 5px;
+            background: white;
+            user-select: none;
+        }
+
+        .btn-primary {
+            background-color: var(--success);
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            box-shadow: 4px 4px 0px #1b5e20;
+        }
+
+        .btn-primary:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .setup-header {
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+        }
+
+        /* QRコードエリアの中央寄せ設定 */
+        #qrcode-container {
+            background: white;
+            padding: 20px;
+            display: inline-flex;
+            /* 内容に合わせて幅を調整 */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            /* 左右マージンautoで中央寄せ */
+            border: 2px solid var(--primary);
+        }
+
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .prediction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .prediction-item {
+            border: 2px solid var(--primary);
+            padding: 10px;
+            cursor: pointer;
+            background: white;
+            font-weight: bold;
+        }
+
+        .prediction-item.selected {
+            background: var(--accent);
+            color: white;
+        }
+
+        .race-screen {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .race-header {
+            background: var(--primary);
+            color: var(--bg-paper);
+            padding: 10px;
+            text-align: center;
+        }
+
+        .race-info-sub {
+            font-size: 0.9rem;
+            margin-top: 5px;
+            color: #ffccbc;
+            font-weight: bold;
+        }
+
+        .track-area {
+            flex: 1;
+            background-color: var(--track-dark);
+            overflow-y: auto;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .lane {
+            position: relative;
+            height: 40px;
+            background: var(--track-light);
+            border-bottom: 1px solid var(--track-dark);
+            display: flex;
+            align-items: center;
+        }
+
+        .lane-num {
+            width: 30px;
+            height: 100%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 12px;
+            z-index: 10;
+        }
+
+        .horse-sprite {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 20;
+        }
+
+        .horse-emoji {
+            font-size: 28px;
+            transform: scaleX(-1);
+        }
+
+        .horse-label {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--primary);
+            padding: 0 4px;
+            font-size: 10px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .goal-line {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            border-left: 4px dashed white;
+        }
+
+        .payout-card {
+            background: white;
+            border: 4px solid var(--primary);
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        .animate-pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+
+    <div id="app"></div>
+
+    <script>
+        const PAYOUT_SCENARIOS = [
+            { id: 0, name: "一攫千金（総取り）", ratios: [1.0, 0, 0], desc: "勝利した一頭が、すべてを独占する。" },
+            { id: 1, name: "御三家・等分", ratios: [0.34, 0.33, 0.33], desc: "上位3名が均等に分け合う。" },
+            { id: 2, name: "実力主義・傾斜配分", ratios: [0.6, 0.25, 0.15], desc: "1位に過半数、2位・3位にも報いる。" },
+            { id: 3, name: "大盤振る舞い", ratios: [0.45, 0.35, 0.2], desc: "1位から3位まで、景気よく分け合う。" },
+            { id: 4, name: "真剣勝負（二強）", ratios: [0.65, 0.35, 0], desc: "1位と2位のみが果実を手にする。" },
+        ];
+
+        class SeededRandom {
+            constructor(seed) { this.seed = seed; }
+            next() {
+                this.seed = (this.seed * 9301 + 49297) % 233280;
+                return this.seed / 233280;
+            }
+        }
+
+        let state = {
+            gameState: 'mode_select',
+            isHost: false,
+            seed: Math.floor(Math.random() * 1000000),
+            playerCount: 15,
+            payoutScenarioIdx: Math.floor(Math.random() * PAYOUT_SCENARIOS.length),
+            myPrediction: null,
+            horses: [],
+            winners: [],
+            payoutMode: null
+        };
+
+        function checkUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const data = params.get('d');
+            if (data) {
+                const [s, c, p] = data.split('-').map(Number);
+                state.seed = s;
+                state.playerCount = c;
+                state.payoutScenarioIdx = p;
+                state.isHost = false;
+                state.gameState = 'guest_waiting';
+                render();
+            }
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = '';
+            const container = document.createElement('div');
+            container.className = "container";
+
+            if (state.gameState === 'mode_select') {
+                container.innerHTML = `
+                    <h1 style="font-weight:900;">昭和大正ダービー</h1>
+                    <p>管理者も参加者も、全員が同じ運命を共有します</p>
+                    <div style="margin-top:50px;">
+                        <div onclick="initHost()" class="btn btn-primary">冠主（ホスト）として開催</div>
+                        <div style="margin-top:20px; font-size:0.9rem; opacity:0.7;">参加者はホストのQRを読み込んでください</div>
+                    </div>
+                `;
+            }
+            else if (state.gameState === 'host_setup') {
+                container.innerHTML = `
+                    <h2 style="font-weight:900;">開催準備（冠主）</h2>
+                    <div style="background:white; padding:15px; border:2px solid var(--primary); text-align:left; margin-bottom:20px;">
+                        <p><b>1. 頭数を決める:</b> 
+                            <select onchange="state.playerCount=Number(this.value); updateHostQR(); render();">
+                                ${Array.from({ length: 21 }, (_, i) => i + 5).map(n => `<option value="${n}" ${n == state.playerCount ? 'selected' : ''}>${n}頭立て</option>`).join('')}
+                            </select>
+                        </p>
+                        <p><b>2. あなたの1着予想：</b></p>
+                        <div class="prediction-grid">
+                            ${Array.from({ length: state.playerCount }).map((_, i) => `
+                                <div onclick="selectPrediction(${i})" class="prediction-item ${state.myPrediction === i ? 'selected' : ''}">
+                                    ${i + 1}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <div id="qrcode-container">
+                            <p style="font-size:0.8rem; margin-bottom:10px;">参加者にこのQRを読ませてください</p>
+                            <div id="qrcode"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:20px;">
+                        <p style="font-size:0.8rem; opacity:0.6;">※配当と順位はシード値に基づき自動決定されます</p>
+                        <div onclick="startSyncRace()" class="btn btn-primary">全員準備完了・出走！</div>
+                    </div>
+                `;
+                setTimeout(() => updateHostQR(), 0);
+            }
+            else if (state.gameState === 'guest_waiting') {
+                container.innerHTML = `
+                    <h2 style="font-weight:900;">出走待機中</h2>
+                    <p>${state.playerCount}頭立てのレースに参加しました。</p>
+                    <hr>
+                    <p><b>あなたの1着予想を選択してください：</b></p>
+                    <div class="prediction-grid">
+                        ${Array.from({ length: state.playerCount }).map((_, i) => `
+                            <div onclick="selectPrediction(${i})" class="prediction-item ${state.myPrediction === i ? 'selected' : ''}">
+                                ${i + 1}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--accent);">ホストが開始するまでお待ちください</p>
+                    <div onclick="startSyncRace()" class="btn btn-primary">（合図で）開始！</div>
+                `;
+            }
+            else if (state.gameState === 'racing') {
+                renderRacing(app); return;
+            }
+            else if (state.gameState === 'finished') {
+                renderFinished(container);
+            }
+
+            app.appendChild(container);
+        }
+
+        function initHost() {
+            state.isHost = true;
+            state.gameState = 'host_setup';
+            render();
+        }
+
+        function updateHostQR() {
+            const qrEl = document.getElementById('qrcode');
+            if (!qrEl) return;
+            qrEl.innerHTML = '';
+            const baseUrl = window.location.href.split('?')[0];
+            const data = `${state.seed}-${state.playerCount}-${state.payoutScenarioIdx}`;
+            const fullUrl = `${baseUrl}?d=${data}`;
+
+            new QRCode(qrEl, {
+                text: fullUrl,
+                width: 180,
+                height: 180,
+                colorDark: "#3e2723",
+                colorLight: "#ffffff"
+            });
+        }
+
+        function selectPrediction(idx) {
+            state.myPrediction = idx;
+            render();
+        }
+
+        function calculateDistribution(scenario, total) {
+            let dist = scenario.ratios.map(r => Math.floor(total * r));
+            let currentSum = dist.reduce((a, b) => a + b, 0);
+            let diff = total - currentSum;
+            for (let i = 0; i < diff; i++) {
+                dist[i % 3]++;
+            }
+            return { ...scenario, dist };
+        }
+
+        function startSyncRace() {
+            const rng = new SeededRandom(state.seed);
+            state.horses = Array.from({ length: state.playerCount }, (_, i) => ({
+                id: i,
+                name: `馬番 ${i + 1}`,
+                position: 0,
+                baseSpeed: rng.next() * 0.25 + 0.15,
+                strategy: rng.next(),
+                finished: false,
+                wobble: 0
+            }));
+
+            const scenario = PAYOUT_SCENARIOS[state.payoutScenarioIdx];
+            state.payoutMode = calculateDistribution(scenario, state.playerCount);
+
+            state.gameState = 'racing';
+            render();
+            requestAnimationFrame(raceLoop);
+        }
+
+        function raceLoop() {
+            if (state.gameState !== 'racing') return;
+
+            let allFinished = true;
+            state.horses.forEach(h => {
+                if (!h.finished) {
+                    h.position += h.baseSpeed * 0.8 + (Math.random() * 0.1);
+                    if (h.position >= 100) {
+                        h.position = 100;
+                        h.finished = true;
+                    }
+                    allFinished = false;
+                }
+                const el = document.getElementById(`h-${h.id}`);
+                if (el) el.style.left = `calc(35px + ${h.position * 0.8}%)`;
+            });
+
+            if (allFinished) {
+                state.winners = [...state.horses].sort((a, b) => b.baseSpeed - a.baseSpeed).slice(0, 3);
+                state.gameState = 'finished';
+                setTimeout(render, 1200);
+            } else {
+                requestAnimationFrame(raceLoop);
+            }
+        }
+
+        function renderRacing(app) {
+            const myPredictionLabel = state.myPrediction !== null ? `あなたの予想：馬番 ${state.myPrediction + 1}` : '予想未選択';
+            app.innerHTML = `
+                <div class="race-screen">
+                    <div class="race-header">
+                        <h2 class="animate-pulse">運命の同期レース実況中...</h2>
+                        <div class="race-info-sub">${myPredictionLabel}</div>
+                    </div>
+                    <div class="track-area" id="track">
+                        <div class="goal-line"></div>
+                        ${state.horses.map(h => `
+                            <div class="lane">
+                                <div class="lane-num">${h.id + 1}</div>
+                                <div id="h-${h.id}" class="horse-sprite" style="left: 40px;">
+                                    <span class="horse-emoji">🐎</span>
+                                    <div class="horse-label">${h.id + 1}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFinished(container) {
+            const isWin = state.myPrediction !== null && state.winners[0].id === state.myPrediction;
+
+            container.innerHTML = `
+                <h1 style="font-size:3rem;">${isWin ? '🎊 的中！' : '終幕'}</h1>
+                <p style="font-weight:bold;">${state.isHost ? '【冠主】' : '【一般参加】'} あなたの予想: 馬番 ${state.myPrediction !== null ? state.myPrediction + 1 : 'なし'}</p>
+                
+                <div class="payout-card">
+                    <h3 style="text-decoration:underline;">【 本日の分配ルール: ${state.payoutMode.name} 】</h3>
+                    <p style="font-size:0.8rem; margin-bottom:10px;">${state.payoutMode.desc}</p>
+                    <p style="font-size:0.7rem; opacity:0.6;">(全${state.playerCount}枠を以下の通り分配しました)</p>
+                    <div style="display:flex; justify-content:space-around; margin:20px 0;">
+                        ${state.winners.map((w, i) => `
+                            <div style="border:3px solid var(--primary); padding:10px; background:${i == 0 ? '#fffde7' : 'white'}; flex:1; margin:5px;">
+                                <div style="font-size:0.8rem;">${i + 1}着: 馬番${w.id + 1}</div>
+                                <div style="font-size:1.5rem; font-weight:bold;">${state.payoutMode.dist[i]}個</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div onclick="location.href=window.location.href.split('?')[0]" class="btn btn-primary" style="background:var(--primary);">最初に戻る</div>
+            `;
+        }
+
+        window.onload = () => {
+            checkUrlParams();
+            if (state.gameState === 'mode_select') render();
+        };
+    </script>
+</body>
+
+</html>
