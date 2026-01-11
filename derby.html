@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>第15回 昭和大正ダービー</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/fumifum1/main/main/jpg/ico.ico">
     <style>
         /* --- 標準CSSによるデザイン構築 --- */
         :root {
@@ -28,7 +30,9 @@
         }
 
         @media (min-width: 768px) {
-            body { border-width: 12px; }
+            body {
+                border-width: 12px;
+            }
         }
 
         /* 共通レイアウト */
@@ -79,14 +83,23 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 10px;
-            background: rgba(255,255,255,0.4);
+            background: rgba(255, 255, 255, 0.4);
             padding: 20px;
             border-radius: 4px;
             margin-bottom: 30px;
         }
 
-        @media (min-width: 640px) { .player-grid { grid-template-columns: 1fr 1fr; } }
-        @media (min-width: 1024px) { .player-grid { grid-template-columns: 1fr 1fr 1fr; } }
+        @media (min-width: 640px) {
+            .player-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .player-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
 
         .player-input-wrap {
             display: flex;
@@ -173,7 +186,7 @@
         }
 
         .horse-label {
-            background: rgba(255,255,255,0.9);
+            background: rgba(255, 255, 255, 0.9);
             border: 1px solid var(--primary);
             padding: 0 4px;
             font-size: 10px;
@@ -187,7 +200,7 @@
             top: 0;
             bottom: 0;
             width: 40px;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             border-left: 4px dashed white;
             display: flex;
             align-items: center;
@@ -208,11 +221,16 @@
             padding: 30px;
             margin: 20px auto;
             max-width: 600px;
-            box-shadow: 6px 6px 0 rgba(0,0,0,0.1);
+            box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.1);
         }
 
-        .payout-spinning { background: #e0e0e0; }
-        .payout-fixed { background: #fffde7; }
+        .payout-spinning {
+            background: #e0e0e0;
+        }
+
+        .payout-fixed {
+            background: #fffde7;
+        }
 
         .dist-row {
             display: flex;
@@ -228,7 +246,9 @@
             background: white;
         }
 
-        .dist-box.gold { background: #ffd700; }
+        .dist-box.gold {
+            background: #ffd700;
+        }
 
         /* 結果画面 */
         .result-item {
@@ -242,26 +262,46 @@
             box-shadow: 4px 4px 0 var(--primary);
         }
 
-        .rank-gold { background: #fffde7; border-width: 4px; }
+        .rank-gold {
+            background: #fffde7;
+            border-width: 4px;
+        }
 
         /* アニメーション */
         .animate-pulse {
             animation: pulse 1.5s infinite;
         }
+
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
 
         .fade-in {
             animation: fadeIn 0.5s ease-out forwards;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
+
 <body>
 
     <div id="app"></div>
@@ -290,7 +330,7 @@
             const app = document.getElementById('app');
             app.innerHTML = '';
 
-            switch(state.gameState) {
+            switch (state.gameState) {
                 case 'setup': renderSetup(); break;
                 case 'racing': renderRacing(); break;
                 case 'rank_reveal': renderRankReveal(); break;
@@ -321,9 +361,9 @@
                 <div class="setup-controls">
                     <label style="font-weight: bold; margin-right: 10px;">出走頭数を選択:</label>
                     <select onchange="updatePlayerCount(this.value)" style="font-family: serif; padding: 5px; font-weight: bold;">
-                        ${Array.from({length: 21}, (_, i) => i + 5).map(n => 
-                            `<option value="${n}" ${n === state.playerCount ? 'selected' : ''}>${n}頭立て</option>`
-                        ).join('')}
+                        ${Array.from({ length: 21 }, (_, i) => i + 5).map(n =>
+                `<option value="${n}" ${n === state.playerCount ? 'selected' : ''}>${n}頭立て</option>`
+            ).join('')}
                     </select>
                 </div>
                 <div class="player-grid" id="grid"></div>
@@ -333,7 +373,7 @@
             state.players.forEach((p, i) => {
                 const wrap = document.createElement('div');
                 wrap.className = "player-input-wrap";
-                wrap.innerHTML = `<span class="player-num">${i+1}</span>`;
+                wrap.innerHTML = `<span class="player-num">${i + 1}</span>`;
                 const input = document.createElement('input');
                 input.className = "player-input";
                 input.value = p;
@@ -359,7 +399,7 @@
                 const lane = document.createElement('div');
                 lane.className = "lane";
                 lane.innerHTML = `
-                    <div class="lane-num">${h.id+1}</div>
+                    <div class="lane-num">${h.id + 1}</div>
                     <div id="h-${h.id}" class="horse-sprite" style="left: 40px;">
                         <span class="horse-emoji">🐎</span>
                         <div class="horse-label">${h.name}</div>
@@ -379,9 +419,9 @@
                 <h2 style="font-weight: 900; font-size: 1.5rem; text-decoration: underline; margin-bottom: 40px;">【 速報：確定着順 】</h2>
                 <div style="max-width: 500px; margin: 0 auto 40px auto;">
                     ${state.winners.map((w, i) => `
-                        <div class="fade-in" style="display: flex; justify-content: space-between; border-bottom: 3px solid var(--primary); padding: 10px; animation-delay: ${i*300}ms">
-                            <span style="font-size: 2rem;">${i==0?'🥇':i==1?'🥈':'🥉'} <b>${w.name}</b></span>
-                            <span style="font-style: italic; font-weight: bold;">${i+1}位</span>
+                        <div class="fade-in" style="display: flex; justify-content: space-between; border-bottom: 3px solid var(--primary); padding: 10px; animation-delay: ${i * 300}ms">
+                            <span style="font-size: 2rem;">${i == 0 ? '🥇' : i == 1 ? '🥈' : '🥉'} <b>${w.name}</b></span>
+                            <span style="font-style: italic; font-weight: bold;">${i + 1}位</span>
                         </div>
                     `).join('')}
                 </div>
@@ -395,20 +435,20 @@
             const div = document.createElement('div');
             div.className = "container";
             div.style.paddingTop = "10vh";
-            
+
             const isSpinning = state.payoutSpinning;
             const mode = state.payoutMode;
 
             div.innerHTML = `
                 <h2 style="font-weight: 900; margin-bottom: 20px;">【 分配規定の抽選 】</h2>
-                <div class="payout-card ${isSpinning?'payout-spinning':'payout-fixed'}">
+                <div class="payout-card ${isSpinning ? 'payout-spinning' : 'payout-fixed'}">
                     ${mode ? `
                         <h3 style="font-size: 2rem; font-weight: 900; text-decoration: underline;">${mode.name}</h3>
                         <div class="dist-row">
                             ${mode.dist.map((d, i) => `
                                 <div>
-                                    <div style="font-size: 10px; font-weight: bold;">${i+1}等</div>
-                                    <div class="dist-box ${i==0?'gold':''}">
+                                    <div style="font-size: 10px; font-weight: bold;">${i + 1}等</div>
+                                    <div class="dist-box ${i == 0 ? 'gold' : ''}">
                                         <b style="font-size: 1.5rem;">${d}</b><small>/${state.playerCount}</small>
                                     </div>
                                 </div>
@@ -431,15 +471,15 @@
                 <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 30px;">栄光の勝者たち</h1>
                 <div style="max-width: 800px; margin: 0 auto;">
                     ${state.winners.map((w, i) => `
-                        <div class="result-item ${i==0?'rank-gold':''}" style="opacity: ${state.payoutMode.dist[i]==0?0.5:1}">
+                        <div class="result-item ${i == 0 ? 'rank-gold' : ''}" style="opacity: ${state.payoutMode.dist[i] == 0 ? 0.5 : 1}">
                             <div style="display: flex; align-items: center; gap: 20px;">
-                                <span style="font-size: ${i==0?'4rem':'2rem'};">${i==0?'🥇':i==1?'🥈':'🥉'}</span>
+                                <span style="font-size: ${i == 0 ? '4rem' : '2rem'};">${i == 0 ? '🥇' : i == 1 ? '🥈' : '🥉'}</span>
                                 <div style="text-align: left;">
-                                    <small style="color: #666;">${i+1}等賞</small>
+                                    <small style="color: #666;">${i + 1}等賞</small>
                                     <div style="font-size: 1.5rem; font-weight: 900;">${w.name}</div>
                                 </div>
                             </div>
-                            <div style="border: 2px solid var(--primary); padding: 5px 15px; background: ${i==0?'var(--primary)':'#eee'}; color: ${i==0?'white':'black'};">
+                            <div style="border: 2px solid var(--primary); padding: 5px 15px; background: ${i == 0 ? 'var(--primary)' : '#eee'}; color: ${i == 0 ? 'white' : 'black'};">
                                 <small>獲得</small>
                                 <div style="font-size: 1.5rem; font-weight: 900;">${state.payoutMode.dist[i]}<small>/${state.playerCount}</small></div>
                             </div>
@@ -468,7 +508,7 @@
         function raceLoop() {
             if (state.gameState !== 'racing') return;
             let currentRank = state.horses.filter(h => h.finished).length + 1;
-            
+
             state.horses.forEach(h => {
                 if (!h.finished) {
                     const phase = h.position / 100;
@@ -486,7 +526,7 @@
             });
 
             if (Math.max(...state.horses.map(h => h.position)) >= 96) {
-                state.winners = [...state.horses].sort((a,b) => b.position - a.position).slice(0,3);
+                state.winners = [...state.horses].sort((a, b) => b.position - a.position).slice(0, 3);
                 state.gameState = 'rank_reveal';
                 setTimeout(render, 1200);
             } else {
@@ -498,7 +538,7 @@
             // 比率に基づいて人数を割り振り、合計がtotalに一致するように調整
             let dist = scenario.ratios.map(r => Math.floor(total * r));
             let currentSum = dist.reduce((a, b) => a + b, 0);
-            
+
             // 端数を1位に追加して合計を合わせる
             if (currentSum < total) {
                 dist[0] += (total - currentSum);
@@ -533,4 +573,5 @@
         window.onload = render;
     </script>
 </body>
+
 </html>

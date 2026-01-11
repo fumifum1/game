@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>第26回 丙午杯ダービー</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/fumifum1/main/main/jpg/ico.ico">
     <style>
         :root {
             --primary: #3e2723;
@@ -28,7 +30,12 @@
             box-sizing: border-box;
         }
 
-        .container { max-width: 600px; margin: 0 auto; padding: 10px; text-align: center; }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 10px;
+            text-align: center;
+        }
 
         .btn {
             display: inline-block;
@@ -43,22 +50,39 @@
             text-decoration: none;
         }
 
-        .btn-primary { background-color: var(--success); color: white; padding: 12px 30px; font-size: 1rem; box-shadow: 3px 3px 0px #1b5e20; }
-        .btn-primary:active { transform: translate(1px, 1px); box-shadow: none; }
-        
-        .btn-outline { background-color: transparent; color: var(--primary); }
+        .btn-primary {
+            background-color: var(--success);
+            color: white;
+            padding: 12px 30px;
+            font-size: 1rem;
+            box-shadow: 3px 3px 0px #1b5e20;
+        }
+
+        .btn-primary:active {
+            transform: translate(1px, 1px);
+            box-shadow: none;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+        }
 
         /* モーダル共通スタイル */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
             z-index: 1000;
             display: none;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
+
         .modal-content {
             background: #fff;
             width: 100%;
@@ -66,14 +90,28 @@
             padding: 20px;
             border: 2px solid #333;
             text-align: center;
-            box-shadow: 10px 10px 0px rgba(0,0,0,0.3);
+            box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.3);
             max-height: 90vh;
             overflow-y: auto;
         }
 
-        .guide-text { text-align: left; font-size: 0.85rem; line-height: 1.6; }
-        .guide-text h3 { border-left: 4px solid var(--accent); padding-left: 8px; margin: 15px 0 5px; font-size: 1rem; }
-        .guide-text ul { padding-left: 20px; margin: 5px 0; }
+        .guide-text {
+            text-align: left;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .guide-text h3 {
+            border-left: 4px solid var(--accent);
+            padding-left: 8px;
+            margin: 15px 0 5px;
+            font-size: 1rem;
+        }
+
+        .guide-text ul {
+            padding-left: 20px;
+            margin: 5px 0;
+        }
 
         .setup-card {
             background: white;
@@ -81,7 +119,7 @@
             padding: 15px;
             margin-bottom: 15px;
             text-align: left;
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.1);
         }
 
         .section-title {
@@ -100,9 +138,30 @@
             padding: 5px;
             background: #fafafa;
         }
-        .name-input-item { display: flex; align-items: center; margin-bottom: 5px; gap: 5px; }
-        .name-input-item span { width: 25px; font-weight: bold; font-size: 0.8rem; text-align: center; background: var(--primary); color: white; border-radius: 2px; }
-        .name-input-item input { flex: 1; padding: 5px; border: 1px solid #ccc; font-size: 0.85rem; }
+
+        .name-input-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            gap: 5px;
+        }
+
+        .name-input-item span {
+            width: 25px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-align: center;
+            background: var(--primary);
+            color: white;
+            border-radius: 2px;
+        }
+
+        .name-input-item input {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ccc;
+            font-size: 0.85rem;
+        }
 
         .prediction-grid {
             display: grid;
@@ -111,6 +170,7 @@
             margin: 10px 0;
             justify-content: center;
         }
+
         .prediction-num {
             border: 2px solid var(--primary);
             aspect-ratio: 1;
@@ -123,7 +183,12 @@
             font-size: 1.1rem;
             transition: all 0.2s;
         }
-        .prediction-num.selected { background: var(--accent); color: white; border-color: var(--accent); }
+
+        .prediction-num.selected {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
 
         .fanfare-screen {
             background: var(--primary);
@@ -134,10 +199,31 @@
             justify-content: center;
             align-items: center;
         }
-        .fanfare-timer { font-size: 5rem; font-weight: 900; margin: 20px 0; color: var(--gold); }
 
-        .race-screen { height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-        .race-header { background: var(--primary); color: var(--bg-paper); padding: 5px 0; text-align: center; z-index: 100; border-bottom: 2px solid #000; }
+        .fanfare-timer {
+            font-size: 5rem;
+            font-weight: 900;
+            margin: 20px 0;
+            color: var(--gold);
+        }
+
+        .race-screen {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .race-header {
+            background: var(--primary);
+            color: var(--bg-paper);
+            padding: 5px 0;
+            text-align: center;
+            z-index: 100;
+            border-bottom: 2px solid #000;
+        }
+
         .my-ticket-badge {
             background: #fff;
             color: var(--primary);
@@ -150,24 +236,92 @@
             border-radius: 20px;
         }
 
-        .track-area { flex: 1; background-color: var(--track-dark); overflow-y: auto; position: relative; }
-        .lane { position: relative; height: 35px; background: var(--track-light); border-bottom: 1px solid var(--track-dark); display: flex; align-items: center; }
-        .lane-sidebar { width: 30px; height: 100%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; z-index: 40; font-size: 0.75rem; font-weight: bold; }
-        .lane-bg-name { 
-            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -55%);
-            font-size: 16px; font-weight: 900; color: #ffffff; white-space: nowrap; z-index: 10; 
-            pointer-events: none; text-shadow: 2px 2px 0 var(--primary), -1px -1px 0 var(--primary), 1px -1px 0 var(--primary), -1px 1px 0 var(--primary), 1px 1px 0 var(--primary);
-            background: rgba(255, 255, 255, 0.1); padding: 2px 10px; border-radius: 10px;
+        .track-area {
+            flex: 1;
+            background-color: var(--track-dark);
+            overflow-y: auto;
+            position: relative;
         }
-        .horse-sprite { position: absolute; z-index: 50; transition: left 0.1s linear; display: flex; align-items: center; }
-        .horse-emoji { font-size: 24px; transform: scaleX(-1); filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5)); }
-        .goal-line { position: absolute; right: 0; top: 0; bottom: 0; width: 30px; border-left: 2px dashed white; background: rgba(255,255,255,0.05); z-index: 20; }
+
+        .lane {
+            position: relative;
+            height: 35px;
+            background: var(--track-light);
+            border-bottom: 1px solid var(--track-dark);
+            display: flex;
+            align-items: center;
+        }
+
+        .lane-sidebar {
+            width: 30px;
+            height: 100%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .lane-bg-name {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -55%);
+            font-size: 16px;
+            font-weight: 900;
+            color: #ffffff;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+            text-shadow: 2px 2px 0 var(--primary), -1px -1px 0 var(--primary), 1px -1px 0 var(--primary), -1px 1px 0 var(--primary), 1px 1px 0 var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 10px;
+            border-radius: 10px;
+        }
+
+        .horse-sprite {
+            position: absolute;
+            z-index: 50;
+            transition: left 0.1s linear;
+            display: flex;
+            align-items: center;
+        }
+
+        .horse-emoji {
+            font-size: 24px;
+            transform: scaleX(-1);
+            filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5));
+        }
+
+        .goal-line {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            border-left: 2px dashed white;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 20;
+        }
 
         @keyframes stamp {
-            0% { transform: scale(3); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+            0% {
+                transform: scale(3);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
-        .reveal-item { animation: stamp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        .reveal-item {
+            animation: stamp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
 
         .lottery-box {
             background: #e0e0e0;
@@ -178,14 +332,18 @@
             margin: 20px 0;
             transition: background 0.3s;
         }
-        .lottery-box.active { background: #fffde7; }
+
+        .lottery-box.active {
+            background: #fffde7;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
+
 <body>
 
     <div id="app"></div>
-    
+
     <!-- 使い方ガイドモーダル -->
     <div id="guide-modal" class="modal-overlay" onclick="closeGuide()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -207,7 +365,8 @@
     <!-- 馬券モーダル -->
     <div id="ticket-modal" class="modal-overlay" onclick="closeModalForce()">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <div style="border-bottom: 2px solid #333; display: flex; justify-content: space-between; font-weight: bold; font-size: 0.7rem; padding-bottom: 5px; margin-bottom: 15px;">
+            <div
+                style="border-bottom: 2px solid #333; display: flex; justify-content: space-between; font-weight: bold; font-size: 0.7rem; padding-bottom: 5px; margin-bottom: 15px;">
                 <span>第26回 丙午杯ダービー</span>
                 <span>単勝</span>
             </div>
@@ -236,14 +395,14 @@
             try {
                 sounds[key].currentTime = 0;
                 sounds[key].play().catch(e => console.log("Audio play blocked", e));
-            } catch (e) {}
+            } catch (e) { }
         }
 
         function stopSound(key) {
             try {
                 sounds[key].pause();
                 sounds[key].currentTime = 0;
-            } catch (e) {}
+            } catch (e) { }
         }
 
         const LEGEND_HORSES = ["ディープインパクト", "オグリキャップ", "トウカイテイオー", "サイレンススズカ", "ナリタブライアン", "エルコンドルパサー", "シンボリルドルフ", "ウォッカ", "ダイワスカーレット", "ゴールドシップ", "キタサンブラック", "アーモンドアイ", "コントレイル", "イクイノックス"];
@@ -290,7 +449,7 @@
 
         function initHorseNames(count) {
             const currentNames = [...state.horseNames];
-            state.horseNames = Array.from({length: count}, (_, i) => currentNames[i] || generateHorseName(i));
+            state.horseNames = Array.from({ length: count }, (_, i) => currentNames[i] || generateHorseName(i));
         }
 
         function render() {
@@ -303,19 +462,21 @@
             if (state.gameState === 'mode_select') {
                 container.innerHTML = `
                     <h1 style="font-weight:900; font-size:1.5rem; margin:30px 0;">第26回 丙午杯ダービー</h1>
+                    <p style="margin-bottom: 50px;">伝統と栄光のレースが今、始まる。</p>
                     <div style="margin-top:40px; display: flex; flex-direction: column; align-items: center; gap: 15px;">
                         <div onclick="initHost()" class="btn btn-primary">冠主として開催</div>
                         <div onclick="openGuide()" class="btn btn-outline" style="font-size: 0.8rem; border-color: #ccc;">使い方ガイド</div>
+                        <p style="font-size: 0.8rem; color: #666; margin-top: 20px;">※音響効果がなりますご注意ください。</p>
                     </div>
                 `;
-            } 
+            }
             else if (state.gameState === 'host_setup') {
                 container.innerHTML = `
                     <h2 style="font-size:1.2rem; margin-bottom:15px;">開催準備</h2>
                     <div class="setup-card">
                         <span class="section-title">1. 出走頭数設定</span>
                         <select onchange="handleCountChange(this.value)" style="width:100%; padding:8px;">
-                            ${Array.from({length: 26}, (_, i) => i + 5).map(n => `<option value="${n}" ${n==state.playerCount?'selected':''}>${n}頭立て</option>`).join('')}
+                            ${Array.from({ length: 26 }, (_, i) => i + 5).map(n => `<option value="${n}" ${n == state.playerCount ? 'selected' : ''}>${n}頭立て</option>`).join('')}
                         </select>
                     </div>
                     <div class="setup-card">
@@ -323,7 +484,7 @@
                         <div class="name-input-list">
                             ${state.horseNames.map((name, i) => `
                                 <div class="name-input-item">
-                                    <span>${i+1}</span>
+                                    <span>${i + 1}</span>
                                     <input type="text" value="${name}" onchange="updateHorseName(${i}, this.value)">
                                 </div>
                             `).join('')}
@@ -333,8 +494,8 @@
                         <span class="section-title">3. 予想馬券の選択</span>
                         <div class="prediction-grid">
                             ${state.horseNames.map((_, i) => `
-                                <div onclick="selectPrediction(${i})" class="prediction-num ${state.myPrediction===i?'selected':''}">
-                                    ${i+1}
+                                <div onclick="selectPrediction(${i})" class="prediction-num ${state.myPrediction === i ? 'selected' : ''}">
+                                    ${i + 1}
                                 </div>
                             `).join('')}
                         </div>
@@ -364,7 +525,7 @@
         function updateHorseName(idx, val) { state.horseNames[idx] = val; }
         function updateHostQR() {
             const qrEl = document.getElementById('qrcode');
-            if(!qrEl) return;
+            if (!qrEl) return;
             qrEl.innerHTML = '';
             const baseUrl = window.location.href.split('?')[0];
             const data = `${state.seed}-${state.playerCount}-${state.payoutScenarioIdx}`;
@@ -407,7 +568,7 @@
             playSound('gateOpen');
             setTimeout(() => { playSound('running'); }, 100);
             const rng = new SeededRandom(state.seed);
-            state.horses = Array.from({length: state.playerCount}, (_, i) => ({
+            state.horses = Array.from({ length: state.playerCount }, (_, i) => ({
                 id: i, name: state.horseNames[i], position: 0,
                 baseSpeed: rng.next() * 0.22 + 0.18, finished: false
             }));
@@ -431,7 +592,7 @@
             if (allFinished) {
                 stopSound('running');
                 playSound('applause');
-                state.winners = [...state.horses].sort((a,b) => b.baseSpeed - a.baseSpeed).slice(0,3);
+                state.winners = [...state.horses].sort((a, b) => b.baseSpeed - a.baseSpeed).slice(0, 3);
                 state.gameState = 'reveal_ranks';
                 setTimeout(render, 500);
             } else { requestAnimationFrame(raceLoop); }
@@ -448,7 +609,7 @@
                     </div>
                     <div class="track-area">
                         <div class="goal-line"></div>
-                        ${state.horses.map(h => `<div class="lane"><div class="lane-sidebar">${h.id+1}</div><div class="lane-bg-name">${h.name}</div><div id="h-${h.id}" class="horse-sprite" style="left: 30px;"><span class="horse-emoji">🐎</span></div></div>`).join('')}
+                        ${state.horses.map(h => `<div class="lane"><div class="lane-sidebar">${h.id + 1}</div><div class="lane-bg-name">${h.name}</div><div id="h-${h.id}" class="horse-sprite" style="left: 30px;"><span class="horse-emoji">🐎</span></div></div>`).join('')}
                     </div>
                 </div>
             `;
@@ -459,10 +620,10 @@
                 <h2 style="font-size:1.2rem; margin:20px 0; border-bottom:2px solid var(--primary);">着順確定</h2>
                 <div style="margin-bottom:30px;">
                     ${state.winners.map((w, i) => `
-                        <div class="reveal-item" style="animation-delay:${i*0.6}s; background:white; border:2px solid var(--primary); padding:15px; margin:10px auto; max-width:400px; display:flex; align-items:center; gap:15px;">
-                            <span style="font-size:2rem;">${i==0?'🥇':i==1?'🥈':'🥉'}</span>
+                        <div class="reveal-item" style="animation-delay:${i * 0.6}s; background:white; border:2px solid var(--primary); padding:15px; margin:10px auto; max-width:400px; display:flex; align-items:center; gap:15px;">
+                            <span style="font-size:2rem;">${i == 0 ? '🥇' : i == 1 ? '🥈' : '🥉'}</span>
                             <div style="text-align:left;">
-                                <div style="font-size:0.8rem; font-weight:bold;">${i+1}着：${w.id+1}番</div>
+                                <div style="font-size:0.8rem; font-weight:bold;">${i + 1}着：${w.id + 1}番</div>
                                 <div style="font-size:1.4rem; font-weight:900;">${w.name}</div>
                             </div>
                         </div>
@@ -525,9 +686,9 @@
                 <div class="payout-card">
                     <div style="display:flex; justify-content:space-around; gap:8px;">
                         ${state.winners.map((w, i) => `
-                            <div style="border:2px solid var(--primary); padding:8px; background:${i==0?'#fffde7':'white'}; flex:1; display:flex; flex-direction:column; align-items:center;">
-                                <div style="font-size:0.75rem;">${i+1}着</div>
-                                <div style="font-size:2rem; font-weight:900; line-height: 1;">${w.id+1}番</div>
+                            <div style="border:2px solid var(--primary); padding:8px; background:${i == 0 ? '#fffde7' : 'white'}; flex:1; display:flex; flex-direction:column; align-items:center;">
+                                <div style="font-size:0.75rem;">${i + 1}着</div>
+                                <div style="font-size:2rem; font-weight:900; line-height: 1;">${w.id + 1}番</div>
                                 <div style="font-size:0.65rem; white-space:nowrap; overflow:hidden; width:100%; text-align:center;">${w.name}</div>
                                 <div style="margin-top:8px; font-size:1.1rem; font-weight:900; color:var(--accent);">${state.payoutMode.dist[i]}枠</div>
                             </div>
@@ -548,4 +709,5 @@
         });
     </script>
 </body>
+
 </html>
