@@ -37,6 +37,21 @@
             text-align: center;
         }
 
+        .main-image {
+            width: 100%;
+            max-width: 320px;
+            height: auto;
+            margin: 0 auto 10px auto;
+            display: block;
+        }
+
+        .image-fallback {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin: 20px 0;
+            color: var(--primary);
+        }
+
         .btn {
             display: inline-block;
             cursor: pointer;
@@ -105,11 +120,6 @@
             padding-left: 8px;
             margin: 15px 0 5px;
             font-size: 1rem;
-        }
-
-        .guide-text ul {
-            padding-left: 20px;
-            margin: 5px 0;
         }
 
         .setup-card {
@@ -189,21 +199,29 @@
             border-color: var(--accent);
         }
 
+        /* ファンファーレ画面：背景サイズを「一回り小さく(40%)」調整 */
         .fanfare-screen {
-            background: var(--primary);
+            background-color: var(--primary);
+            background-image: linear-gradient(rgba(62, 39, 35, 0.8), rgba(62, 39, 35, 0.8)), url('images/uma.png');
+            background-size: 40%;
+            background-position: center;
+            background-repeat: no-repeat;
             color: white;
             height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            text-align: center;
         }
 
         .fanfare-timer {
-            font-size: 5rem;
+            font-size: 6rem;
             font-weight: 900;
-            margin: 20px 0;
+            margin: 10px 0;
             color: var(--gold);
+            text-shadow: 4px 4px 10px rgba(0,0,0,0.8);
+            z-index: 10;
         }
 
         .race-screen {
@@ -329,7 +347,6 @@
             background: #fffde7;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 
 <body>
@@ -365,6 +382,7 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         const sounds = {
             fanfare: new Audio('sounds/1.mp3'),
@@ -450,12 +468,15 @@
 
             if (state.gameState === 'mode_select') {
                 container.innerHTML = `
-                    <h1 style="font-weight:900; font-size:1.5rem; margin:30px 0;">第26回 丙午杯ダービー</h1>
-                    <p style="margin-bottom: 50px;">伝統と栄光のレースが今、始まる。</p>
-                    <div style="margin-top:40px; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                    <h1 style="font-weight:900; font-size:1.5rem; margin:30px 0 10px 0;">第26回 丙午杯ダービー</h1>
+                    <div id="main-image-container">
+                        <img src="images/uma.png" alt="競馬ロゴ" class="main-image" onerror="showFallbackText(this)">
+                    </div>
+                    <p style="margin: 10px 0 30px 0; font-weight: bold;">伝統と栄光のレースが今、始まる。</p>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
                         <div onclick="initHost()" class="btn btn-primary">冠主として開催</div>
                         <div onclick="openGuide()" class="btn btn-outline" style="font-size: 0.8rem; border-color: #ccc;">使い方ガイド</div>
-                        <p style="font-size: 0.8rem; color: #666; margin-top: 20px;">※音響効果がなりますご注意ください。</p>
+                        <p style="font-size: 0.8rem; color: #666; margin-top: 20px;">※音響効果が鳴ります。ご注意ください。</p>
                     </div>
                 `;
             }
@@ -516,6 +537,11 @@
             app.appendChild(container);
         }
 
+        function showFallbackText(img) {
+            const container = img.parentElement;
+            container.innerHTML = '<div class="image-fallback">競馬ロゴ</div>';
+        }
+
         function openGuide() { document.getElementById('guide-modal').style.display = 'flex'; }
         function closeGuide() { document.getElementById('guide-modal').style.display = 'none'; }
 
@@ -573,9 +599,9 @@
         function renderPreRace(app) {
             app.innerHTML = `
                 <div class="fanfare-screen">
-                    <div style="font-size:1.2rem; font-weight:bold;">出走準備中...</div>
+                    <div style="font-size:1.5rem; font-weight:bold; text-shadow: 2px 2px 4px #000; z-index:10;">出走まで...</div>
                     <div class="fanfare-timer">${state.countdown}</div>
-                    <div style="font-size:0.9rem;">♪ ファンファーレ再生中</div>
+                    <div style="font-size:0.9rem; opacity: 0.8; z-index:10;">伝統と栄光のファンファーレ</div>
                 </div>
             `;
         }
@@ -726,8 +752,8 @@
                 state.seed = s; 
                 state.playerCount = c; 
                 state.payoutScenarioIdx = p;
-                state.isHost = false; // ゲストとして参加
-                state.gameState = 'host_setup'; // 直接準備（馬券購入）画面へ
+                state.isHost = false; 
+                state.gameState = 'host_setup'; 
             }
             initHorseNames(state.playerCount); 
             render();

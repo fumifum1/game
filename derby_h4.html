@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第26回 丙午杯ダービー</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/fumifum1/main/main/jpg/ico.ico">
+    <style>
+        :root {
+            --primary: #3e2723;
+            --bg-paper: #f4e7d3;
+            --accent: #8b0000;
+            --track-light: #8d6e63;
+            --track-dark: #5d4037;
+            --success: #2e7d32;
+            --gold: #ffd700;
+            --info: #0277bd;
+            --btn-border: #3e2723;
+        }
+
+        body {
+            font-family: "serif", "YuMincho", "Yu Mincho", "MS Mincho", serif;
+            background-color: var(--bg-paper);
+            color: var(--primary);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            border: 4px solid var(--primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* ハンバーガーメニューのスタイル */
+        .hamburger {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 2000;
+            cursor: pointer;
+            background: var(--primary);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            border-radius: 4px;
+            border: 2px solid var(--bg-paper);
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        #menu-content {
+            position: fixed;
+            top: 60px;
+            right: 15px;
+            background: white;
+            border: 2px solid var(--primary);
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.2);
+            z-index: 1999;
+            padding: 10px 0;
+            min-width: 150px;
+            display: none;
+        }
+
+        #menu-content.active {
+            display: block;
+        }
+
+        #menu-content ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #menu-content li a {
+            display: block;
+            padding: 10px 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        #menu-content li a:hover {
+            background: var(--bg-paper);
+        }
+
+        /* メインコンテンツエリア */
+        #app {
+            flex: 1;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .main-image {
+            width: 100%;
+            max-width: 320px;
+            height: auto;
+            margin: 0 auto 10px auto;
+            display: block;
+        }
+
+        .btn {
+            display: inline-block;
+            cursor: pointer;
+            font-weight: 900;
+            border: 2px solid var(--primary);
+            padding: 8px 16px;
+            margin: 5px;
+            background: white;
+            font-size: 0.9rem;
+            user-select: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--success);
+            color: white;
+            padding: 12px 30px;
+            font-size: 1rem;
+            box-shadow: 3px 3px 0px #1b5e20;
+        }
+
+        /* フッターのスタイル */
+        footer {
+            background: var(--primary);
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            padding: 10px;
+            font-size: 11px;
+            border-top: 2px solid var(--primary);
+            letter-spacing: 0.5px;
+        }
+
+        footer a {
+            color: var(--gold);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* モーダル関連 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #fff;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            border: 2px solid #333;
+            text-align: center;
+            box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* レース画面関連 */
+        .fanfare-screen {
+            background-color: var(--primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+        }
+
+        .fanfare-timer {
+            font-size: 6rem;
+            font-weight: 900;
+            color: var(--gold);
+        }
+
+        .race-screen {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .track-area {
+            flex: 1;
+            background-color: var(--track-dark);
+            position: relative;
+        }
+
+        .lane {
+            position: relative;
+            height: 35px;
+            background: var(--track-light);
+            border-bottom: 1px solid var(--track-dark);
+            display: flex;
+            align-items: center;
+        }
+
+        .lane-sidebar {
+            width: 30px;
+            height: 100%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .lane-bg-name {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-weight: 900;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+        }
+
+        .horse-sprite {
+            position: absolute;
+            transition: left 0.1s linear;
+        }
+
+        .horse-emoji {
+            font-size: 24px;
+            transform: scaleX(-1);
+            display: block;
+        }
+
+        .setup-card {
+            background: white;
+            border: 2px solid var(--primary);
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .prediction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .prediction-num {
+            border: 2px solid var(--primary);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: 900;
+        }
+
+        .prediction-num.selected {
+            background: var(--accent);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ハンバーガーメニュー -->
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <nav id="menu-content">
+        <ul>
+            <li><a href="../main/index.html">Profile</a></li>
+            <li><a href="https://fumifum1.github.io/main/game.html">Game</a></li>
+            <li style="border-top: 1px solid var(--btn-border); margin: 4px 0;"></li>
+            <li><a href="#" onclick="toggleHelp(); return false;">使い方ガイド</a></li>
+        </ul>
+    </nav>
+
+    <div id="app"></div>
+
+    <!-- フッター -->
+    <footer>
+        &copy; 2026 Synapse Creations. derby race game_ver4.0.1 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+    </footer>
+
+    <!-- 使い方ガイド -->
+    <div id="guide-modal" class="modal-overlay" onclick="toggleHelp()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2>遊び方ガイド</h2>
+            <div style="text-align: left; font-size: 0.85rem;">
+                <p>1. 開催準備：頭数を選びます。</p>
+                <p>2. 馬券購入：予想する番号を選びます。</p>
+                <p>3. 出走開始：迫力のレースを観戦！</p>
+            </div>
+            <div onclick="toggleHelp()" class="btn btn-primary" style="margin-top: 10px;">閉じる</div>
+        </div>
+    </div>
+
+    <!-- 馬券モーダル -->
+    <div id="ticket-modal" class="modal-overlay" onclick="closeTicketModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div id="ticket-num" style="font-size: 3rem; font-weight: 900;">00</div>
+            <div id="ticket-name" style="font-size: 1.2rem; margin: 10px 0;">---</div>
+            <div onclick="startPreRaceSequence()" class="btn btn-primary">出走開始</div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        function toggleMenu() {
+            document.getElementById('menu-content').classList.toggle('active');
+        }
+
+        function toggleHelp() {
+            const modal = document.getElementById('guide-modal');
+            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+            document.getElementById('menu-content').classList.remove('active');
+        }
+
+        const sounds = {
+            fanfare: new Audio('sounds/1.mp3'),
+            gateOpen: new Audio('sounds/2.mp3'),
+            running: new Audio('sounds/3.mp3'),
+            applause: new Audio('sounds/sound4.mp3')
+        };
+        sounds.running.loop = true;
+
+        function playSound(key) {
+            try { sounds[key].currentTime = 0; sounds[key].play().catch(() => {}); } catch (e) {}
+        }
+
+        let state = {
+            gameState: 'mode_select',
+            isHost: false,
+            seed: Math.floor(Math.random() * 1000000),
+            playerCount: 15,
+            myPrediction: null,
+            horses: [],
+            winners: [],
+            horseNames: [],
+            countdown: 7
+        };
+
+        function initHorseNames(count) {
+            const prefixes = ["サくら", "メジロ", "トウカイ", "シンボリ"];
+            const suffixes = ["バクシンオー", "マックイーン", "テイオー"];
+            state.horseNames = Array.from({ length: count }, (_, i) => 
+                prefixes[Math.floor(Math.random() * prefixes.length)] + suffixes[Math.floor(Math.random() * suffixes.length)]
+            );
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = '';
+            const container = document.createElement('div');
+            container.className = "container";
+
+            if (state.gameState === 'mode_select') {
+                container.innerHTML = `
+                    <h1 style="margin:30px 0;">第26回 丙午杯ダービー</h1>
+                    <img src="images/uma.png" alt="競馬ロゴ" class="main-image" onerror="this.style.display='none'">
+                    <div onclick="startAsHost()" class="btn btn-primary">冠主として開催</div>
+                `;
+            } else if (state.gameState === 'host_setup') {
+                container.innerHTML = `
+                    <h2>開催準備</h2>
+                    <div class="setup-card">
+                        <span style="font-weight:bold;">出走頭数</span>
+                        <select onchange="state.playerCount=Number(this.value); initHorseNames(state.playerCount); render();" style="width:100%; margin-top:5px;">
+                            ${Array.from({ length: 16 }, (_, i) => i + 5).map(n => `<option value="${n}" ${n==state.playerCount?'selected':''}>${n}頭</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="setup-card">
+                        <span style="font-weight:bold;">予想馬券</span>
+                        <div class="prediction-grid">
+                            ${state.horseNames.map((_, i) => `<div onclick="selectPrediction(${i})" class="prediction-num ${state.myPrediction===i?'selected':''}">${i+1}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (state.gameState === 'pre_race') {
+                app.innerHTML = `<div class="fanfare-screen"><div style="font-size:1.5rem;">出走まで...</div><div class="fanfare-timer">${state.countdown}</div></div>`;
+                return;
+            } else if (state.gameState === 'racing') {
+                renderRacing(app); return;
+            } else if (state.gameState === 'reveal_ranks') {
+                container.innerHTML = `<h2>レース結果</h2>${state.winners.map((w, i) => `<div style="background:white; border:2px solid var(--primary); padding:10px; margin:5px 0;">${i+1}着：${w.id+1}番 ${w.name}</div>`).join('')}<div onclick="location.reload()" class="btn btn-primary" style="margin-top:20px;">トップに戻る</div>`;
+            }
+
+            app.appendChild(container);
+        }
+
+        function startAsHost() {
+            state.isHost = true;
+            state.gameState = 'host_setup';
+            initHorseNames(state.playerCount);
+            render();
+        }
+
+        function selectPrediction(idx) {
+            state.myPrediction = idx;
+            document.getElementById('ticket-num').innerText = (idx + 1).toString().padStart(2, '0');
+            document.getElementById('ticket-name').innerText = state.horseNames[idx];
+            document.getElementById('ticket-modal').style.display = 'flex';
+        }
+
+        function closeTicketModal() { document.getElementById('ticket-modal').style.display = 'none'; render(); }
+
+        function startPreRaceSequence() {
+            closeTicketModal();
+            state.gameState = 'pre_race';
+            state.countdown = 7;
+            render();
+            playSound('fanfare');
+            const timer = setInterval(() => {
+                state.countdown--;
+                if (state.countdown <= 0) { clearInterval(timer); startRace(); } else render();
+            }, 1000);
+        }
+
+        function startRace() {
+            state.gameState = 'racing';
+            playSound('gateOpen');
+            setTimeout(() => playSound('running'), 200);
+            state.horses = Array.from({ length: state.playerCount }, (_, i) => ({
+                id: i, name: state.horseNames[i], position: 0,
+                speed: Math.random() * 0.2 + 0.2, finished: false
+            }));
+            render();
+            requestAnimationFrame(raceLoop);
+        }
+
+        function raceLoop() {
+            if (state.gameState !== 'racing') return;
+            let allFinished = true;
+            state.horses.forEach(h => {
+                if (!h.finished) {
+                    h.position += h.speed + (Math.random() * 0.1);
+                    if (h.position >= 100) { h.position = 100; h.finished = true; }
+                    allFinished = false;
+                }
+                const el = document.getElementById(`h-${h.id}`);
+                if (el) el.style.left = `calc(30px + ${h.position * 0.85}%)`;
+            });
+            if (allFinished) {
+                sounds.running.pause();
+                playSound('applause');
+                state.winners = [...state.horses].sort((a, b) => b.speed - a.speed).slice(0, 3);
+                state.gameState = 'reveal_ranks';
+                setTimeout(render, 1000);
+            } else requestAnimationFrame(raceLoop);
+        }
+
+        function renderRacing(app) {
+            app.innerHTML = `
+                <div class="race-screen">
+                    <div class="track-area">
+                        ${state.horses.map(h => `<div class="lane"><div class="lane-sidebar">${h.id+1}</div><div class="lane-bg-name">${h.name}</div><div id="h-${h.id}" class="horse-sprite" style="left:30px;"><span class="horse-emoji">🐎</span></div></div>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.addEventListener('load', render);
+    </script>
+</body>
+
+</html>
