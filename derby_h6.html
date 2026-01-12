@@ -294,7 +294,7 @@
     </div>
 
     <footer>
-        &copy; 2026 Synapse Creations. derby race game_ver6.1.1 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+        &copy; 2026 Synapse Creations. derby race game_ver6.0.1 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -356,6 +356,7 @@
             myPrediction: null,
             horses: [],
             winners: [],
+            allFinishedRanks: [],
             payoutMode: null,
             horseNames: [],
             isLotterySpinning: false,
@@ -545,7 +546,9 @@
             });
             if (allFinished) {
                 stopSound('running'); playSound('applause');
-                state.winners = [...state.horses].sort((a, b) => b.baseSpeed - a.baseSpeed).slice(0, 3);
+                // 全着順を確定させる
+                state.allFinishedRanks = [...state.horses].sort((a, b) => b.baseSpeed - a.baseSpeed);
+                state.winners = state.allFinishedRanks.slice(0, 3);
                 state.gameState = 'reveal_ranks';
                 setTimeout(render, 500);
             } else { requestAnimationFrame(raceLoop); }
@@ -627,21 +630,31 @@
         }
 
         function renderFinished(container) {
-            const isWin = state.myPrediction !== null && state.winners[0].id === state.myPrediction;
+            // 自分の馬が何位だったか計算
+            const myRankIdx = state.allFinishedRanks.findIndex(h => h.id === state.myPrediction);
+            const myRankText = (myRankIdx !== -1) ? `${myRankIdx + 1}着` : "圏外";
+            const isWin = myRankIdx === 0;
+            
+            // 自分の馬が3位以内ならハイライトする用の条件
+            const isPodium = myRankIdx >= 0 && myRankIdx < 3;
+
             container.innerHTML = `
                 <div style="margin-bottom:20px;">
                     <h2 style="font-size:1.8rem; margin:20px 0;">${isWin ? '🎊 予想的中！' : '終幕'}</h2>
-                    <div style="background: white; border: 2px dashed var(--accent); padding: 12px; margin-bottom: 20px; display: inline-block;">
-                        <div style="font-size: 0.75rem; color: var(--accent);">あなたの予想馬券</div>
-                        <div style="font-size: 1.3rem; font-weight: 900;">${state.myPrediction + 1}番 ${state.horseNames[state.myPrediction]}</div>
+                    
+                    <div style="background: white; border: 2px dashed ${isPodium ? 'var(--success)' : 'var(--accent)'}; padding: 12px; margin-bottom: 20px; display: inline-block; min-width: 200px;">
+                        <div style="font-size: 0.75rem; color: #666;">あなたの予想と結果</div>
+                        <div style="font-size: 1.3rem; font-weight: 900; margin: 4px 0;">${state.myPrediction + 1}番 ${state.horseNames[state.myPrediction]}</div>
+                        <div style="font-size: 1.1rem; font-weight: 900; color: ${isPodium ? 'var(--success)' : 'var(--accent)'};">最終：${myRankText}</div>
                     </div>
-                    <div style="display:flex; justify-content:space-around; gap:8px;">
+
+                    <div style="display:flex; justify-content:center; align-items:stretch; gap:5px; width:100%; box-sizing:border-box;">
                         ${state.winners.map((w, i) => `
-                            <div style="border:2px solid var(--primary); padding:8px; background:${i == 0 ? '#fffde7' : 'white'}; flex:1; display:flex; flex-direction:column; align-items:center;">
-                                <div style="font-size:0.75rem;">${i + 1}着</div>
-                                <div style="font-size:2rem; font-weight:900; line-height: 1;">${w.id + 1}番</div>
-                                <div style="font-size:1rem; white-space:nowrap; overflow:hidden; width:100%; text-align:center;">${w.name}</div>
-                                <div style="margin-top:8px; font-size:2rem; font-weight:900; color:var(--accent); line-height: 1.2;">${state.payoutMode.dist[i]} / ${state.playerCount}</div>
+                            <div style="border:2px solid var(--primary); padding:8px 4px; background:${i == 0 ? '#fffde7' : 'white'}; width: 33.3%; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:space-between; min-width:0;">
+                                <div style="font-size:0.7rem; font-weight:bold;">${i + 1}着</div>
+                                <div style="font-size:1.8rem; font-weight:900; line-height: 1; margin: 4px 0;">${w.id + 1}番</div>
+                                <div style="font-size:0.65rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">${w.name}</div>
+                                <div style="margin-top:6px; font-size:1.5rem; font-weight:900; color:var(--accent); line-height: 1.1;">${state.payoutMode.dist[i]}/${state.playerCount}</div>
                             </div>
                         `).join('')}
                     </div>
