@@ -294,7 +294,7 @@
     </div>
 
     <footer>
-        &copy; 2026 Synapse Creations. derby race game_ver6.0.1 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+        &copy; 2026 Synapse Creations. derby race game_ver6.1.1 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -367,7 +367,6 @@
             for (let i = 0; i < count; i++) {
                 if (asHost) {
                     const existing = state.horseNames[i];
-                    // 修正の鍵：既存が「参加者N」形式なら強制的にランダム名で上書きする
                     if (!existing || existing.startsWith('参加者')) {
                         newNames.push(generateHorseName(i));
                     } else {
@@ -641,8 +640,8 @@
                             <div style="border:2px solid var(--primary); padding:8px; background:${i == 0 ? '#fffde7' : 'white'}; flex:1; display:flex; flex-direction:column; align-items:center;">
                                 <div style="font-size:0.75rem;">${i + 1}着</div>
                                 <div style="font-size:2rem; font-weight:900; line-height: 1;">${w.id + 1}番</div>
-                                <div style="font-size:0.65rem; white-space:nowrap; overflow:hidden; width:100%; text-align:center;">${w.name}</div>
-                                <div style="margin-top:8px; font-size:1.1rem; font-weight:900; color:var(--accent);">${state.payoutMode.dist[i]}枠</div>
+                                <div style="font-size:1rem; white-space:nowrap; overflow:hidden; width:100%; text-align:center;">${w.name}</div>
+                                <div style="margin-top:8px; font-size:2rem; font-weight:900; color:var(--accent); line-height: 1.2;">${state.payoutMode.dist[i]} / ${state.playerCount}</div>
                             </div>
                         `).join('')}
                     </div>
