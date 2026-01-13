@@ -242,6 +242,25 @@
 
         .lottery-box { background: #e0e0e0; border: 4px solid var(--primary); padding: 20px; font-size: 1.5rem; font-weight: 900; margin: 20px 0; transition: background 0.3s; }
         .lottery-box.active { background: #fffde7; }
+        
+        .guest-notice {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #e65100;
+            font-weight: bold;
+            line-height: 1.4;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 
@@ -294,7 +313,7 @@
     </div>
 
     <footer>
-        &copy; 2026 Synapse Creations. derby race game_ver6.0.1 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+        &copy; 2026 Synapse Creations. derby race game_ver6.2.2 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -472,6 +491,11 @@
             render(); 
         }
 
+        function resetAsNewHost() {
+            // クエリパラメータを削除してリロード
+            window.location.href = window.location.pathname;
+        }
+
         function handleCountChange(val) { 
             state.playerCount = Number(val); 
             initHorseNames(state.playerCount, state.isHost); 
@@ -546,7 +570,6 @@
             });
             if (allFinished) {
                 stopSound('running'); playSound('applause');
-                // 全着順を確定させる
                 state.allFinishedRanks = [...state.horses].sort((a, b) => b.baseSpeed - a.baseSpeed);
                 state.winners = state.allFinishedRanks.slice(0, 3);
                 state.gameState = 'reveal_ranks';
@@ -630,12 +653,9 @@
         }
 
         function renderFinished(container) {
-            // 自分の馬が何位だったか計算
             const myRankIdx = state.allFinishedRanks.findIndex(h => h.id === state.myPrediction);
             const myRankText = (myRankIdx !== -1) ? `${myRankIdx + 1}着` : "圏外";
             const isWin = myRankIdx === 0;
-            
-            // 自分の馬が3位以内ならハイライトする用の条件
             const isPodium = myRankIdx >= 0 && myRankIdx < 3;
 
             container.innerHTML = `
@@ -659,7 +679,18 @@
                         `).join('')}
                     </div>
                 </div>
-                <div onclick="location.reload()" class="btn btn-primary" style="margin-top:25px;">新しいレース</div>
+
+                <div class="btn-group">
+                    ${state.isHost ? `
+                        <div onclick="location.reload()" class="btn btn-primary">冠主（ホスト）として次を開催</div>
+                    ` : `
+                        <div class="guest-notice">
+                            再度レースを楽しむには、<br>ホストから新しいQRコードを<br>受け取ってください。
+                        </div>
+                        <div onclick="resetAsNewHost()" class="btn btn-primary">自分が冠主（ホスト）になって開催</div>
+                    `}
+                    <div onclick="window.location.href='https://fumifum1.github.io/main/game.html'" class="btn btn-outline" style="font-size:0.8rem;">他のゲームで遊ぶ</div>
+                </div>
             `;
         }
 
