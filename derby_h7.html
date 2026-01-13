@@ -246,13 +246,20 @@
         .guest-notice {
             background: #fff3e0;
             border: 2px solid #ff9800;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
-            margin-top: 25px;
-            font-size: 0.9rem;
+            margin-top: 15px;
+            font-size: 0.85rem;
             color: #e65100;
             font-weight: bold;
-            line-height: 1.5;
+            line-height: 1.4;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -306,7 +313,7 @@
     </div>
 
     <footer>
-        &copy; 2026 Synapse Creations. derby race game_ver6.1.1 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+        &copy; 2026 Synapse Creations. derby race game_ver6.2.2 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -484,6 +491,11 @@
             render(); 
         }
 
+        function resetAsNewHost() {
+            // クエリパラメータを削除してリロード
+            window.location.href = window.location.pathname;
+        }
+
         function handleCountChange(val) { 
             state.playerCount = Number(val); 
             initHorseNames(state.playerCount, state.isHost); 
@@ -558,7 +570,6 @@
             });
             if (allFinished) {
                 stopSound('running'); playSound('applause');
-                // 全着順を確定させる
                 state.allFinishedRanks = [...state.horses].sort((a, b) => b.baseSpeed - a.baseSpeed);
                 state.winners = state.allFinishedRanks.slice(0, 3);
                 state.gameState = 'reveal_ranks';
@@ -668,13 +679,18 @@
                         `).join('')}
                     </div>
                 </div>
-                ${state.isHost ? `
-                    <div onclick="location.reload()" class="btn btn-primary" style="margin-top:25px;">冠主（ホスト）として次を開催</div>
-                ` : `
-                    <div class="guest-notice">
-                        再度レースを楽しむには、<br>ホストから新しいQRコードを<br>受け取ってください。
-                    </div>
-                `}
+
+                <div class="btn-group">
+                    ${state.isHost ? `
+                        <div onclick="location.reload()" class="btn btn-primary">冠主（ホスト）として次を開催</div>
+                    ` : `
+                        <div class="guest-notice">
+                            再度レースを楽しむには、<br>ホストから新しいQRコードを<br>受け取ってください。
+                        </div>
+                        <div onclick="resetAsNewHost()" class="btn btn-primary">自分が冠主（ホスト）になって開催</div>
+                    `}
+                    <div onclick="window.location.href='https://fumifum1.github.io/main/game.html'" class="btn btn-outline" style="font-size:0.8rem;">他のゲームで遊ぶ</div>
+                </div>
             `;
         }
 
