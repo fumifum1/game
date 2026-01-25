@@ -55,9 +55,17 @@
             transition: all 0.3s;
         }
 
-        .hamburger.open span:nth-child(1) { transform: translateY(11px) rotate(45deg); }
-        .hamburger.open span:nth-child(2) { opacity: 0; }
-        .hamburger.open span:nth-child(3) { transform: translateY(-11px) rotate(-45deg); }
+        .hamburger.open span:nth-child(1) {
+            transform: translateY(11px) rotate(45deg);
+        }
+
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.open span:nth-child(3) {
+            transform: translateY(-11px) rotate(-45deg);
+        }
 
         #menu-content {
             position: fixed;
@@ -67,16 +75,33 @@
             height: 100%;
             background-color: var(--bg-paper);
             border-left: 3px solid var(--primary);
-            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
             z-index: 1999;
             transition: right 0.3s;
             padding-top: 60px;
         }
 
-        #menu-content.open { right: 0; }
-        #menu-content ul { list-style: none; padding: 0; margin: 0; }
-        #menu-content li { padding: 15px 20px; border-bottom: 1px solid rgba(62, 39, 35, 0.1); }
-        #menu-content a { text-decoration: none; color: var(--primary); font-weight: bold; display: block; }
+        #menu-content.open {
+            right: 0;
+        }
+
+        #menu-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #menu-content li {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(62, 39, 35, 0.1);
+        }
+
+        #menu-content a {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: bold;
+            display: block;
+        }
 
         footer {
             background-color: var(--primary);
@@ -87,7 +112,10 @@
             margin-top: auto;
         }
 
-        footer a { color: var(--gold); text-decoration: none; }
+        footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
 
         .container {
             max-width: 600px;
@@ -105,7 +133,12 @@
             display: block;
         }
 
-        .image-fallback { font-weight: bold; font-size: 1.2rem; margin: 20px 0; color: var(--primary); }
+        .image-fallback {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin: 20px 0;
+            color: var(--primary);
+        }
 
         .btn {
             display: inline-block;
@@ -128,9 +161,15 @@
             box-shadow: 3px 3px 0px #1b5e20;
         }
 
-        .btn-primary:active { transform: translate(1px, 1px); box-shadow: none; }
+        .btn-primary:active {
+            transform: translate(1px, 1px);
+            box-shadow: none;
+        }
 
-        .btn-outline { background-color: transparent; color: var(--primary); }
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+        }
 
         .modal-overlay {
             position: fixed;
@@ -158,8 +197,18 @@
             overflow-y: auto;
         }
 
-        .guide-text { text-align: left; font-size: 0.85rem; line-height: 1.6; }
-        .guide-text h3 { border-left: 4px solid var(--accent); padding-left: 8px; margin: 15px 0 5px; font-size: 1rem; }
+        .guide-text {
+            text-align: left;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .guide-text h3 {
+            border-left: 4px solid var(--accent);
+            padding-left: 8px;
+            margin: 15px 0 5px;
+            font-size: 1rem;
+        }
 
         .setup-card {
             background: white;
@@ -179,14 +228,64 @@
             display: block;
         }
 
-        .name-input-list { max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 5px; background: #fafafa; }
-        .name-input-item { display: flex; align-items: center; margin-bottom: 5px; gap: 5px; }
-        .name-input-item span { width: 25px; font-weight: bold; font-size: 0.8rem; text-align: center; background: var(--primary); color: white; border-radius: 2px; }
-        .name-input-item input { flex: 1; padding: 5px; border: 1px solid #ccc; font-size: 0.85rem; }
+        .name-input-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 5px;
+            background: #fafafa;
+        }
 
-        .prediction-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; margin: 10px 0; justify-content: center; }
-        .prediction-num { border: 2px solid var(--primary); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; background: white; font-weight: 900; font-size: 1.1rem; transition: all 0.2s; }
-        .prediction-num.selected { background: var(--accent); color: white; border-color: var(--accent); }
+        .name-input-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            gap: 5px;
+        }
+
+        .name-input-item span {
+            width: 25px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-align: center;
+            background: var(--primary);
+            color: white;
+            border-radius: 2px;
+        }
+
+        .name-input-item input {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ccc;
+            font-size: 0.85rem;
+        }
+
+        .prediction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+            gap: 8px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+
+        .prediction-num {
+            border: 2px solid var(--primary);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: white;
+            font-weight: 900;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .prediction-num.selected {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
 
         .fanfare-screen {
             background-color: var(--primary);
@@ -203,15 +302,73 @@
             text-align: center;
         }
 
-        .fanfare-timer { font-size: 6rem; font-weight: 900; margin: 10px 0; color: var(--gold); text-shadow: 4px 4px 10px rgba(0,0,0,0.8); z-index: 10; }
+        .fanfare-timer {
+            font-size: 6rem;
+            font-weight: 900;
+            margin: 10px 0;
+            color: var(--gold);
+            text-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+            z-index: 10;
+        }
 
-        .race-screen { height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-        .race-header { background: var(--primary); color: var(--bg-paper); padding: 5px 0; text-align: center; z-index: 100; border-bottom: 2px solid #000; }
-        .my-ticket-badge { background: #fff; color: var(--primary); padding: 2px 12px; display: inline-block; margin-top: 2px; font-size: 0.85rem; font-weight: 900; border: 1px solid #000; border-radius: 20px; }
+        .race-screen {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
 
-        .track-area { flex: 1; background-color: var(--track-dark); overflow-y: auto; position: relative; }
-        .lane { position: relative; height: 35px; background: var(--track-light); border-bottom: 1px solid var(--track-dark); display: flex; align-items: center; }
-        .lane-sidebar { width: 30px; height: 100%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; z-index: 40; font-size: 0.75rem; font-weight: bold; }
+        .race-header {
+            background: var(--primary);
+            color: var(--bg-paper);
+            padding: 5px 0;
+            text-align: center;
+            z-index: 100;
+            border-bottom: 2px solid #000;
+        }
+
+        .my-ticket-badge {
+            background: #fff;
+            color: var(--primary);
+            padding: 2px 12px;
+            display: inline-block;
+            margin-top: 2px;
+            font-size: 0.85rem;
+            font-weight: 900;
+            border: 1px solid #000;
+            border-radius: 20px;
+        }
+
+        .track-area {
+            flex: 1;
+            background-color: var(--track-dark);
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .lane {
+            position: relative;
+            height: 35px;
+            background: var(--track-light);
+            border-bottom: 1px solid var(--track-dark);
+            display: flex;
+            align-items: center;
+        }
+
+        .lane-sidebar {
+            width: 30px;
+            height: 100%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
         .lane-bg-name {
             position: absolute;
             left: 50%;
@@ -229,20 +386,61 @@
             border-radius: 10px;
         }
 
-        .horse-sprite { position: absolute; z-index: 50; transition: left 0.1s linear; display: flex; align-items: center; }
-        .horse-emoji { font-size: 24px; transform: scaleX(-1); filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5)); }
+        .horse-sprite {
+            position: absolute;
+            z-index: 50;
+            transition: left 0.1s linear;
+            display: flex;
+            align-items: center;
+        }
 
-        .goal-line { position: absolute; right: 0; top: 0; bottom: 0; width: 30px; border-left: 2px dashed white; background: rgba(255, 255, 255, 0.05); z-index: 20; }
+        .horse-emoji {
+            font-size: 24px;
+            transform: scaleX(-1);
+            filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5));
+        }
+
+        .goal-line {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            border-left: 2px dashed white;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 20;
+        }
 
         @keyframes stamp {
-            0% { transform: scale(3); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .reveal-item { animation: stamp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+            0% {
+                transform: scale(3);
+                opacity: 0;
+            }
 
-        .lottery-box { background: #e0e0e0; border: 4px solid var(--primary); padding: 20px; font-size: 1.5rem; font-weight: 900; margin: 20px 0; transition: background 0.3s; }
-        .lottery-box.active { background: #fffde7; }
-        
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .reveal-item {
+            animation: stamp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .lottery-box {
+            background: #e0e0e0;
+            border: 4px solid var(--primary);
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin: 20px 0;
+            transition: background 0.3s;
+        }
+
+        .lottery-box.active {
+            background: #fffde7;
+        }
+
         .guest-notice {
             background: #fff3e0;
             border: 2px solid #ff9800;
@@ -302,7 +500,8 @@
 
     <div id="ticket-modal" class="modal-overlay" onclick="closeModalForce()">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <div style="border-bottom: 2px solid #333; display: flex; justify-content: space-between; font-weight: bold; font-size: 0.7rem; padding-bottom: 5px; margin-bottom: 15px;">
+            <div
+                style="border-bottom: 2px solid #333; display: flex; justify-content: space-between; font-weight: bold; font-size: 0.7rem; padding-bottom: 5px; margin-bottom: 15px;">
                 <span>第26回 丙午杯ダービー</span>
                 <span>単勝</span>
             </div>
@@ -313,7 +512,8 @@
     </div>
 
     <footer>
-        &copy; 2026 Synapse Creations. derby race game_ver6.2.2 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+        &copy; 2026 Synapse Creations. derby race game_ver6.5.2 <a
+            href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -336,8 +536,8 @@
         };
         sounds.running.loop = true;
 
-        function playSound(key) { try { sounds[key].currentTime = 0; sounds[key].play().catch(() => {}); } catch (e) {} }
-        function stopSound(key) { try { sounds[key].pause(); sounds[key].currentTime = 0; } catch (e) {} }
+        function playSound(key) { try { sounds[key].currentTime = 0; sounds[key].play().catch(() => { }); } catch (e) { } }
+        function stopSound(key) { try { sounds[key].pause(); sounds[key].currentTime = 0; } catch (e) { } }
 
         const LEGEND_HORSES = ["ディープインパクト", "オグリキャップ", "トウカイテイオー", "サイレンススズカ", "ナリタブライアン", "エルコンドルパサー", "シンボリルドルフ", "ウォッカ", "ダイワスカーレット", "ゴールドシップ", "キタサンブラック", "アーモンドアイ", "コントレイル", "イクイノックス"];
         const HORSE_PREFIXES = ["サクラ", "メジロ", "トウカイ", "シンボリ", "ダイワ", "マチカネ", "アグネス", "マンハッタン", "アドマイヤ", "スマート", "ゴールド", "キング", "ナリタ"];
@@ -375,11 +575,34 @@
             myPrediction: null,
             horses: [],
             winners: [],
+            finishOrder: [], // 実際にゴールした順序
             allFinishedRanks: [],
             payoutMode: null,
             horseNames: [],
             isLotterySpinning: false,
-            countdown: 7
+            payoutScenarioIdx: Math.floor(Math.random() * PAYOUT_SCENARIOS.length),
+            myPrediction: null,
+            horses: [],
+            winners: [],
+            finishOrder: [], // 実際にゴールした順序
+            allFinishedRanks: [],
+            payoutMode: null,
+            horseNames: [],
+            isLotterySpinning: false,
+            countdown: 7,
+            payoutScenarioIdx: Math.floor(Math.random() * PAYOUT_SCENARIOS.length),
+            myPrediction: null,
+            horses: [],
+            winners: [],
+            finishOrder: [], // 実際にゴールした順序
+            allFinishedRanks: [],
+            payoutMode: null,
+            horseNames: [],
+            isLotterySpinning: false,
+            countdown: 7,
+            hostMode: 'random', // 'random' or 'master'
+            riggedWinnerId: -1, // -1 means random, otherwise horse ID
+            customRatios: null // [r1, r2, r3] percentages
         };
 
         function initHorseNames(count, asHost) {
@@ -414,14 +637,56 @@
                     </div>
                     <p style="margin: 10px 0 30px 0; font-weight: bold;">伝統と栄光のレースが今、始まる。</p>
                     <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
-                        <div onclick="initHost()" class="btn btn-primary">冠主として開催</div>
+                        <div onclick="showModeSelectModal()" class="btn btn-primary">冠主として開催</div>
                         <div onclick="openGuide()" class="btn btn-outline" style="font-size: 0.8rem; border-color: #ccc;">使い方ガイド</div>
                         <p style="font-size: 0.8rem; color: #666; margin-top: 20px;">※音響効果が鳴ります。ご注意ください。</p>
                     </div>
                 `;
             }
             else if (state.gameState === 'host_setup') {
-                const headerText = state.isHost ? "開催準備" : "準備完了（ゲスト参加中）";
+                const headerText = state.isHost ? (state.hostMode === 'master' ? "開催準備（支配人モード）" : "開催準備") : "準備完了（ゲスト参加中）";
+                const predictionSection = (state.isHost && state.hostMode === 'master') ? `
+                    <div class="setup-card">
+                        <span class="section-title">レース結果の操作（支配人権限）</span>
+                        <div style="margin-bottom:10px;">
+                            <div style="font-size:0.8rem; font-weight:bold;">勝利させる馬</div>
+                            <select onchange="updateRiggedWinner(this.value)" style="width:100%; padding:8px;">
+                                <option value="-1">ランダム（操作なし）</option>
+                                ${state.horseNames.map((n, i) => `<option value="${i}" ${state.riggedWinnerId == i ? 'selected' : ''}>${i + 1}: ${n}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <div style="font-size:0.8rem; font-weight:bold;">配当パターン</div>
+                            <select id="payout-select" onchange="updateRiggedPayout(this.value)" style="width:100%; padding:8px;">
+                                ${PAYOUT_SCENARIOS.map((s, i) => `<option value="${i}" ${state.payoutScenarioIdx == i ? 'selected' : ''}>${s.name}</option>`).join('')}
+                            </select>
+                            
+                            <div style="margin-top:10px; background:#f5f5f5; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                <div style="font-size:0.75rem; font-weight:bold; margin-bottom:5px;">配当割合の調整（合計100%になるように設定）</div>
+                                <div style="display:flex; gap:5px; align-items:center;">
+                                    <div style="flex:1;"><span style="font-size:0.7rem;">1着</span><input type="number" id="ratio-0" value="${(state.customRatios || getScenarioRatios(state.payoutScenarioIdx))[0]}" onchange="updateCustomRatio(0, this.value)" style="width:100%; padding:4px;"></div>
+                                    <div style="flex:1;"><span style="font-size:0.7rem;">2着</span><input type="number" id="ratio-1" value="${(state.customRatios || getScenarioRatios(state.payoutScenarioIdx))[1]}" onchange="updateCustomRatio(1, this.value)" style="width:100%; padding:4px;"></div>
+                                    <div style="flex:1;"><span style="font-size:0.7rem;">3着</span><input type="number" id="ratio-2" value="${(state.customRatios || getScenarioRatios(state.payoutScenarioIdx))[2]}" onchange="updateCustomRatio(2, this.value)" style="width:100%; padding:4px;"></div>
+                                </div>
+                                <div id="ratio-error" style="color:red; font-size:0.7rem; font-weight:bold; margin-top:5px; display:none;">合計が100%になっていません！</div>
+                            </div>
+                        </div>
+                        <div id="start-btn-host" onclick="startPreRaceSequence()" class="btn btn-primary" style="margin-top:15px; width:90%;">出走開始（支配人）</div>
+                    </div>
+                ` : `
+                    <div class="setup-card">
+                        <span class="section-title">馬券の購入（予想馬券の選択）</span>
+                        <div class="prediction-grid">
+                            ${state.horseNames.map((_, i) => `
+                                <div onclick="selectPrediction(${i})" class="prediction-num ${state.myPrediction === i ? 'selected' : ''}">
+                                    ${i + 1}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <p style="font-size:0.8rem; color:#666; text-align:center; margin-top:10px;">勝ち馬の番号をタップしてください</p>
+                    </div>
+                `;
+
                 container.innerHTML = `
                     <h2 style="font-size:1.2rem; margin-bottom:15px;">${headerText}</h2>
                     ${state.isHost ? `
@@ -448,17 +713,7 @@
                         <p style="font-size:0.9rem; margin:0;">${state.playerCount}頭立てのレースに参加しました。</p>
                     </div>
                     `}
-                    <div class="setup-card">
-                        <span class="section-title">馬券の購入（予想馬券の選択）</span>
-                        <div class="prediction-grid">
-                            ${state.horseNames.map((_, i) => `
-                                <div onclick="selectPrediction(${i})" class="prediction-num ${state.myPrediction === i ? 'selected' : ''}">
-                                    ${i + 1}
-                                </div>
-                            `).join('')}
-                        </div>
-                        <p style="font-size:0.8rem; color:#666; text-align:center; margin-top:10px;">勝ち馬の番号をタップしてください</p>
-                    </div>
+                    ${predictionSection}
                     ${state.isHost ? `
                     <div class="setup-card" style="text-align:center;">
                         <span class="section-title">招待QR（スキャンして参加）</span>
@@ -484,11 +739,94 @@
         function openGuide() { document.getElementById('guide-modal').style.display = 'flex'; }
         function closeGuide() { document.getElementById('guide-modal').style.display = 'none'; }
 
-        function initHost() { 
-            state.isHost = true; 
-            state.gameState = 'host_setup'; 
-            initHorseNames(state.playerCount, true); 
-            render(); 
+        function showModeSelectModal() {
+            const container = document.getElementById('app').querySelector('.container');
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h2 style="margin-bottom:15px;">開催モードの選択</h2>
+                    <div onclick="initHost('random')" class="btn btn-primary" style="width:80%;">通常モード<br><span style="font-size:0.7rem; font-weight:normal;">ランダム対戦・ホストも参加</span></div>
+                    <div onclick="initHost('master')" class="btn btn-primary" style="width:80%; background-color:#5d4037;">支配人モード<br><span style="font-size:0.7rem; font-weight:normal;">結果を操作・ホストは観戦のみ</span></div>
+                    <div onclick="this.parentElement.parentElement.remove()" class="btn btn-outline" style="margin-top:15px;">キャンセル</div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function initHost(mode = 'random') {
+            state.isHost = true;
+            state.hostMode = mode;
+            state.gameState = 'host_setup';
+            // モーダルがあれば消す
+            const modals = document.querySelectorAll('.modal-overlay');
+            modals.forEach(m => { if (!m.id) m.remove(); });
+
+            initHorseNames(state.playerCount, true);
+            render();
+        }
+
+        function updateRiggedWinner(val) {
+            state.riggedWinnerId = Number(val);
+            updateHostQR();
+        }
+
+        function updateRiggedPayout(val) {
+            state.payoutScenarioIdx = Number(val);
+            state.customRatios = null; // リセットしてデフォルト値を使う
+            render(); // インプット欄を更新するため再描画
+            updateHostQR();
+        }
+
+        function getScenarioRatios(idx) {
+            // ランダム(ID:7)の場合は便宜上均等割などを返しておく（実際はレース中計算）
+            const s = PAYOUT_SCENARIOS[idx];
+            if (!s.ratios) return [33, 33, 34];
+            return s.ratios.map(r => Math.round(r * 100));
+        }
+
+        function updateCustomRatio(idx, val) {
+            if (!state.customRatios) {
+                state.customRatios = getScenarioRatios(state.payoutScenarioIdx);
+            }
+            state.customRatios[idx] = Number(val);
+
+            const sum = state.customRatios.reduce((a, b) => a + b, 0);
+            const errEl = document.getElementById('ratio-error');
+            const btnEl = document.getElementById('start-btn-host');
+
+            if (sum !== 100) {
+                if (errEl) errEl.style.display = 'block';
+                if (errEl) errEl.innerText = `合計: ${sum}% (あと${100 - sum}%)`;
+                if (btnEl) { btnEl.style.opacity = '0.5'; btnEl.style.pointerEvents = 'none'; }
+            } else {
+                if (errEl) errEl.style.display = 'none';
+                if (btnEl) { btnEl.style.opacity = '1'; btnEl.style.pointerEvents = 'auto'; }
+
+                // パターン自動判定：入力値に最も近いパターンを選択
+                let closestIdx = -1;
+                let minDiff = Infinity;
+
+                PAYOUT_SCENARIOS.forEach((s, i) => {
+                    if (s.id === 7 || !s.ratios) return; // ランダムは除外
+                    // ユークリッド距離の2乗で比較
+                    const diff = Math.pow((s.ratios[0] * 100) - state.customRatios[0], 2) +
+                        Math.pow((s.ratios[1] * 100) - state.customRatios[1], 2) +
+                        Math.pow((s.ratios[2] * 100) - state.customRatios[2], 2);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestIdx = i;
+                    }
+                });
+
+                if (closestIdx !== -1 && closestIdx !== state.payoutScenarioIdx) {
+                    state.payoutScenarioIdx = closestIdx;
+                    const sel = document.getElementById('payout-select');
+                    if (sel) sel.value = closestIdx;
+                }
+            }
+            updateHostQR();
         }
 
         function resetAsNewHost() {
@@ -496,10 +834,10 @@
             window.location.href = window.location.pathname;
         }
 
-        function handleCountChange(val) { 
-            state.playerCount = Number(val); 
-            initHorseNames(state.playerCount, state.isHost); 
-            render(); 
+        function handleCountChange(val) {
+            state.playerCount = Number(val);
+            initHorseNames(state.playerCount, state.isHost);
+            render();
         }
 
         function updateHorseName(idx, val) { if (state.isHost) state.horseNames[idx] = val; }
@@ -509,7 +847,13 @@
             if (!qrEl) return;
             qrEl.innerHTML = '';
             const baseUrl = window.location.href.split('?')[0];
-            const data = `${state.seed}-${state.playerCount}-${state.payoutScenarioIdx}`;
+            let data = `${state.seed}-${state.playerCount}-${state.payoutScenarioIdx}-${state.riggedWinnerId}`;
+
+            // カスタム比率があれば追加
+            if (state.customRatios) {
+                data += `-${state.customRatios.join('-')}`;
+            }
+
             new QRCode(qrEl, { text: `${baseUrl}?d=${data}`, width: 140, height: 140 });
         }
 
@@ -547,10 +891,28 @@
             playSound('gateOpen');
             setTimeout(() => playSound('running'), 100);
             const rng = new SeededRandom(state.seed);
-            state.horses = Array.from({ length: state.playerCount }, (_, i) => ({
-                id: i, name: state.horseNames[i], position: 0,
-                baseSpeed: rng.next() * 0.22 + 0.18, finished: false
-            }));
+            state.finishOrder = []; // リセット
+            state.horses = Array.from({ length: state.playerCount }, (_, i) => {
+                let baseSpd = rng.next() * 0.22 + 0.18;
+                // 支配人モードかつ勝馬指定がある場合、対象の馬を強化
+                // 支配人モードかつ勝馬指定がある場合、対象の馬を強化
+                // ただし、最初から速すぎるとバレるので、通常と同じかやや抑えめにする（後半でまくる）
+                if (state.riggedWinnerId !== -1 && state.riggedWinnerId === i) {
+                    // 以前より少しベースを上げて安定させる (min 0.25)
+                    baseSpd = rng.next() * 0.12 + 0.25;
+                }
+                return {
+                    id: i,
+                    name: state.horseNames[i],
+                    position: 0,
+                    baseSpeed: baseSpd,
+                    finished: false,
+                    currentSpeed: 0,
+                    speedModifier: 1.0,
+                    statusEffect: '', // '', '🔥', '💦'
+                    gimmickTimer: 0
+                };
+            });
             state.gameState = 'racing';
             render();
             requestAnimationFrame(raceLoop);
@@ -558,37 +920,207 @@
 
         function raceLoop() {
             if (state.gameState !== 'racing') return;
-            let allFinished = true;
+
+            // 現在の先頭と最後尾を取得（まだゴールしていない馬の中で）
+            const activeHorses = state.horses.filter(h => !h.finished);
+            if (activeHorses.length === 0) {
+                // 全馬ゴール
+                endRace();
+                return;
+            }
+
+            // 位置でソートして順位を判定
+            activeHorses.sort((a, b) => b.position - a.position);
+            const leader = activeHorses[0];
+            const lastPlace = activeHorses[activeHorses.length - 1];
+
             state.horses.forEach(h => {
-                if (!h.finished) {
-                    h.position += h.baseSpeed * 0.7 + (Math.random() * 0.12);
-                    if (h.position >= 100) { h.position = 100; h.finished = true; }
-                    allFinished = false;
+                if (h.finished) return;
+
+                // --- ギミック判定 ---
+                // クールダウンや持続時間の管理
+                if (h.gimmickTimer > 0) {
+                    h.gimmickTimer--;
+                    if (h.gimmickTimer <= 0) {
+                        // 効果終了
+                        h.speedModifier = 1.0;
+                        h.statusEffect = '';
+                        updateHorseVisual(h);
+                    }
+                } else {
+                    // 新しいギミックの発生判定 (ランダム性の調整)
+                    const rand = Math.random();
+
+                    // 1. 最後尾の逆転ブースト (🔥)
+                    // 条件: 最後尾である、レース中盤(20-80%)、確率低め
+
+                    if (h === lastPlace && h.position > 20 && h.position < 80 && activeHorses.length > 1) {
+                        if (rand < 0.02) { // 2%の確率で発動
+                            h.speedModifier = 3.5; // 超加速
+                            h.gimmickTimer = 180; // 約3秒間 (60fps換算)
+                            h.statusEffect = '🔥';
+                            updateHorseVisual(h);
+                        }
+                    }
+
+                    // 2. 先頭の失速 (💦)
+                    // 条件: 先頭である、レース終盤(60-95%)、確率低め
+                    else if (h === leader && h.position > 60 && h.position < 95 && activeHorses.length > 1) {
+                        // 支配人モードの勝ち馬は失速しない
+                        if (state.riggedWinnerId !== -1 && h.id === state.riggedWinnerId) {
+                            // 何もしない
+                        } else {
+                            if (rand < 0.015) { // 1.5%の確率で発動
+                                h.speedModifier = 0.2; // 激減速
+                                h.gimmickTimer = 120; // 約2秒間
+                                h.statusEffect = '💦';
+                                updateHorseVisual(h);
+                            }
+                        }
+                    }
                 }
+
+                // --- 移動処理 ---
+                // ベース速度にランダム性と補正を加える
+                const randomFactor = (Math.random() * 0.12);
+                let speed = (h.baseSpeed * 0.7 + randomFactor) * h.speedModifier;
+
+                // --- 支配人モードの安全装置 (Director AI) ---
+                if (state.riggedWinnerId !== -1) {
+                    const riggedHorse = state.horses[state.riggedWinnerId];
+                    if (riggedHorse && !riggedHorse.finished) {
+
+                        // A. 中盤(40m~)で「まくり」演出: 勝負を仕掛ける
+                        // まだブーストしてなくて、ゴール前でもない場合
+                        if (h.id === state.riggedWinnerId && h.position > 40 && h.position < 70 && h.statusEffect !== '🔥') {
+                            // 確率で、あるいは順位が低い場合に発動
+                            if (Math.random() < 0.05) {
+                                speed *= 2.5; // ブースト
+                                h.gimmickTimer = 200; // 長めに
+                                h.statusEffect = '🔥';
+                                updateHorseVisual(h);
+                            }
+                        }
+
+                        // B. 終盤(80m~)の最終安全装置
+                        // 負けている場合、強制ブースト（より強力に）
+                        if (riggedHorse.position > 80 && h.id === state.riggedWinnerId && activeHorses[0] !== riggedHorse) {
+                            speed *= 3.0; // 鬼加速
+                            if (h.statusEffect !== '🔥') { h.statusEffect = '🔥'; updateHorseVisual(h); }
+                        }
+
+                        // C. 終盤(88m~)で勝ち馬より前にいるライバルは強制失速
+                        if (h.id !== state.riggedWinnerId && h.position > 88 && h.position > riggedHorse.position) {
+                            speed *= 0.1; // 強制ブレーキ
+                            if (h.statusEffect !== '💦') { h.statusEffect = '💦'; updateHorseVisual(h); }
+                        }
+                    }
+                }
+
+                h.position += speed;
+
+                // --- 支配人モードの最終防衛ライン (God Mode) ---
+                // 勝ち馬がまだゴールしていない場合、他の馬は絶対に99%を超えさせない
+                if (state.riggedWinnerId !== -1 && h.id !== state.riggedWinnerId) {
+                    const riggedHorse = state.horses[state.riggedWinnerId];
+                    if (riggedHorse && !riggedHorse.finished) {
+                        if (h.position > 99) {
+                            h.position = 99; // 寸止め
+                        }
+                    }
+                }
+
+                if (h.position >= 100) {
+                    h.position = 100;
+                    h.finished = true;
+                    // ゴールしたらエフェクトを消す
+                    h.statusEffect = '';
+                    updateHorseVisual(h);
+                    // ゴール順に登録
+                    state.finishOrder.push(h);
+                }
+
+                // --- 画面更新 ---
                 const el = document.getElementById(`h-${h.id}`);
-                if (el) el.style.left = `calc(30px + ${h.position * 0.85}%)`;
+                if (el) {
+                    el.style.left = `calc(30px + ${h.position * 0.85}%)`;
+                    // ゴールライン通過のアニメーションなどがあればここに
+                }
             });
-            if (allFinished) {
-                stopSound('running'); playSound('applause');
-                state.allFinishedRanks = [...state.horses].sort((a, b) => b.baseSpeed - a.baseSpeed);
-                state.winners = state.allFinishedRanks.slice(0, 3);
-                state.gameState = 'reveal_ranks';
-                setTimeout(render, 500);
-            } else { requestAnimationFrame(raceLoop); }
+
+            if (state.finishOrder.length === state.horses.length) {
+                endRace();
+            } else {
+                requestAnimationFrame(raceLoop);
+            }
+        }
+
+        function updateHorseVisual(h) {
+            const backEl = document.getElementById(`h-status-back-${h.id}`);
+            const frontEl = document.getElementById(`h-status-front-${h.id}`);
+
+            if (backEl) backEl.innerText = '';
+            if (frontEl) frontEl.innerText = '';
+
+            if (h.statusEffect === '🔥') {
+                if (backEl) {
+                    backEl.innerText = '🔥';
+                    backEl.style.transform = 'scale(1.5)';
+                }
+            } else if (h.statusEffect === '💦') {
+                if (frontEl) {
+                    frontEl.innerText = '💦';
+                    frontEl.style.transform = 'scale(1.2)';
+                }
+            }
+        }
+
+        function endRace() {
+            stopSound('running');
+            playSound('applause');
+            // 着順を確定 (finishOrderを使用)
+            state.allFinishedRanks = [...state.finishOrder];
+            // 念のため、finishOrderに入っていない馬がいれば（バグ対策）、距離順などで追加
+            const missing = state.horses.filter(h => !state.finishOrder.includes(h));
+            if (missing.length > 0) {
+                missing.sort((a, b) => b.position - a.position);
+                state.allFinishedRanks = state.allFinishedRanks.concat(missing);
+            }
+
+            state.winners = state.allFinishedRanks.slice(0, 3);
+            state.gameState = 'reveal_ranks';
+            setTimeout(render, 500);
         }
 
         function renderRacing(app) {
-            const myNum = (state.myPrediction + 1).toString().padStart(2, '0');
-            const myName = state.horseNames[state.myPrediction];
+            const hasPrediction = state.myPrediction !== null;
+            const myNum = hasPrediction ? (state.myPrediction + 1).toString().padStart(2, '0') : '--';
+            const myName = hasPrediction ? state.horseNames[state.myPrediction] : '';
+
+            const badgeHtml = hasPrediction ? `<div class="my-ticket-badge">あなたの馬券：${myNum} ${myName}</div>` : `<div class="my-ticket-badge" style="background:#ddd; color:#666;">支配人観戦モード</div>`;
+
             app.innerHTML = `
                 <div class="race-screen">
                     <div class="race-header">
                         <div style="font-size:0.8rem; font-weight:bold;">実況：第26回 丙午杯ダービー</div>
-                        <div class="my-ticket-badge">あなたの馬券：${myNum} ${myName}</div>
+                        ${badgeHtml}
                     </div>
                     <div class="track-area">
                         <div class="goal-line"></div>
-                        ${state.horses.map(h => `<div class="lane"><div class="lane-sidebar">${h.id + 1}</div><div class="lane-bg-name">${h.name}</div><div id="h-${h.id}" class="horse-sprite" style="left: 30px;"><span class="horse-emoji">🐎</span></div></div>`).join('')}
+                        ${state.horses.map(h => {
+                const isMyHorse = hasPrediction && h.id === state.myPrediction;
+                const laneStyle = isMyHorse ? 'background: #bcaaa4; border-bottom: 2px solid #3e2723;' : '';
+                return `
+                            <div class="lane" style="${laneStyle}">
+                                <div class="lane-sidebar" style="${isMyHorse ? 'background:var(--accent);' : ''}">${h.id + 1}</div>
+                                <div class="lane-bg-name" style="${isMyHorse ? 'color:#ffebee;' : ''}">${h.name}</div>
+                                <div id="h-${h.id}" class="horse-sprite" style="left: 30px;">
+                                    <span id="h-status-back-${h.id}" style="font-size:1.5rem; margin-right:5px; transition:transform 0.2s;"></span>
+                                    <span class="horse-emoji">🐎</span>
+                                    <span id="h-status-front-${h.id}" style="font-size:1.5rem; margin-left:5px; transition:transform 0.2s;"></span>
+                                </div>
+                            </div>
+                        `}).join('')}
                     </div>
                 </div>
             `;
@@ -600,7 +1132,7 @@
                 <div style="margin-bottom:30px;">
                     ${state.winners.map((w, i) => `
                         <div class="reveal-item" style="animation-delay:${i * 0.6}s; background:white; border:2px solid var(--primary); padding:15px; margin:10px auto; max-width:400px; display:flex; align-items:center; gap:15px;">
-                            <span style="font-size:2rem;">${['🥇','🥈','🥉'][i]}</span>
+                            <span style="font-size:2rem;">${['🥇', '🥈', '🥉'][i]}</span>
                             <div style="text-align:left;">
                                 <div style="font-size:0.8rem; font-weight:bold;">${i + 1}着：${w.id + 1}番</div>
                                 <div style="font-size:1.4rem; font-weight:900;">${w.name}</div>
@@ -615,22 +1147,38 @@
         function startLottery() {
             state.gameState = 'lottery'; state.isLotterySpinning = true; render();
             playSound('drumroll');
-            let count = 0; const max = 30;
+
+            const targetIdx = state.payoutScenarioIdx;
+            const max = 30;
+            // 逆算して開始位置を決める (start + max) % len == target
+            let currentIdx = (targetIdx - (max % PAYOUT_SCENARIOS.length) + PAYOUT_SCENARIOS.length) % PAYOUT_SCENARIOS.length;
+            state.payoutScenarioIdx = currentIdx;
+
+            let count = 0;
             const interval = setInterval(() => {
+                count++;
                 state.payoutScenarioIdx = (state.payoutScenarioIdx + 1) % PAYOUT_SCENARIOS.length;
-                render(); count++;
+                render();
                 if (count >= max) {
                     clearInterval(interval); stopSound('drumroll'); playSound('finish');
                     state.isLotterySpinning = false;
-                    state.payoutMode = calculateDistribution(PAYOUT_SCENARIOS[state.payoutScenarioIdx], state.playerCount);
+                    state.payoutScenarioIdx = targetIdx; // 念のため補正
+                    state.payoutMode = calculateDistribution(PAYOUT_SCENARIOS[state.payoutScenarioIdx], state.playerCount, state.customRatios);
                     render();
                 }
             }, 100);
         }
 
-        function calculateDistribution(scenario, total) {
+        function calculateDistribution(scenario, total, overrideRatios = null) {
             let dist = [0, 0, 0];
-            if (scenario.id === 7) {
+
+            if (overrideRatios) {
+                // カスタム比率(%)から計算
+                dist = overrideRatios.map(r => Math.floor(total * (r / 100)));
+                let diff = total - dist.reduce((a, b) => a + b, 0);
+                for (let i = 0; i < diff; i++) dist[i % 3]++;
+            }
+            else if (scenario.id === 7) {
                 let r1 = Math.floor(Math.random() * total);
                 let r2 = Math.floor(Math.random() * (total - r1));
                 dist = [r1, r2, total - r1 - r2];
@@ -653,20 +1201,27 @@
         }
 
         function renderFinished(container) {
-            const myRankIdx = state.allFinishedRanks.findIndex(h => h.id === state.myPrediction);
+            const hasPrediction = state.myPrediction !== null;
+            const myRankIdx = hasPrediction ? state.allFinishedRanks.findIndex(h => h.id === state.myPrediction) : -1;
             const myRankText = (myRankIdx !== -1) ? `${myRankIdx + 1}着` : "圏外";
             const isWin = myRankIdx === 0;
             const isPodium = myRankIdx >= 0 && myRankIdx < 3;
 
+            const predictionResultHtml = hasPrediction ? `
+                <h2 style="font-size:1.8rem; margin:20px 0;">${isWin ? '🎊 予想的中！' : '終幕'}</h2>
+                <div style="background: white; border: 2px dashed ${isPodium ? 'var(--success)' : 'var(--accent)'}; padding: 12px; margin-bottom: 20px; display: inline-block; min-width: 200px;">
+                    <div style="font-size: 0.75rem; color: #666;">あなたの予想と結果</div>
+                    <div style="font-size: 1.3rem; font-weight: 900; margin: 4px 0;">${state.myPrediction + 1}番 ${state.horseNames[state.myPrediction]}</div>
+                    <div style="font-size: 1.1rem; font-weight: 900; color: ${isPodium ? 'var(--success)' : 'var(--accent)'};">最終：${myRankText}</div>
+                </div>
+            ` : `
+                <h2 style="font-size:1.8rem; margin:20px 0;">レース終了</h2>
+                <div style="margin-bottom:20px; font-weight:bold; color:#666;">（支配人モードで観戦中）</div>
+            `;
+
             container.innerHTML = `
                 <div style="margin-bottom:20px;">
-                    <h2 style="font-size:1.8rem; margin:20px 0;">${isWin ? '🎊 予想的中！' : '終幕'}</h2>
-                    
-                    <div style="background: white; border: 2px dashed ${isPodium ? 'var(--success)' : 'var(--accent)'}; padding: 12px; margin-bottom: 20px; display: inline-block; min-width: 200px;">
-                        <div style="font-size: 0.75rem; color: #666;">あなたの予想と結果</div>
-                        <div style="font-size: 1.3rem; font-weight: 900; margin: 4px 0;">${state.myPrediction + 1}番 ${state.horseNames[state.myPrediction]}</div>
-                        <div style="font-size: 1.1rem; font-weight: 900; color: ${isPodium ? 'var(--success)' : 'var(--accent)'};">最終：${myRankText}</div>
-                    </div>
+                    ${predictionResultHtml}
 
                     <div style="display:flex; justify-content:center; align-items:stretch; gap:5px; width:100%; box-sizing:border-box;">
                         ${state.winners.map((w, i) => `
@@ -697,8 +1252,21 @@
         window.addEventListener('load', () => {
             const params = new URLSearchParams(window.location.search);
             if (params.get('d')) {
-                const [s, c, p] = params.get('d').split('-').map(Number);
+                const parts = params.get('d').split('-').map(Number);
+                const s = parts[0];
+                const c = parts[1];
+                const p = parts[2];
+                const w = parts.length > 3 ? parts[3] : -1; // 4つ目があれば勝馬ID
+
+                // 5,6,7つ目があればカスタム比率
+                let ratios = null;
+                if (parts.length > 6) {
+                    ratios = [parts[4], parts[5], parts[6]];
+                }
+
                 state.seed = s; state.playerCount = c; state.payoutScenarioIdx = p;
+                state.riggedWinnerId = w;
+                state.customRatios = ratios;
                 state.isHost = false; state.gameState = 'host_setup';
                 initHorseNames(state.playerCount, false);
             } else {
@@ -708,4 +1276,5 @@
         });
     </script>
 </body>
+
 </html>
