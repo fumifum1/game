@@ -575,7 +575,7 @@
     </div>
 
     <footer>
-        &copy; 2026 Synapse Creations. derby race game_ver6.6.5 <a
+        &copy; 2026 Synapse Creations. derby race game_ver6.6.6 <a
             href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
     </footer>
 
@@ -634,7 +634,7 @@
             gameState: 'mode_select',
             isHost: false,
             seed: Math.floor(Math.random() * 1000000),
-            playerCount: 15,
+            playerCount: 8,
             payoutScenarioIdx: Math.floor(Math.random() * PAYOUT_SCENARIOS.length),
             myPrediction: null,
             horses: [],
@@ -737,7 +737,7 @@
                                 <div id="ratio-error" style="color:red; font-size:0.7rem; font-weight:bold; margin-top:5px; display:none;">合計が100%になっていません！</div>
                             </div>
                         </div>
-                        <div id="start-btn-host" onclick="startPreRaceSequence()" class="btn btn-primary" style="margin-top:15px; width:90%;">出走開始（支配人）</div>
+                        <div id="start-btn-host" onclick="startPreRaceSequence()" class="btn btn-primary" style="margin-top:15px; width:100%; box-sizing:border-box;">出走開始（支配人）</div>
                     </div>
                 ` : `
                     <div class="setup-card">
