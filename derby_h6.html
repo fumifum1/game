@@ -512,7 +512,7 @@
     </div>
 
     <footer>
-        &copy; 2026 Synapse Creations. derby race game_ver6.5.2 <a
+        &copy; 2026 Synapse Creations. derby race game_ver6.6.2 <a
             href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
     </footer>
 
@@ -543,10 +543,11 @@
         const HORSE_PREFIXES = ["サクラ", "メジロ", "トウカイ", "シンボリ", "ダイワ", "マチカネ", "アグネス", "マンハッタン", "アドマイヤ", "スマート", "ゴールド", "キング", "ナリタ"];
         const HORSE_SUFFIXES = ["バクシンオー", "マックイーン", "テイオー", "オーシャン", "スカーレット", "フクキタル", "タキオン", "カフェ", "ベガ", "ファルコン", "シップ", "カメハメハ", "タイシン"];
 
-        function generateHorseName(index) {
-            if (index < LEGEND_HORSES.length && Math.random() > 0.3) return LEGEND_HORSES[index];
-            const pre = HORSE_PREFIXES[Math.floor(Math.random() * HORSE_PREFIXES.length)];
-            const suf = HORSE_SUFFIXES[Math.floor(Math.random() * HORSE_SUFFIXES.length)];
+        function generateHorseName(rng, index) {
+            const r = rng ? rng.next() : Math.random();
+            if (index < LEGEND_HORSES.length && r > 0.3) return LEGEND_HORSES[index];
+            const pre = HORSE_PREFIXES[Math.floor((rng ? rng.next() : Math.random()) * HORSE_PREFIXES.length)];
+            const suf = HORSE_SUFFIXES[Math.floor((rng ? rng.next() : Math.random()) * HORSE_SUFFIXES.length)];
             return pre + suf;
         }
 
@@ -606,17 +607,19 @@
         };
 
         function initHorseNames(count, asHost) {
+            const rng = new SeededRandom(state.seed);
             const newNames = [];
             for (let i = 0; i < count; i++) {
+                const defaultName = generateHorseName(rng, i);
                 if (asHost) {
                     const existing = state.horseNames[i];
                     if (!existing || existing.startsWith('参加者')) {
-                        newNames.push(generateHorseName(i));
+                        newNames.push(defaultName);
                     } else {
                         newNames.push(existing);
                     }
                 } else {
-                    newNames.push(`参加者${i + 1}`);
+                    newNames.push(defaultName);
                 }
             }
             state.horseNames = newNames;
@@ -840,7 +843,12 @@
             render();
         }
 
-        function updateHorseName(idx, val) { if (state.isHost) state.horseNames[idx] = val; }
+        function updateHorseName(idx, val) {
+            if (state.isHost) {
+                state.horseNames[idx] = val;
+                updateHostQR();
+            }
+        }
 
         function updateHostQR() {
             const qrEl = document.getElementById('qrcode');
@@ -849,12 +857,34 @@
             const baseUrl = window.location.href.split('?')[0];
             let data = `${state.seed}-${state.playerCount}-${state.payoutScenarioIdx}-${state.riggedWinnerId}`;
 
-            // カスタム比率があれば追加
             if (state.customRatios) {
                 data += `-${state.customRatios.join('-')}`;
             }
 
-            new QRCode(qrEl, { text: `${baseUrl}?d=${data}`, width: 140, height: 140 });
+            let url = `${baseUrl}?d=${data}`;
+
+            // 編集された名前があれば追加
+            const rngForCheck = new SeededRandom(state.seed);
+            const diffs = {};
+            for (let i = 0; i < state.playerCount; i++) {
+                const defName = generateHorseName(rngForCheck, i);
+                if (state.horseNames[i] !== defName) {
+                    diffs[i] = state.horseNames[i];
+                }
+            }
+
+            if (Object.keys(diffs).length > 0) {
+                try {
+                    const jsonStr = JSON.stringify(diffs);
+                    // Base64エンコード (日本語対応)
+                    const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
+                    url += `&n=${encoded}`;
+                } catch (e) {
+                    console.error("Name encoding failed", e);
+                }
+            }
+
+            new QRCode(qrEl, { text: url, width: 140, height: 140 });
         }
 
         function selectPrediction(idx) {
@@ -1256,9 +1286,8 @@
                 const s = parts[0];
                 const c = parts[1];
                 const p = parts[2];
-                const w = parts.length > 3 ? parts[3] : -1; // 4つ目があれば勝馬ID
+                const w = parts.length > 3 ? parts[3] : -1;
 
-                // 5,6,7つ目があればカスタム比率
                 let ratios = null;
                 if (parts.length > 6) {
                     ratios = [parts[4], parts[5], parts[6]];
@@ -1268,7 +1297,24 @@
                 state.riggedWinnerId = w;
                 state.customRatios = ratios;
                 state.isHost = false; state.gameState = 'host_setup';
+
+                // まずシード値に基づいてデフォルト名を生成
                 initHorseNames(state.playerCount, false);
+
+                // 次にURLにある編集後の名前を反映
+                if (params.get('n')) {
+                    try {
+                        const jsonStr = decodeURIComponent(escape(atob(params.get('n'))));
+                        const diffs = JSON.parse(jsonStr);
+                        for (const idx in diffs) {
+                            if (state.horseNames[idx] !== undefined) {
+                                state.horseNames[idx] = diffs[idx];
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Name decoding failed", e);
+                    }
+                }
             } else {
                 initHorseNames(state.playerCount, false);
             }
