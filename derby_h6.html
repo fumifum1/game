@@ -575,7 +575,7 @@
     </div>
 
     <footer>
-        &copy; 2026 Synapse Creations. derby race game_ver6.6.4 <a
+        &copy; 2026 Synapse Creations. derby race game_ver6.6.5 <a
             href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
     </footer>
 
@@ -911,6 +911,7 @@
             if (state.isHost) {
                 state.horseNames[idx] = val;
                 updateHostQR();
+                render(); // UIを更新してプルダウン等の名前に反映
             }
         }
 
