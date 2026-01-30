@@ -512,7 +512,7 @@
     </div>
 
     <footer>
-        &copy; 2026 Synapse Creations. derby race game_ver6.6.2 <a
+        &copy; 2026 Synapse Creations. derby race game_ver6.6.3 <a
             href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
     </footer>
 
@@ -855,10 +855,10 @@
             if (!qrEl) return;
             qrEl.innerHTML = '';
             const baseUrl = window.location.href.split('?')[0];
-            let data = `${state.seed}-${state.playerCount}-${state.payoutScenarioIdx}-${state.riggedWinnerId}`;
+            let data = `${state.seed}:${state.playerCount}:${state.payoutScenarioIdx}:${state.riggedWinnerId}`;
 
             if (state.customRatios) {
-                data += `-${state.customRatios.join('-')}`;
+                data += `:${state.customRatios.join(':')}`;
             }
 
             let url = `${baseUrl}?d=${data}`;
@@ -878,7 +878,8 @@
                     const jsonStr = JSON.stringify(diffs);
                     // Base64エンコード (日本語対応)
                     const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
-                    url += `&n=${encoded}`;
+                    // URLセーフにするためにさらにエンコード
+                    url += `&n=${encodeURIComponent(encoded)}`;
                 } catch (e) {
                     console.error("Name encoding failed", e);
                 }
@@ -1282,11 +1283,11 @@
         window.addEventListener('load', () => {
             const params = new URLSearchParams(window.location.search);
             if (params.get('d')) {
-                const parts = params.get('d').split('-').map(Number);
+                const parts = params.get('d').split(':').map(Number);
                 const s = parts[0];
                 const c = parts[1];
                 const p = parts[2];
-                const w = parts.length > 3 ? parts[3] : -1;
+                const w = (parts.length > 3 && !isNaN(parts[3])) ? parts[3] : -1;
 
                 let ratios = null;
                 if (parts.length > 6) {
