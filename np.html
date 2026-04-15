@@ -173,6 +173,7 @@
                     </label>
                 </li>
                 <li><a href="#" id="api-status-display" onclick="return false;" style="font-size: 0.75rem; color: #64748b; pointer-events: none;">APIキー: 未設定</a></li>
+                <li><a href="#" id="model-status-display" onclick="setApiModel(); return false;" style="font-size: 0.75rem; color: #64748b;">使用モデル: 未設定</a></li>
                 <li><a href="#" onclick="resetApiKey(); return false;" class="btn-danger-menu">APIキーを削除 (ログアウト)</a></li>
             </ul>
         </nav>
@@ -252,26 +253,47 @@
         let imported = new Set();
         let selected = null;
         let apiKey = localStorage.getItem('gemini_key') || "";
+        let apiModel = localStorage.getItem('gemini_model') || "gemini-1.5-flash-latest";
 
         function updateApiStatusDisplay() {
-            const display = document.getElementById('api-status-display');
+            const apiDisplay = document.getElementById('api-status-display');
+            const modelDisplay = document.getElementById('model-status-display');
+            
             if (apiKey) {
-                display.innerText = "APIキー: 設定済み (****" + apiKey.slice(-4) + ")";
-                display.style.color = "#10b981"; // Green
+                apiDisplay.innerText = "APIキー: 設定済み (****" + apiKey.slice(-4) + ")";
+                apiDisplay.style.color = "#10b981"; // Green
             } else {
-                display.innerText = "APIキー: 未設定";
-                display.style.color = "#64748b"; // Gray
+                apiDisplay.innerText = "APIキー: 未設定";
+                apiDisplay.style.color = "#64748b"; // Gray
+            }
+
+            if (apiModel) {
+                modelDisplay.innerText = "使用モデル: " + apiModel;
+                modelDisplay.style.color = "#4f46e5"; // Primary
+            }
+        }
+
+        // モデル名の設定
+        function setApiModel() {
+            const current = localStorage.getItem('gemini_model') || "gemini-1.5-flash-latest";
+            const input = prompt("使用する Gemini モデル名を入力してください（例: gemini-1.5-flash-latest, gemini-1.5-pro-latest）:", current);
+            if (input && input.trim() !== "") {
+                apiModel = input.trim();
+                localStorage.setItem('gemini_model', apiModel);
+                updateApiStatusDisplay();
             }
         }
 
         // APIキーのリセット機能
         function resetApiKey() {
-            if (confirm("ブラウザに保存されているAPIキーを削除しますか？\n次回使用時に再度入力が必要になります。")) {
+            if (confirm("ブラウザに保存されているAPIキーとモデル設定を削除しますか？\n次回使用時に再度読み込みが必要になります。")) {
                 localStorage.removeItem('gemini_key');
+                localStorage.removeItem('gemini_model');
                 apiKey = "";
+                apiModel = "gemini-1.5-flash-latest";
                 updateApiStatusDisplay();
-                alert("APIキーを削除しました。");
-                location.reload(); // 状態をクリーンにするためリロード
+                alert("設定を削除しました。");
+                location.reload();
             }
         }
 
@@ -405,20 +427,26 @@
                     Format example: {"grid": [0,0,5,3,0,0,0,0,0,...]}
                 `;
 
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [
                             { text: promptText },
                             { inlineData: { mimeType: "image/jpeg", data: base64 } }
-                        ]}]
+                        ]}],
+                        generationConfig: {
+                            response_mime_type: "application/json"
+                        }
                     })
                 });
                 
-                const data = await res.json();
-                if (data.error) throw new Error(data.error.message);
+                if (!res.ok) {
+                    const errorMsg = await res.json();
+                    throw new Error(errorMsg.error?.message || `HTTP error! status: ${res.status}`);
+                }
                 
+                const data = await res.json();
                 const textOutput = data.candidates[0].content.parts[0].text;
                 const jsonMatch = textOutput.match(/\{.*\}/s);
                 
@@ -431,10 +459,16 @@
                         drawGrid();
                         document.getElementById('status').innerText = "読み取り完了！内容を確認してください";
                     }
+                } else {
+                    throw new Error("AIからの応答を解析できませんでした。");
                 }
             } catch(e) { 
                 console.error(e);
-                alert("AI解析に失敗しました。APIキーが正しいか、画像が鮮明か確認してください。\nエラー: " + e.message); 
+                let msg = e.message;
+                if (msg.includes("API_KEY_INVALID")) msg = "APIキーが無効です。";
+                if (msg.includes("not found")) msg = "指定されたモデルが見つかりません。設定から最新のモデル名に変更してください。";
+                
+                alert("AI解析に失敗しました。\nエラー: " + msg); 
             } finally { 
                 document.getElementById('loading').style.display = 'none'; 
             }
