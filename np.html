@@ -253,7 +253,7 @@
         let imported = new Set();
         let selected = null;
         let apiKey = localStorage.getItem('gemini_key') || "";
-        let apiModel = localStorage.getItem('gemini_model') || "gemini-1.5-flash-latest";
+        let apiModel = localStorage.getItem('gemini_model') || "gemini-3-flash-preview";
 
         function updateApiStatusDisplay() {
             const apiDisplay = document.getElementById('api-status-display');
@@ -275,8 +275,8 @@
 
         // モデル名の設定
         function setApiModel() {
-            const current = localStorage.getItem('gemini_model') || "gemini-1.5-flash-latest";
-            const input = prompt("使用する Gemini モデル名を入力してください（例: gemini-1.5-flash-latest, gemini-1.5-pro-latest）:", current);
+            const current = localStorage.getItem('gemini_model') || "gemini-3-flash-preview";
+            const input = prompt("使用する Gemini モデル名を入力してください（例: gemini-3-flash-preview, gemini-3.1-pro-preview）:", current);
             if (input && input.trim() !== "") {
                 apiModel = input.trim();
                 localStorage.setItem('gemini_model', apiModel);
@@ -290,7 +290,7 @@
                 localStorage.removeItem('gemini_key');
                 localStorage.removeItem('gemini_model');
                 apiKey = "";
-                apiModel = "gemini-1.5-flash-latest";
+                apiModel = "gemini-3-flash-preview";
                 updateApiStatusDisplay();
                 alert("設定を削除しました。");
                 location.reload();
