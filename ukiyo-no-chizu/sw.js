@@ -7,7 +7,7 @@ const CORE = [
   './', 'index.html', 'manifest.webmanifest',
   'css/style.css', 'css/gacha.css', 'css/screens.css',
   'js/version.js', 'js/prefectures.js', 'js/arts.js', 'js/generator.js', 'js/world-arts.js',
-  'js/maps/index.js', 'js/maps/countries.js', 'js/maps/globe.js', 'js/globe.js', 'js/country-facts.js', 'js/app.js',
+  'js/maps/index.js', 'js/maps/countries.js', 'js/maps/globe.js', 'js/globe.js', 'js/country-facts.js', 'js/app.js', 'js/minigames.js', 'css/minigames.css',
   'js/maps/asia.js', 'js/maps/europe.js', 'js/maps/africa.js', 'js/maps/northamerica.js', 'js/maps/southamerica.js', 'js/maps/oceania.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
 ];

@@ -1,0 +1,79 @@
+/* ===== ミニゲーム ===== */
+.mini { position: fixed; inset: 0; display: flex; flex-direction: column; background-color: var(--paper); background-image: var(--wagara); background-size: 40px 20px; }
+.mini .pick-top { background: var(--paper); border-bottom: 2px solid var(--ink); }
+.mini .pick-logo { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-stat { font: 800 1rem var(--mincho); color: var(--vermilion); white-space: nowrap; }
+.mini-body { flex: 1; overflow-y: auto; padding: 14px 16px calc(24px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.mini-body > * { width: 100%; max-width: 520px; flex-shrink: 0; }
+.mg-lead, .mg-hint { text-align: center; font-size: 0.86rem; color: var(--ink-2); margin: 0; line-height: 1.6; }
+.mg-prompt { text-align: center; font: 800 1.15rem var(--mincho); margin: 0; }
+
+/* 一覧 */
+.mg-list, .mg-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mg-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 14px 12px 12px; background: var(--card); color: var(--ink); border: 2px solid var(--ink); border-radius: 10px; box-shadow: 3px 3px 0 var(--ink); cursor: pointer; font-family: var(--sans); }
+.mg-card:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.mg-card b { font: 800 1.02rem var(--mincho); }
+.mg-card small { font-size: 0.75rem; color: var(--ink-2); line-height: 1.45; }
+.mg-seal { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 6px; background: var(--vermilion); color: #fff8ec; font: 800 1.15rem var(--mincho); margin-bottom: 2px; }
+.mg-best { margin-top: auto; padding-top: 4px; font: 700 0.75rem var(--mincho); color: var(--indigo); }
+.mg-modes .mg-card { align-items: center; text-align: center; padding: 22px 10px; }
+.mg-modes .mg-card b { font-size: 1.3rem; }
+
+/* 4択 */
+.mg-q { display: grid; place-items: center; min-height: 150px; background: var(--card); border: 2px solid var(--ink); border-radius: 10px; padding: 14px; }
+.mg-flag { max-width: 82%; max-height: 150px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); border: 1px solid var(--line); }
+.mg-sil { width: 100%; height: 200px; }
+.mg-sil path { fill: var(--ink); }
+.mg-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mg-choice { min-height: 52px; padding: 8px 6px; border: 2px solid var(--ink); border-radius: 8px; background: var(--card); color: var(--ink); font: 800 0.98rem var(--mincho); cursor: pointer; line-height: 1.3; }
+.mg-choice.ok { background: #4f7a3a; color: #fff; border-color: #2f4f22; }
+.mg-choice.ng { background: var(--vermilion); color: #fff; border-color: #8f2a1b; }
+.mg-timer { height: 10px; border: 2px solid var(--ink); border-radius: 99px; overflow: hidden; background: var(--card); }
+.mg-timer i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--vermilion), var(--gold)); transition: width 0.1s linear; }
+
+/* 地球儀ダーツ */
+.mg-globe { width: min(100%, 420px); aspect-ratio: 1; touch-action: none; cursor: crosshair; align-self: center; }
+.mg-darts-res { text-align: center; font: 800 1rem var(--mincho); color: var(--indigo); min-height: 1.5em; margin: 0; }
+
+/* ありがとう聞き取り */
+.mg-play { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto !important; align-self: center; font-size: 1rem; }
+.mg-play svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mini .tnote { font-size: 0.72rem; color: var(--ink-2); margin: 0; text-align: center; min-height: 1em; line-height: 1.5; }
+.mg-reveal { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 2.8em; }
+.mg-reveal b { font: 800 1.2rem var(--mincho); color: var(--vermilion); }
+.mg-reveal small { font-size: 0.78rem; color: var(--ink-2); text-align: center; }
+
+/* 名画スライド */
+.mg-slide-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.mg-board { position: relative; width: min(100%, 420px); aspect-ratio: 1; border: 3px solid var(--ink); border-radius: 6px; background: var(--ink); overflow: hidden; }
+.mg-tile { position: absolute; border: 1px solid rgba(255, 248, 236, 0.55); padding: 0; background-color: var(--card); background-repeat: no-repeat; cursor: pointer; transition: left 0.12s, top 0.12s; display: flex; align-items: flex-start; justify-content: flex-start; font: 800 0.7rem var(--sans); color: #fff; text-shadow: 0 0 3px #000, 0 0 2px #000; }
+.mg-tile:not(:empty) { padding: 3px 5px; }
+.mg-tile.empty { background: transparent; border-color: transparent; cursor: default; }
+.mg-board.done .mg-tile { border-color: transparent; color: transparent; text-shadow: none; transition: border-color 0.6s; }
+.mg-sample { width: 96px; height: 96px; object-fit: cover; border: 2px solid var(--ink); border-radius: 4px; }
+
+/* 首都の札合わせ */
+.mg-memory { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+.mg-card2 { position: relative; aspect-ratio: 3 / 4; border: 0; padding: 0; background: none; cursor: pointer; }
+.mg-card2 .face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 2px solid var(--ink); border-radius: 8px; padding: 3px; overflow: hidden; }
+.mg-card2 .back { background: var(--indigo) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12'%3E%3Cg fill='none' stroke='%23fff8ec' stroke-opacity='.18'%3E%3Ccircle cx='0' cy='12' r='11'/%3E%3Ccircle cx='0' cy='12' r='7'/%3E%3Ccircle cx='24' cy='12' r='11'/%3E%3Ccircle cx='24' cy='12' r='7'/%3E%3Ccircle cx='12' cy='12' r='11'/%3E%3Ccircle cx='12' cy='12' r='7'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 24px 12px; color: #fff8ec; font: 800 1.4rem var(--mincho); }
+.mg-card2 .back::after { content: ''; position: absolute; inset: 5px; border: 1.5px solid rgba(255, 248, 236, 0.6); border-radius: 4px; }
+.mg-card2 .front { background: var(--card); color: var(--ink); visibility: hidden; font: 800 0.84rem var(--mincho); line-height: 1.25; text-align: center; word-break: break-all; }
+.mg-card2 .front.cap { background: #f6e7b8; color: #5a420f; }
+.mg-card2 .front img { width: 80%; max-height: 38%; object-fit: contain; border: 1px solid var(--line); }
+.mg-card2.open .back { visibility: hidden; }
+.mg-card2.open .front { visibility: visible; animation: mg-flip 0.25s ease-out; }
+@keyframes mg-flip { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.mg-card2.got .front { border-color: #4f7a3a; box-shadow: 0 0 0 2px #4f7a3a inset; }
+
+/* 結果 */
+.mg-result { text-align: center; }
+.mg-score { font: 800 2.6rem var(--mincho); color: var(--vermilion); margin: 4px 0; }
+
+html[data-theme='night'] .mg-card2 .front.cap { background: #3a3220; color: #f0d68a; }
+html[data-theme='night'] .mg-q { background: #1c2a44; }
+@media (max-width: 360px) {
+  .mg-card2 .front { font-size: 0.74rem; }
+  .tab { min-width: 46px; padding: 4px 2px; }
+}
+.tabbar .tab { min-width: 50px; }

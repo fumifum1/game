@@ -2,6 +2,7 @@
   'use strict';
 
   const SVGNS = 'http://www.w3.org/2000/svg';
+  const NATIVE = window.Capacitor?.isNativePlatform?.() === true; // Androidアプリ(APK)として動いているか
   const HINT_PENALTY = 20;
   const ARTS = window.UKIYOE_ARTS;
   const WORLD_ARTS = window.WORLD_ARTS;
@@ -504,6 +505,8 @@
 
   // 「ありがとう」をその国の言葉で読み上げる(端末に声がないときは日本語の声で読み方を読む)
   function speakThanks(c, note) {
+    const tts = NATIVE && window.Capacitor.Plugins?.TextToSpeech;
+    if (tts) return speakNative(tts, c, note);
     const synth = window.speechSynthesis;
     if (!synth) { note.textContent = 'このブラウザは音声の読み上げに対応していません。'; return; }
     const go = () => {
@@ -525,6 +528,25 @@
     };
     if (synth.getVoices().length) go();
     else { synth.addEventListener('voiceschanged', go, { once: true }); setTimeout(() => { if (!synth.speaking) go(); }, 600); }
+  }
+
+  // Androidアプリ版: WebView には読み上げ機能がないので、端末の読み上げエンジン(プラグイン)で話す
+  async function speakNative(tts, c, note) {
+    try {
+      await tts.stop().catch(() => {});
+      const { languages = [] } = await tts.getSupportedLanguages();
+      const norm = (l) => l.replace('_', '-').toLowerCase(), want = c.lang.toLowerCase(), base = want.split('-')[0];
+      const hit = languages.find((l) => norm(l) === want) || languages.find((l) => norm(l).split('-')[0] === base);
+      if (hit) {
+        note.textContent = `${c.langName}の声で再生しています。`;
+        await tts.speak({ text: c.word, lang: hit, rate: 0.85 });
+      } else {
+        note.textContent = `この端末には${c.langName}の声が入っていないため、読み方を日本語の声で再生しています。`;
+        await tts.speak({ text: c.yomi.replace(/・/g, ' '), lang: 'ja-JP', rate: 0.85 });
+      }
+    } catch {
+      note.textContent = '音声を再生できませんでした。端末の設定で「テキスト読み上げ」を確認してください。';
+    }
   }
 
   // ===== 状態 =====
@@ -1445,12 +1467,12 @@
   }
   function showPicker() {
     closeSheet();
-    $('#title').hidden = true; $('#game').hidden = true; $('#menu').hidden = false;
+    $('#title').hidden = true; $('#game').hidden = true; $('#mini').hidden = true; $('#menu').hidden = false;
     renderMenu();
   }
   function showTitle(first) {
     closeSheet();
-    $('#menu').hidden = true; $('#game').hidden = true; $('#title').hidden = false;
+    $('#menu').hidden = true; $('#game').hidden = true; $('#mini').hidden = true; $('#title').hidden = false;
     changeTitleArt(first);
     renderMenu();
   }
@@ -1474,7 +1496,7 @@
   applySettings();
   // ===== スマホアプリとして入れる(PWA) =====
   let installEvt = null;
-  function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
+  function isStandalone() { return NATIVE || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
   window.addEventListener('appinstalled', () => { installEvt = null; });
   async function installApp() {
@@ -1491,9 +1513,24 @@
     openModal(body, [['閉じる', closeModal, 'btn-primary']]);
   }
   // オフラインでも動くように(https か localhost のときだけ)
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+  if (!NATIVE && 'serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* 入れられなくても遊べる */ });
   }
+
+  if (NATIVE && window.Capacitor.Plugins?.App) {
+    window.Capacitor.Plugins.App.addListener('backButton', () => {
+      if (!$('#modal').hidden) return closeModal();
+      if (!$('#sheet').hidden) return closeSheet();
+      if (!$('#game').hidden) return $('#btn-back').click();
+      if (!$('#menu').hidden) return showTitle();
+      if (!$('#mini').hidden) return window.MINI?.back();
+      window.Capacitor.Plugins.App.exitApp();
+    });
+  }
+
+  // ミニゲーム(minigames.js)に渡す道具
+  window.UKIYO = { h, svgEl, $, store, Sound, vibrate, settings, fmtTime, shuffle, koban, addKoban, renderWallet, checkBadges, openModal, closeModal,
+    COUNTRIES, flagUrl, shapeEl, speakThanks, JAPAN, MAP_LIST, artsFor, isMapOpen, loadMap, showTitle: () => showTitle() };
 
   useMap(JAPAN);
   showTitle(true);

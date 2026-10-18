@@ -10,6 +10,7 @@
       this.lon = lon; this.lat = lat;
       this.fill = () => null;   // 国ごとの色(null なら陸の基本色)
       this.marker = null;       // {lon, lat, t0} 止まった国の波紋
+      this.pins = [];           // [{lon, lat, color}] ミニゲーム用のピン
       this.raf = 0; this.anim = null;
       this.theme = 'paper';
       new ResizeObserver(() => this.resize()).observe(canvas);
@@ -76,6 +77,19 @@
         g.fillStyle = color; g.fill('evenodd');
         g.strokeStyle = night ? 'rgba(217,180,74,0.35)' : 'rgba(42,36,32,0.35)'; g.lineWidth = Math.max(0.6, W / 600); g.stroke();
       }
+      // ピン(ミニゲームの地球儀ダーツ): 2本以上あれば点線で結ぶ
+      if (this.pins.length) {
+        const pts = this.pins.map((p) => { const [x, y, v] = this.project(p.lon, p.lat); return { ...p, x: cx + x * R, y: cy - y * R, v }; });
+        if (pts.length > 1 && pts.every((p) => p.v > 0)) {
+          g.setLineDash([W / 60, W / 80]); g.strokeStyle = 'rgba(255,248,236,0.9)'; g.lineWidth = W / 160;
+          g.beginPath(); g.moveTo(pts[0].x, pts[0].y); for (const p of pts.slice(1)) g.lineTo(p.x, p.y); g.stroke(); g.setLineDash([]);
+        }
+        for (const p of pts) {
+          if (p.v <= 0) continue;
+          g.fillStyle = p.color || '#c3402b'; g.strokeStyle = '#fff8ec'; g.lineWidth = W / 140;
+          g.beginPath(); g.arc(p.x, p.y, W / 45, 0, Math.PI * 2); g.fill(); g.stroke();
+        }
+      }
       // 止まった国の波紋
       if (this.marker) {
         const [x, y, v] = this.project(this.marker.lon, this.marker.lat);
@@ -120,6 +134,19 @@
       let d = ((lon - this.lon) % 360 + 360) % 360;
       this.anim = { t0: performance.now(), ms, lon0: this.lon, lat0: this.lat, lon1: this.lon + d + 360 * turns, lat1: Math.max(-50, Math.min(55, lat)), ease: easeSpin, done };
       this.loop();
+    }
+    // 画面上の位置(クライアント座標) → 経度・緯度。地球の外なら null
+    unproject(clientX, clientY) {
+      const r = this.cv.getBoundingClientRect(), W = this.cv.width, H = this.cv.height;
+      const px = ((clientX - r.left) / r.width) * W, py = ((clientY - r.top) / r.height) * H;
+      const R = Math.min(W, H) / 2 - 3 * (W / 300);
+      const x = (px - W / 2) / R, y = -(py - H / 2) / R, rho = Math.hypot(x, y);
+      if (rho > 1) return null;
+      if (rho < 1e-9) return [this.lon, this.lat];
+      const c = Math.asin(rho), p0 = this.lat * RAD, sc = Math.sin(c), cc = Math.cos(c);
+      const lat = Math.asin(cc * Math.sin(p0) + (y * sc * Math.cos(p0)) / rho) / RAD;
+      const lon = this.lon + Math.atan2(x * sc, rho * cc * Math.cos(p0) - y * sc * Math.sin(p0)) / RAD;
+      return [((lon + 540) % 360) - 180, lat];
     }
     setMarker(lon, lat) { this.marker = lon == null ? null : { lon, lat, t0: performance.now() }; this.loop(); }
     stop() { cancelAnimationFrame(this.raf); }
