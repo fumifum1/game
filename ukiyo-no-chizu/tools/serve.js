@@ -12,6 +12,7 @@ const types = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.json': 'application/json',
+  '.webmanifest': 'application/manifest+json',
 };
 
 http.createServer((req, res) => {
@@ -23,4 +24,4 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     res.end(data);
   });
-}).listen(port, () => console.log(`UkiyoePuzzle: http://localhost:${port}`));
+}).listen(port, () => console.log(`浮世ノ地図(スマホ版): http://localhost:${port}`));

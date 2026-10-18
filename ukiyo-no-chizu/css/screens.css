@@ -104,3 +104,10 @@ html[data-theme='night'] .gcard.r3 { background: linear-gradient(160deg, #3a3220
 .lock-info .li-t span { font-size: 0.8rem; line-height: 1.5; }
 .gcard .gflag { width: 78%; margin: 8px auto 4px; }
 .gcard .gshape { height: 54px; }
+
+/* ===== スマホアプリとしての操作感 ===== */
+html, body { overscroll-behavior: none; }
+button, .tab, .stage-chip, .thumb { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.title-screen, .picker, .tabbar, #tray, .hud { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.title-ver { font: 700 0.65rem var(--sans); opacity: 0.75; margin-left: 6px; }
+.install-steps { text-align: left; line-height: 1.8; font-family: var(--mincho); padding-left: 1.2em; }

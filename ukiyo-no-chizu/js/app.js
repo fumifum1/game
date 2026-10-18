@@ -556,6 +556,7 @@
     img.referrerPolicy = 'no-referrer';
     img.src = next.url;
     $('#title-credit').textContent = `${next.artist}「${next.title}」`;
+    $('#title-credit').append(h('span', 'title-ver', `v${self.APP_VERSION}`));
   }
   function renderTitle() {
     const d = dailyChallenge(), st = streak(), n = st.last === today() || st.last === yesterday() ? st.n : 0;
@@ -815,6 +816,12 @@
       openModal(body, [['やめる', closeModal, 'btn-primary'], ['すべて消す', () => { store.clearAll(); location.reload(); }]]);
     });
     row('記録をすべて消す', null, reset);
+    // スマホに入れる(ホーム画面に追加)
+    const inst = h('button', 'btn btn-small', isStandalone() ? '入れてあります' : installEvt ? '入れる' : '入れ方');
+    inst.type = 'button'; inst.disabled = isStandalone();
+    inst.addEventListener('click', installApp);
+    row('スマホに入れる', 'ホーム画面からアプリとして起動できます', inst);
+    row('バージョン', `${self.APP_BUILD} 更新`, h('span', null, `${self.APP_VERSION}`));
     const cr = h('p', 'note');
     cr.innerHTML = '地図：<a href="https://www.gsi.go.jp/kankyochiri/gm_jpn.html" target="_blank" rel="noopener">地球地図日本（国土地理院）</a>を加工（<a href="https://github.com/dataofjapan/land" target="_blank" rel="noopener">dataofjapan/land</a> 経由）、<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a><br>絵画：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a>（パブリックドメイン）<br>国旗：<a href="https://flagpedia.net/" target="_blank" rel="noopener">Flagpedia</a>（パブリックドメイン）';
     wrap.append(h('div', 'shop-sec', '出典'), cr);
@@ -1465,6 +1472,29 @@
   $('#btn-sound').addEventListener('click', () => { settings.sound = !settings.sound; applySettings(); if (settings.sound) Sound.snap(); });
 
   applySettings();
+  // ===== スマホアプリとして入れる(PWA) =====
+  let installEvt = null;
+  function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
+  window.addEventListener('appinstalled', () => { installEvt = null; });
+  async function installApp() {
+    if (installEvt) { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; closeSheet(); return; }
+    // iPhone など、ボタンで入れられないブラウザは手順を出す
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const body = h('div'); body.append(h('h3', null, 'スマホに入れる'));
+    const ol = h('ol', 'install-steps');
+    const steps = ios
+      ? ['Safari でこのページを開く', '画面下の「共有」ボタン（□に↑）を押す', '「ホーム画面に追加」を選ぶ', '右上の「追加」を押す']
+      : ['Chrome でこのページを開く', '右上の「︙」メニューを押す', '「アプリをインストール」または「ホーム画面に追加」を選ぶ', '「インストール」を押す'];
+    steps.forEach((t) => ol.append(h('li', null, t)));
+    body.append(ol, h('p', 'note', 'ホーム画面の「浮世ノ地図」から、アプリのように全画面で遊べます。一度開いた地図や絵は、電波がなくても遊べます。'));
+    openModal(body, [['閉じる', closeModal, 'btn-primary']]);
+  }
+  // オフラインでも動くように(https か localhost のときだけ)
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* 入れられなくても遊べる */ });
+  }
+
   useMap(JAPAN);
   showTitle(true);
 })();
