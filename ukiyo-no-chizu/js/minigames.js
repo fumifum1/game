@@ -23,7 +23,7 @@
     { id: 'shape', name: 'シルエット当て', seal: '形', desc: '影の形から県や国を当てよう', unit: '問', start: startShape },
     { id: 'darts', name: '地球儀ダーツ', seal: '的', desc: '地球儀を回して国の場所を突こう', unit: '点', start: startDarts },
     { id: 'thanks', name: 'ありがとう聞き取り', seal: '聴', desc: '何語の「ありがとう」か当てよう', unit: '問', start: startThanks },
-    { id: 'slide', name: '名画スライド', seal: '絵', desc: '名画をずらして元の絵に戻そう', unit: '手', lowerBetter: true, start: startSlide },
+    { id: 'slide', name: '名画スライド', seal: '絵', desc: '名画や自分の写真をずらして元の絵に戻そう', unit: '手', lowerBetter: true, subs: ['3×3', '4×4', '5×5'], start: startSlide },
     { id: 'memory', name: '首都の札合わせ', seal: '札', desc: '国と首都、県と県庁所在地をそろえよう', unit: '手', lowerBetter: true, start: startMemory },
   ];
 
@@ -43,8 +43,13 @@
   $('#nav-mini').addEventListener('click', open);
   $('#mini-back').addEventListener('click', back);
 
+  const bestKey = (g, sub) => 'mini:best:' + g.id + (sub ? ':' + sub : '');
   function bestText(g) {
-    const b = store.get('mini:best:' + g.id, null);
+    if (g.subs) {
+      const parts = g.subs.map((sub) => [sub, store.get(bestKey(g, sub), null)]).filter(([, b]) => b != null);
+      return parts.length ? 'ベスト ' + parts.map(([sub, b]) => `${sub} ${b}${g.unit}`).join('・') : 'まだ遊んでいません';
+    }
+    const b = store.get(bestKey(g), null);
     return b == null ? 'まだ遊んでいません' : `ベスト ${b}${g.unit}`;
   }
   function showList() {
@@ -63,9 +68,9 @@
   }
 
   // 結果(ベストを記録して小判を渡す)
-  function finish(g, { score, detail, reward }) {
+  function finish(g, { score, detail, reward, sub }) {
     stop();
-    const key = 'mini:best:' + g.id, prev = store.get(key, null);
+    const key = bestKey(g, sub), prev = store.get(key, null);
     const better = prev == null || (g.lowerBetter ? score < prev : score > prev);
     if (better) store.set(key, score);
     const gain = clamp(Math.round(reward), 0, 30);
@@ -131,8 +136,8 @@
   }
 
   // ===== 2. シルエット当て =====
-  function modeSelect(g, opts, go) {
-    body.append(h('p', 'mg-hint', 'どちらで遊ぶ？'));
+  function modeSelect(g, opts, go, q = 'どちらで遊ぶ？') {
+    body.append(h('p', 'mg-hint', q));
     const box = h('div', 'mg-modes');
     for (const [label, sub, v] of opts) {
       const b = h('button', 'mg-card'); b.type = 'button';
@@ -278,17 +283,27 @@
   function startSlide(g) {
     setGame(g);
     const arts = U.MAP_LIST.filter((m) => U.isMapOpen(m.id)).flatMap((m) => U.artsFor(m.id).filter((a) => !a.locked && a.url));
-    modeSelect(g, [['3×3', 'かんたん', 3], ['4×4', 'むずかしい', 4]], (N) => {
+    const best = (n) => { const b = store.get(bestKey(g, `${n}×${n}`), null); return b == null ? '' : `・ベスト${b}手`; };
+    modeSelect(g, [['3×3', 'かんたん' + best(3), 3], ['4×4', 'むずかしい' + best(4), 4], ['5×5', 'たいへん' + best(5), 5]], (N) => {
       body.innerHTML = '';
-      const art = pick(arts);
-      const info = h('p', 'mg-hint', `${art.artist}「${art.title}」を読み込み中…`);
+      modeSelect(g, [['名画', '持っている絵からおまかせ', 'art'], ['写真', `自分の写真で1回・小判${U.PHOTO_PRICE}枚`, 'photo']], (kind) => {
+        if (kind === 'art') return play(N, pick(arts));
+        U.choosePhoto((art) => play(N, art));
+      }, `${N}×${N}・どの絵で遊ぶ？`);
+      const cards = body.querySelectorAll('.mg-modes .mg-card');
+      cards[1]?.insertAdjacentHTML('afterbegin', `<span class="mg-photo-ico">${U.PHOTO_SVG}</span>`);
+    }, 'どの大きさで遊ぶ？');
+    function play(N, art) {
+      setGame(g);
+      const label = art.id === 'photo' ? 'あなたの写真' : `${art.artist}「${art.title}」`;
+      const info = h('p', 'mg-hint', `${label}を読み込み中…`);
       body.append(info);
       const img = new Image(); img.referrerPolicy = 'no-referrer';
       img.onerror = () => { info.textContent = '絵を読み込めませんでした。通信状態を確かめてください。'; };
       img.onload = () => build(img);
       img.src = art.url;
       function build(im) {
-        info.textContent = `${art.artist}「${art.title}」　空いているところのとなりの札を押してずらそう`;
+        info.textContent = `${label}　空いているところのとなりの札を押してずらそう`;
         const wrap = h('div', 'mg-slide-wrap'), board = h('div', 'mg-board'), mini = h('img', 'mg-sample'); mini.src = art.url; mini.alt = '見本';
         wrap.append(board, mini); body.append(wrap);
         const B = board.clientWidth, T = B / N, sc = Math.max(B / im.naturalWidth, B / im.naturalHeight);
@@ -318,7 +333,7 @@
             el.style.backgroundImage = `url("${art.url}")`;
             el.style.backgroundSize = `${iw}px ${ihh}px`;
             el.style.backgroundPosition = `${ox - tc * T}px ${oy - tr * T}px`;
-            el.textContent = N === 4 ? String(t + 1) : '';
+            el.textContent = N >= 4 ? String(t + 1) : '';
           });
         }
         function move(pos) {
@@ -329,12 +344,12 @@
             board.classList.add('done'); els[empty].style.backgroundImage = `url("${art.url}")`;
             const tt = N * N - 1; els[empty].style.backgroundSize = `${iw}px ${ihh}px`; els[empty].style.backgroundPosition = `${ox - (tt % N) * T}px ${oy - Math.floor(tt / N) * T}px`; els[empty].classList.remove('empty');
             const sec = (performance.now() - t0) / 1000;
-            setTimeout(() => finish(g, { score: moves, detail: `${N}×${N}・${fmtTime(sec)}`, reward: N === 3 ? clamp(25 - moves / 6, 5, 15) : clamp(40 - moves / 8, 10, 30) }), 900);
+            setTimeout(() => finish(g, { score: moves, detail: `${N}×${N}・${fmtTime(sec)}`, sub: `${N}×${N}`, reward: N === 3 ? clamp(25 - moves / 6, 5, 15) : N === 4 ? clamp(40 - moves / 8, 10, 30) : clamp(30 - moves / 25, 15, 30) }), 900);
           }
         }
         paint();
       }
-    });
+    }
   }
 
   // ===== 6. 首都の札合わせ(神経衰弱) =====

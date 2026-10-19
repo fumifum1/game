@@ -515,3 +515,9 @@ html[data-theme='night'] .seg button[aria-pressed='true'], html[data-theme='nigh
   .pill-btn { padding: 6px 9px; font-size: 0.8rem; }
   .wallet .icon-btn { width: 34px; height: 34px; flex: none; }
 }
+
+/* 写真で遊ぶ */
+.art .pic.photo { background: repeating-linear-gradient(135deg, var(--paper-2) 0 10px, var(--card) 10px 20px); color: var(--vermilion); }
+.art .pic.photo svg { width: 44%; height: 44%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+.photo-confirm { text-align: center; }
+.photo-preview { display: block; max-width: 100%; max-height: 38vh; margin: 8px auto 10px; border: 2px solid var(--ink); border-radius: 4px; object-fit: contain; }

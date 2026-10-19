@@ -690,6 +690,70 @@
     $('#diff-desc').textContent = `${u}名${d.names ? 'あり' : 'なし'}・形のガイド${d.guide ? 'あり' : 'なし'}　／　小判${reward}枚〜${best ? '　／　ベスト ' + fmtTime(best) : ''}`;
   }
 
+  // ===== 写真で遊ぶ =====
+  // 自分の写真を絵柄にする。小判を払うと1回遊べる。写真は端末の中だけで使い、保存もしない(アプリを閉じると消える)
+  const PHOTO_PRICE = 30;
+  const PHOTO_ART = { id: 'photo', title: '持ち込みの一枚', artist: 'あなたの写真', series: '' };
+  let photo = null; // { url(blob), w, h }
+  function pickPhotoFile() {
+    return new Promise((res) => {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = 'image/*';
+      input.addEventListener('change', () => res(input.files?.[0] || null), { once: true });
+      input.addEventListener('cancel', () => res(null), { once: true });
+      input.click();
+    });
+  }
+  // 大きな写真は長辺1920pxに縮める(向きのずれも直す)
+  async function loadPhoto(file) {
+    let src;
+    try { src = await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch {
+      src = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
+    }
+    const w0 = src.width || src.naturalWidth, h0 = src.height || src.naturalHeight, k = Math.min(1, 1920 / Math.max(w0, h0));
+    const cv = document.createElement('canvas'); cv.width = Math.round(w0 * k); cv.height = Math.round(h0 * k);
+    cv.getContext('2d').drawImage(src, 0, 0, cv.width, cv.height);
+    src.close?.();
+    const blob = await new Promise((res) => cv.toBlob(res, 'image/jpeg', 0.9));
+    if (photo) URL.revokeObjectURL(photo.url);
+    photo = { url: URL.createObjectURL(blob), w: cv.width, h: cv.height };
+    return photo;
+  }
+  async function pickPhoto() {
+    const file = await pickPhotoFile();
+    if (!file) return null;
+    $('#loading').hidden = false; $('#loading-text').textContent = '写真を読み込んでいます…';
+    try { return await loadPhoto(file); } catch {
+      const body = h('div'); body.append(h('h3', null, '写真を読み込めませんでした'), h('p', null, 'ほかの写真を選んでください。'));
+      openModal(body, [['閉じる', closeModal, 'btn-primary']]);
+      return null;
+    } finally { $('#loading').hidden = true; }
+  }
+  // 写真を選ぶ → 確認(小判を払う) → onGo(写真の絵柄)
+  async function choosePhoto(onGo) {
+    if (!photo && !(await pickPhoto())) return;
+    const have = koban(), body = h('div', 'photo-confirm');
+    const img = h('img', 'photo-preview'); img.src = photo.url; img.alt = '選んだ写真';
+    body.append(h('h3', null, '写真で遊ぶ'), img);
+    const again = async () => { closeModal(); if (await pickPhoto()) choosePhoto(onGo); };
+    if (have < PHOTO_PRICE) {
+      body.append(h('p', null, `写真で遊ぶには小判${PHOTO_PRICE}枚が必要です（あと${PHOTO_PRICE - have}枚）。`),
+        h('p', 'note', '地方ステージや今日のお題、余興で小判を集めましょう。'));
+      return openModal(body, [['閉じる', closeModal, 'btn-primary']]);
+    }
+    body.append(h('p', null, `この写真を絵柄にして、小判${PHOTO_PRICE}枚で1回遊べます。`));
+    const rw = h('div', 'rewards');
+    const r1 = h('div', 'rw'); r1.append(h('span', null, 'いまの小判'), kobanEl(have));
+    const r2 = h('div', 'rw total'); r2.append(h('span', null, '使ったあと'), kobanEl(have - PHOTO_PRICE));
+    rw.append(r1, r2); body.append(rw);
+    body.append(h('p', 'note', '写真はこの端末の中だけで使い、どこにも送りません。アプリを閉じると消えます。ほかの人が作った絵や写真は使わないでください。'));
+    openModal(body, [[`小判${PHOTO_PRICE}枚で遊ぶ`, () => {
+      store.set('koban', koban() - PHOTO_PRICE); Sound.coin(); vibrate(30); renderWallet(true);
+      closeModal(); onGo({ ...PHOTO_ART, url: photo.url });
+    }, 'btn-primary'], ['別の写真', again], ['やめる', closeModal]]);
+  }
+  const PHOTO_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+
   // ===== 絵柄えらび =====
   let genThumb = null;
   function artPicEl(a) {
@@ -744,6 +808,15 @@
       });
       list.append(b);
     }
+    const pb = h('button', 'art photo-art'); pb.type = 'button';
+    const ppic = h('div', 'pic photo'); ppic.innerHTML = PHOTO_SVG;
+    pb.append(ppic, h('div', 't', '写真で遊ぶ'), h('div', 'a', `自分の写真で1回・小判${PHOTO_PRICE}枚`));
+    pb.addEventListener('click', () => {
+      if (!isMapOpen(mapId)) return;
+      closeSheet();
+      choosePhoto(() => startGame({ mapId, stage: selectedStage(mapId), diffKey: sel.diff, artChoice: 'photo' }));
+    });
+    list.append(pb);
     openSheet(`絵柄をえらぶ（${mapInfo(mapId).name}）`, list);
   }
 
@@ -856,6 +929,7 @@
 
   // ===== 絵柄の決定と読み込み =====
   function resolveArt(mapId, choice) {
+    if (choice === 'photo' && photo) return { ...PHOTO_ART, url: photo.url };
     const open = artsFor(mapId).filter((a) => !a.locked);
     if (!open.some((a) => a.id === choice)) choice = 'random';
     if (choice === 'random') {
@@ -888,6 +962,7 @@
   async function loadArt(art) {
     if (artUrl) { URL.revokeObjectURL(artUrl); artUrl = null; }
     if (art.id === 'gen') { artUrl = await makeGenerated(art); return { art, href: artUrl }; }
+    if (art.id === 'photo') return { art, href: art.url };
     try {
       return { art, href: await preload(art.url) };
     } catch {
@@ -912,7 +987,7 @@
     useMap(map);
     const { art, href } = await loadArt(resolveArt(mapId, artChoice));
     $('#loading').hidden = true;
-    store.set('lastArt:' + mapId, art.id);
+    if (art.id !== 'photo') store.set('lastArt:' + mapId, art.id);
     setupGame({ diff, art, href, stage, daily });
     if (art.fallback) toast('絵を読み込めなかったため、創作浮世絵で遊びます', 3500);
   }
@@ -1439,7 +1514,7 @@
     vtext(title, titleX, y0 + 13, ts);
     if (series) vtext(series, x0 + 18, y0 + 13, ss, 'sub');
     // 落款: 浮世絵は「北斎画」の形、世界の絵は作者名(国名の注記は省く)
-    const sign = a.artist === '創作浮世絵' ? '創作画'
+    const sign = a.id === 'photo' ? '持込' : a.artist === '創作浮世絵' ? '創作画'
       : MAP.id === 'japan' ? a.artist.slice(-2) + '画' : a.artist.replace(/（.*?）/g, '').slice(0, 9);
     const sx = x0 - 18;
     vtext(sign, sx, y0 + colH - sign.length * 16 * 1.05 - 22, 16, 'sub');
@@ -1533,7 +1608,7 @@
 
   // ミニゲーム(minigames.js)に渡す道具
   window.UKIYO = { h, svgEl, $, store, Sound, vibrate, settings, fmtTime, shuffle, koban, addKoban, renderWallet, checkBadges, openModal, closeModal,
-    COUNTRIES, flagUrl, shapeEl, speakThanks, JAPAN, MAP_LIST, artsFor, isMapOpen, loadMap, showTitle: () => showTitle() };
+    COUNTRIES, flagUrl, shapeEl, speakThanks, choosePhoto, PHOTO_PRICE, PHOTO_SVG, JAPAN, MAP_LIST, artsFor, isMapOpen, loadMap, showTitle: () => showTitle() };
 
   useMap(JAPAN);
   showTitle(true);
