@@ -27,6 +27,7 @@ body, .picker, .sheet-card { background-color: var(--paper); background-image: v
 .daily-line b { color: #f0c860; }
 .daily-line.done { opacity: 0.85; }
 .title-credit { margin: 10px 0 0; font: 500 0.72rem var(--mincho); opacity: 0.8; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7); }
+.creator-link { display: inline-block; margin-top: 6px; font: 700 0.78rem var(--mincho); color: #fff8ec; text-decoration: underline; text-underline-offset: 3px; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7); padding: 4px 8px; }
 
 /* 下のメニュー */
 .tabbar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; padding: 8px 4px calc(10px + env(safe-area-inset-bottom)); background-color: var(--paper); background-image: var(--wagara); background-size: 40px 20px; border-top: 2px solid var(--ink); }
@@ -111,3 +112,4 @@ button, .tab, .stage-chip, .thumb { touch-action: manipulation; -webkit-tap-high
 .title-screen, .picker, .tabbar, #tray, .hud { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .title-ver { font: 700 0.65rem var(--sans); opacity: 0.75; margin-left: 6px; }
 .install-steps { text-align: left; line-height: 1.8; font-family: var(--mincho); padding-left: 1.2em; }
+a.btn { display: inline-block; text-decoration: none; }

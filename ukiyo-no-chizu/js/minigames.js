@@ -49,7 +49,7 @@
   }
   function showList() {
     stop(); inGame = false;
-    titleEl.textContent = 'ミニゲーム'; stat.textContent = '';
+    titleEl.textContent = '余興'; stat.textContent = '';
     body.innerHTML = '';
     body.append(h('p', 'mg-lead', '1回1〜2分。結果に応じて小判がもらえます（最大30枚）。'));
     const list = h('div', 'mg-list');

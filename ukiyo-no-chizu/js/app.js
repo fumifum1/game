@@ -350,7 +350,7 @@
     const rates = h('p', 'gacha-rates');
     rates.innerHTML = `金色の国は、もう国旗を持っている国です。<br>★★★（人口100万人未満）7%　★★ 28%　★ 65%<br>同じ国旗が出たら小判が戻ります（★5枚・★★10枚・★★★30枚）`;
     wrap.append(stage, status, btns, rates);
-    openSheet(`国旗ガチャ（小判 ${koban()}枚）`, wrap);
+    openSheet(`国旗の福引（小判 ${koban()}枚）`, wrap);
     const globe = new window.Globe(cv, { lon: 120 + Math.random() * 60, lat: 20 });
     globe.theme = settings.theme;
     const have = flags(); globe.fill = (ft) => (have[ft.a3] ? OWNED_GOLD : null);
@@ -362,11 +362,11 @@
     if (!gacha || gacha.busy) return;
     if (koban() < price) {
       const body = h('div');
-      body.append(h('h3', null, '小判が足りません'), h('p', null, `ガチャには小判${price}枚が必要です（あと${price - koban()}枚）。`), h('p', 'note', '地方ステージや今日のお題で小判を集めましょう。'));
+      body.append(h('h3', null, '小判が足りません'), h('p', null, `福引には小判${price}枚が必要です（あと${price - koban()}枚）。`), h('p', 'note', '地方ステージや今日のお題で小判を集めましょう。'));
       return openModal(body, [['閉じる', closeModal, 'btn-primary']]);
     }
     store.set('koban', koban() - price); renderWallet(true);
-    $('#sheet-title').textContent = `国旗ガチャ（小判 ${koban()}枚）`;
+    $('#sheet-title').textContent = `国旗の福引（小判 ${koban()}枚）`;
     const before = flags(), have = { ...before }, results = [];
     let refund = 0;
     for (let i = 0; i < n; i++) {
@@ -792,7 +792,7 @@
           a.locked ? priceBtn(a.price, () => confirmBuy({ key: a.key, title: `${a.artist}のまだ見ぬ一枚`, price: a.price }, reopen)) : h('span', 'owned', '持っている')));
       }
     }
-    openSheet(`お店（小判 ${koban()}枚）`, wrap);
+    openSheet(`画商（小判 ${koban()}枚）`, wrap);
   }
   $('#nav-shop').addEventListener('click', openShop);
   $('#nav-gacha').addEventListener('click', openGacha);
@@ -844,6 +844,9 @@
     inst.addEventListener('click', installApp);
     row('スマホに入れる', 'ホーム画面からアプリとして起動できます', inst);
     row('バージョン', `${self.APP_BUILD} 更新`, h('span', null, `${self.APP_VERSION}`));
+    // つくった人のサイト(アプリ版では端末のブラウザで開く)
+    const site = h('a', 'btn btn-small', 'ひらく'); site.href = 'https://fumifum1.github.io/main/index.html';
+    row('クリエイターのサイト', 'ほかのゲームや作品はこちら', site);
     const cr = h('p', 'note');
     cr.innerHTML = '地図：<a href="https://www.gsi.go.jp/kankyochiri/gm_jpn.html" target="_blank" rel="noopener">地球地図日本（国土地理院）</a>を加工（<a href="https://github.com/dataofjapan/land" target="_blank" rel="noopener">dataofjapan/land</a> 経由）、<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a><br>絵画：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a>（パブリックドメイン）<br>国旗：<a href="https://flagpedia.net/" target="_blank" rel="noopener">Flagpedia</a>（パブリックドメイン）';
     wrap.append(h('div', 'shop-sec', '出典'), cr);
