@@ -124,3 +124,14 @@ html[data-theme='night'] .mg-q { background: #1c2a44; }
 .mg-list .guide.small .guide-img { width: 42px; margin-left: 0; }
 .mg-list .guide.small .guide-bubble { margin-bottom: 0; padding: 5px 6px; font-size: 0.62rem; line-height: 1.45; letter-spacing: 0; }
 @media (min-width: 560px) { .mg-list .guide.small .guide-img { width: 58px; } .mg-list .guide.small .guide-bubble { font-size: 0.76rem; padding: 6px 9px; } }
+
+/* 余興カード: 落ち着いた吹き出し(細く薄い枠・小さめの文字)、案内役の大きさはそろえる */
+.mg-title { white-space: nowrap; overflow: hidden; }
+.mg-list .guide { min-height: 50px; }
+.mg-list .guide.small .guide-img { width: 40px; flex: 0 0 40px; }
+.mg-list .guide.small .guide-bubble { border: 1px solid var(--line); box-shadow: none; color: var(--ink-2); font-weight: 500; font-size: 0.6rem; line-height: 1.5; padding: 4px 7px; border-radius: 10px; }
+.mg-list .guide-bubble::before { border-right-color: var(--line); }
+@media (min-width: 560px) { .mg-list .guide.small .guide-img { width: 52px; flex-basis: 52px; } .mg-list .guide.small .guide-bubble { font-size: 0.72rem; } }
+/* 題が長くてもカードの幅は広げない(はみ出す分は文字を縮める) */
+.mg-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mg-list .mg-card, .mg-title { min-width: 0; }

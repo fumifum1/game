@@ -527,3 +527,12 @@ html[data-theme='night'] .seg button[aria-pressed='true'], html[data-theme='nigh
 .frame-name { flex: 1; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: 6px; background: var(--card); color: var(--ink); font: 700 1rem var(--mincho); }
 .frame-ico { display: grid; place-items: center; width: 100%; height: 100%; background: repeating-linear-gradient(135deg, var(--paper-2) 0 8px, var(--card) 8px 16px); color: var(--vermilion); }
 .frame-ico svg { width: 60%; height: 60%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+
+/* 絵画を選ぶ: ランダムのときは侍がふわふわ。押すとしゃべる */
+.art-pick { position: relative; }
+.pic.random { background: radial-gradient(circle at 50% 40%, #fffaf0, var(--paper-2)) !important; }
+.ap-pic .pic.random img, .art .pic.random img { width: 82%; height: 92%; object-fit: contain; animation: yurari 3.2s ease-in-out infinite; filter: drop-shadow(0 3px 4px rgba(31, 58, 95, 0.25)); }
+.ap-pic .pic.random { cursor: pointer; overflow: visible; }
+.ap-say { position: absolute; left: 6px; bottom: calc(100% + 8px); max-width: min(300px, 90%); padding: 6px 10px; background: var(--card); color: var(--ink); border: 1.5px solid var(--ink); border-radius: 12px; font: 700 0.8rem/1.5 var(--mincho); box-shadow: 2px 3px 0 rgba(42, 36, 32, 0.15); opacity: 0; transform: translateY(4px) scale(0.96); transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 3; }
+.ap-say::after { content: ''; position: absolute; left: 34px; top: 100%; border: 7px solid transparent; border-top: 9px solid var(--ink); border-bottom: 0; }
+.ap-say.on { opacity: 1; transform: none; }

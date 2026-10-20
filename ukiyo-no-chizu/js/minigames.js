@@ -19,22 +19,22 @@
   };
 
   const GAMES = [
-    { id: 'flag', name: '国旗フラッシュ', desc: '60秒で国旗を何問当てられるか、勝負だ！', unit: '問', start: startFlag, who: 'pirate',
+    { id: 'flag', name: '国旗フラッシュ', desc: '60秒で旗を当てまくれ！', unit: '問', start: startFlag, who: 'pirate',
       intro: '旗を見たら、どこの国か当てるんだ！時間は60秒。まちがえると3秒へるから気をつけな。',
       lines: ['たいした目利きだ！海賊の仲間にしてやろう。', 'なかなかやるな。もっと旗を覚えてこい！', '旗の見分けはまだまだだな。図鑑で勉強だ！'] },
-    { id: 'shape', name: 'シルエット当て', desc: '影の形だけで、県や国を当ててごらん。', unit: '問', start: startShape, who: 'merchant',
+    { id: 'shape', name: 'シルエット当て', desc: '影の形で県や国を当ててね。', unit: '問', start: startShape, who: 'merchant',
       intro: '影の形だけで、どこの県か国か当ててごらん。全部で10問だよ。',
       lines: ['見事！地図がすっかり頭に入っているね。', 'いい線いってるよ。あと少しだ。', '形はむずかしいね。地図パズルで覚えるといいよ。'] },
-    { id: 'darts', name: '地球儀ダーツ', desc: '地球儀を回して、国の場所をねらい撃て！', unit: '点', start: startDarts, who: 'hunter',
+    { id: 'darts', name: '地球儀ダーツ', desc: '地球儀の国をねらい撃て！', unit: '点', start: startDarts, who: 'hunter',
       intro: '地球儀を指で回して、お題の国をねらってトンと突くのだ。近いほど点が高い（150km以内で100点）。5本勝負！',
       lines: ['百発百中とはこのことだ！', '悪くない腕前だ。', '的はまだ遠いな。修行あるのみ！'] },
-    { id: 'thanks', name: 'ありがとう聞き取り', desc: '何語の「ありがとう」か、聞き分けてね。', unit: '問', start: startThanks, who: 'teller',
+    { id: 'thanks', name: 'ありがとう当て', desc: '何語のありがとうかな？', unit: '問', start: startThanks, who: 'teller',
       intro: '世界の「ありがとう」を聞かせるよ。何語か当ててみて。全部で8問。音が鳴るので音量に気をつけてね。',
       lines: ['耳がいいね！世界中で友だちができるよ。', 'よく聞けているよ。', 'ことばはむずかしいね。図鑑のカードでも聞けるよ。'] },
-    { id: 'slide', name: '名画スライド', desc: 'ばらばらの絵を、ずらして元に戻しておくれ。', unit: '手', lowerBetter: true, subs: ['3×3', '4×4', '5×5'], start: startSlide, who: 'painter',
+    { id: 'slide', name: '名画スライド', desc: '絵をずらして元に戻して。', unit: '手', lowerBetter: true, subs: ['3×3', '4×4', '5×5'], start: startSlide, who: 'painter',
       intro: '大変だ、絵がばらばらになってしまった！札をずらして元に戻しておくれ。',
       lines: ['ありがとう、見事に元どおりだ！', 'うん、きれいに戻ったね。', '手間をかけたね。でも完成だ！'] },
-    { id: 'memory', name: '首都の札合わせ', desc: '国と首都、県と県庁所在地の札をそろえるのじゃ。', unit: '手', lowerBetter: true, start: startMemory, who: 'noble',
+    { id: 'memory', name: '首都の札合わせ', desc: '首都の札をそろえるのじゃ。', unit: '手', lowerBetter: true, start: startMemory, who: 'noble',
       intro: '札をめくって、県と県庁所在地（国と首都）の組をそろえるのじゃ。少ない手でそろえるほど見事であるぞ。',
       lines: ['まことに見事じゃ。', 'なかなかの覚えのよさじゃな。', 'ほっほっほ、また挑むがよい。'] },
   ];
@@ -89,7 +89,16 @@
       list.append(b);
     }
     body.append(list);
+    fitTitles(list);
   }
+  function fitTitles(root) {
+    for (const t of root.querySelectorAll('.mg-title')) {
+      t.style.fontSize = '';
+      let size = parseFloat(getComputedStyle(t).fontSize);
+      while (t.scrollWidth > t.clientWidth + 1 && size > 11) { size -= 0.5; t.style.fontSize = `${size}px`; }
+    }
+  }
+  new ResizeObserver(() => { const l = body.querySelector('.mg-list'); if (l) fitTitles(l); }).observe(body);
 
   // 結果(ベストを記録して小判を渡す)
   function finish(g, { score, detail, reward, sub, grade = 0.5 }) {

@@ -763,77 +763,52 @@
     } finally { $('#loading').hidden = true; }
   }
 
-  // --- 掛け軸の表装(全体を入れるときの余白) ---
-  // 壁(聚楽壁)に掛け軸を掛けた絵にして、写真は本紙の位置に入れる。本紙の場所を返す
-  function drawScroll(g, W, H, a) {
-    const m = Math.min(W, H);
-    const wall = g.createLinearGradient(0, 0, 0, H); wall.addColorStop(0, '#dccba7'); wall.addColorStop(1, '#c6b088');
-    g.fillStyle = wall; g.fillRect(0, 0, W, H);
-    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    for (let i = 0, n = Math.round((W * H) / 700); i < n; i++) {
-      g.fillStyle = rnd() < 0.5 ? 'rgba(90,64,30,0.12)' : 'rgba(255,250,235,0.22)';
-      const r = (0.6 + rnd() * 1.6) * (m / 700); g.fillRect(rnd() * W, rnd() * H, r, r);
+  // --- 和紙(全体を入れるときの余白) ---
+  // 生成りの和紙に、楮(こうぞ)の繊維とちりを散らす。写真を置く場所を返す
+  function drawWashi(g, W, H, a) {
+    const m = Math.min(W, H), M = Math.max(W, H);
+    let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    g.fillStyle = '#f5efe1'; g.fillRect(0, 0, W, H);
+    // 紙のむら
+    for (let i = 0; i < 14; i++) {
+      const x = rnd() * W, y = rnd() * H, r = (0.2 + rnd() * 0.5) * M, gr = g.createRadialGradient(x, y, 0, x, y, r);
+      const light = rnd() < 0.5, c = light ? '255,253,246' : '214,198,160', al = light ? 0.45 : 0.12;
+      gr.addColorStop(0, `rgba(${c},${al})`); gr.addColorStop(1, `rgba(${c},0)`); // 同じ色のまま透明に(黒へ寄せると灰色になる)
+      g.fillStyle = gr; g.fillRect(0, 0, W, H);
     }
-    // 各部の寸法(画面の短い辺に対する割合)
-    const cw = 0.04 * m, mt = 0.05 * m, mb = 0.032 * m, ten = 0.12 * m, chi = 0.07 * m;
-    const hasso = 0.014 * m, jiku = 0.026 * m, knob = 0.03 * m, cord = 0.05 * m;
-    const ichiT = 0.06, ichiB = 0.03;
-    const padX = 0.05 * m + knob, padTop = 0.02 * m + cord, padBot = 0.03 * m;
-    const availW = W - 2 * padX - 2 * cw, availH = H - padTop - padBot - hasso - ten - mt - mb - chi - jiku;
-    const ph = Math.max(10, Math.min(availH / (1 + ichiT + ichiB), availW / a)), pw = ph * a;
-    const sw = pw + 2 * cw, sh = hasso + ten + mt + ph * (1 + ichiT + ichiB) + mb + chi + jiku;
-    const x0 = (W - sw) / 2, y0 = padTop + (H - padTop - padBot - sh) / 2;
-    // 影と掛け紐
-    g.save(); g.shadowColor = 'rgba(40,25,10,0.4)'; g.shadowBlur = 0.03 * m; g.shadowOffsetY = 0.012 * m;
-    g.fillStyle = '#2f4560'; g.fillRect(x0, y0, sw, sh); g.restore();
-    g.strokeStyle = '#5a3a22'; g.lineWidth = Math.max(1, 0.004 * m);
-    g.beginPath(); g.moveTo(x0 + sw * 0.32, y0 + hasso / 2); g.lineTo(W / 2, y0 - cord); g.lineTo(x0 + sw * 0.68, y0 + hasso / 2); g.stroke();
-    g.fillStyle = '#3b2618'; g.beginPath(); g.arc(W / 2, y0 - cord, 0.008 * m, 0, Math.PI * 2); g.fill();
-    // 天地(藍の絹): 細い横すじで布らしく
-    const silk = (x, y, w, hh) => {
-      g.fillStyle = '#2f4560'; g.fillRect(x, y, w, hh);
-      g.fillStyle = 'rgba(255,255,255,0.05)';
-      for (let yy = y; yy < y + hh; yy += Math.max(2, 0.006 * m)) g.fillRect(x, yy, w, Math.max(0.5, 0.0015 * m));
-    };
-    const yTen = y0 + hasso, yMid = yTen + ten, midH = mt + ph * (1 + ichiT + ichiB) + mb, yChi = yMid + midH;
-    silk(x0, yTen, sw, ten); silk(x0, yChi, sw, chi);
-    // 中廻し(金茶の金襴): 七宝つなぎの模様
-    g.fillStyle = '#9c7a34'; g.fillRect(x0, yMid, sw, midH);
-    g.save(); g.beginPath(); g.rect(x0, yMid, sw, midH); g.clip();
-    const st = Math.max(4, 0.022 * m);
-    g.strokeStyle = 'rgba(255,228,150,0.35)'; g.lineWidth = Math.max(0.5, 0.0018 * m);
-    for (let yy = yMid; yy < yMid + midH + st; yy += st) for (let xx = x0; xx < x0 + sw + st; xx += st) { g.beginPath(); g.arc(xx, yy, st / 2, 0, Math.PI * 2); g.stroke(); }
-    g.restore();
-    // 一文字(金): 本紙の上下
-    const px = x0 + cw, pyTop = yMid + mt, py = pyTop + ph * ichiT;
-    const gold = (x, y, w, hh) => {
-      const gr = g.createLinearGradient(0, y, 0, y + hh); gr.addColorStop(0, '#ecd27e'); gr.addColorStop(0.5, '#c9a347'); gr.addColorStop(1, '#e2c46c');
-      g.fillStyle = gr; g.fillRect(x, y, w, hh);
-      g.strokeStyle = 'rgba(80,55,15,0.45)'; g.lineWidth = Math.max(0.5, 0.0015 * m); g.strokeRect(x, y, w, hh);
-    };
-    gold(px, pyTop, pw, ph * ichiT); gold(px, py + ph, pw, ph * ichiB);
-    // 風帯: 天から下がる2本の帯
-    for (const fx of [0.3, 0.7]) {
-      const bw = 0.022 * m, bx = x0 + sw * fx - bw / 2;
-      gold(bx, yTen, bw, ten * 0.82);
-      g.fillStyle = 'rgba(60,40,10,0.5)'; g.fillRect(bx + bw * 0.2, yTen + ten * 0.82 - 0.004 * m, bw * 0.6, 0.004 * m);
+    // 繊維: 細く曲がった筋
+    g.lineCap = 'round';
+    for (let i = 0, n = Math.round((W * H) / 2200); i < n; i++) {
+      const x = rnd() * W, y = rnd() * H, len = (0.02 + rnd() * 0.08) * m, ang = rnd() * Math.PI * 2;
+      g.strokeStyle = rnd() < 0.7 ? `rgba(160,135,90,${0.08 + rnd() * 0.14})` : `rgba(255,255,255,${0.45 + rnd() * 0.4})`;
+      g.lineWidth = Math.max(0.4, ((0.3 + rnd() * 1) * m) / 900);
+      g.beginPath(); g.moveTo(x, y);
+      g.quadraticCurveTo(x + Math.cos(ang + 0.7) * len * 0.5, y + Math.sin(ang + 0.7) * len * 0.5, x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+      g.stroke();
     }
-    // 八双(上の細い棒)と軸(下の棒・軸先)
-    const wood = (x, y, w, hh, c1, c2) => { const gr = g.createLinearGradient(0, y, 0, y + hh); gr.addColorStop(0, c1); gr.addColorStop(0.5, c2); gr.addColorStop(1, c1); g.fillStyle = gr; g.fillRect(x, y, w, hh); };
-    wood(x0, y0, sw, hasso, '#3b2618', '#6b4428');
-    wood(x0, yChi + chi, sw, jiku, '#2e1d12', '#5e3b22');
-    for (const kx of [x0 - knob, x0 + sw]) wood(kx, yChi + chi - jiku * 0.15, knob, jiku * 1.3, '#1d130c', '#4a3020');
-    // 本紙のふち
-    g.strokeStyle = 'rgba(40,30,15,0.5)'; g.lineWidth = Math.max(0.5, 0.002 * m);
-    g.strokeRect(px, py, pw, ph);
-    return { x: px, y: py, w: pw, h: ph };
+    // ちり(小さな粒)
+    for (let i = 0, n = Math.round((W * H) / 6000); i < n; i++) {
+      g.fillStyle = `rgba(115,90,55,${0.1 + rnd() * 0.2})`;
+      g.beginPath(); g.arc(rnd() * W, rnd() * H, Math.max(0.4, ((0.5 + rnd() * 1.4) * m) / 900), 0, Math.PI * 2); g.fill();
+    }
+    // 写真の場所: まわりに和紙の余白を残して中央に
+    const pad = 0.07 * m;
+    let pw = W - 2 * pad, ph = pw / a;
+    if (ph > H - 2 * pad) { ph = H - 2 * pad; pw = ph * a; }
+    const x = (W - pw) / 2, y = (H - ph) / 2;
+    g.save(); g.shadowColor = 'rgba(70,50,20,0.25)'; g.shadowBlur = 0.012 * m; g.shadowOffsetY = 0.003 * m;
+    g.fillStyle = '#fff'; g.fillRect(x, y, pw, ph); g.restore();
+    return { x, y, w: pw, h: ph, m };
   }
-  // 写真を W×H に描く(切り取り: 中心cx,cyと拡大z / 全体: 掛け軸に入れる)
+  // 写真を W×H に描く(切り取り: 中心cx,cyと拡大z / 全体: 和紙に置く)
   function drawOwn(g, src, f, W, H) {
     const iw = src.width, ih = src.height;
     if (f.mode === 'fit') {
-      const r = drawScroll(g, W, H, iw / ih);
+      const r = drawWashi(g, W, H, iw / ih);
       g.drawImage(src, r.x, r.y, r.w, r.h);
+      // 細い縁と、少し外にもう1本(表装の筋のように)
+      g.strokeStyle = 'rgba(105,80,40,0.55)'; g.lineWidth = Math.max(0.6, 0.0025 * r.m); g.strokeRect(r.x, r.y, r.w, r.h);
+      const o = 0.014 * r.m; g.strokeStyle = 'rgba(150,120,70,0.35)'; g.lineWidth = Math.max(0.5, 0.0015 * r.m); g.strokeRect(r.x - o, r.y - o, r.w + 2 * o, r.h + 2 * o);
       return;
     }
     const s = Math.max(W / iw, H / ih) * f.z, dw = iw * s, dh = ih * s;
@@ -866,7 +841,7 @@
     const f = { ...start };
     const box = h('div', 'framing');
     const seg = h('div', 'framing-seg');
-    const modes = [['crop', '切り取る'], ['fit', '全体（掛け軸）']];
+    const modes = [['crop', '切り取る'], ['fit', '全体（和紙）']];
     const mbtn = modes.map(([v, label]) => { const b = h('button', null, label); b.type = 'button'; b.addEventListener('click', () => { f.mode = v; sync(); }); seg.append(b); return [v, b]; });
     const [PW, PH] = sizeFor(aspect, 480);
     const cv = h('canvas', 'framing-view'); cv.width = Math.round(PW); cv.height = Math.round(PH);
@@ -888,7 +863,7 @@
       for (const [v, b] of mbtn) b.setAttribute('aria-pressed', String(f.mode === v));
       const crop = f.mode === 'crop';
       zoomRow.hidden = !crop; cv.classList.toggle('grab', crop);
-      tip.textContent = crop ? '絵を指でずらして、使うところを選んでください。' : '写真をそのまま全部入れて、まわりは掛け軸の表装にします。';
+      tip.textContent = crop ? '絵を指でずらして、使うところを選んでください。' : '写真をそのまま全部入れて、まわりは和紙で包みます。';
       draw();
     }
     zoom.addEventListener('input', () => { f.z = +zoom.value; draw(); });
@@ -1019,7 +994,10 @@
   // ===== 絵柄えらび =====
   let genThumb = null;
   function artPicEl(a) {
-    if (a.id === 'random') return h('div', 'pic random', '?');
+    if (a.id === 'random') {
+      const p = h('div', 'pic random'), im = h('img', 'pic-chara'); im.src = 'img/chara/smurai.png'; im.alt = '侍'; im.draggable = false;
+      p.append(im); return p;
+    }
     const pic = h('div', 'pic');
     if (a.id === 'gen') {
       if (!genThumb) genThumb = window.generateUkiyoe((Math.random() * 1e9) | 0, 300, Math.round((300 * JAPAN.height) / JAPAN.width)).canvas;
@@ -1033,12 +1011,30 @@
   }
   const artSubtitle = (a) => (a.id === 'gen' ? a.artist : `${a.artist}${a.series ? '・' + a.series : ''}`);
 
+  const SAMURAI_LINES = [
+    'どの絵にするでござるか？', '「変更」を押せば、絵画をえらべるでござる。', 'ランダムなら、毎回ちがう絵が出るでござる。',
+    '小判をためて、名画を集めるでござる。', '拙者、富士の絵がいちばん好きでござる。', '自分の写真も、額に入れて飾れるでござるよ。',
+    'ふわ〜……おっと、居眠りしておった。', '全部はまると、一枚の名画になるでござる！', '形のガイドを消すと、腕が上がるでござる。',
+  ];
+  let samuraiLast = -1, samuraiTimer = 0;
+  function samuraiSay(btn) {
+    let say = btn.querySelector('.ap-say');
+    if (!say) { say = h('span', 'ap-say'); btn.append(say); }
+    let i; do { i = Math.floor(Math.random() * SAMURAI_LINES.length); } while (i === samuraiLast && SAMURAI_LINES.length > 1);
+    samuraiLast = i; say.textContent = SAMURAI_LINES[i];
+    say.classList.remove('on'); void say.offsetWidth; say.classList.add('on');
+    Sound.pick();
+    clearTimeout(samuraiTimer); samuraiTimer = setTimeout(() => say.classList.remove('on'), 2800);
+  }
   function renderArtPick() {
     const id = selectedArt(sel.map);
     const btn = $('#art-pick');
     const pic = btn.querySelector('.ap-pic'); pic.innerHTML = '';
     if (id === 'random') {
-      pic.append(artPicEl({ id: 'random' }));
+      const sp = artPicEl({ id: 'random' });
+      // 侍を押すと、ひとことしゃべる(絵画の一覧は開かない)
+      sp.addEventListener('click', (e) => { e.stopPropagation(); samuraiSay(btn); });
+      pic.append(sp);
       btn.querySelector('.ap-t').textContent = '絵画を選ぶ';
       const n = allArtsFor(sel.map).filter((a) => !a.locked).length;
       btn.querySelector('.ap-a').textContent = `いまはランダム（持っている${n}枚から）`;
