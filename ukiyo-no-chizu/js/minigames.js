@@ -23,7 +23,7 @@
     { id: 'shape', name: 'シルエット当て', seal: '形', desc: '影の形から県や国を当てよう', unit: '問', start: startShape },
     { id: 'darts', name: '地球儀ダーツ', seal: '的', desc: '地球儀を回して国の場所を突こう', unit: '点', start: startDarts },
     { id: 'thanks', name: 'ありがとう聞き取り', seal: '聴', desc: '何語の「ありがとう」か当てよう', unit: '問', start: startThanks },
-    { id: 'slide', name: '名画スライド', seal: '絵', desc: '名画や自分の写真をずらして元の絵に戻そう', unit: '手', lowerBetter: true, subs: ['3×3', '4×4', '5×5'], start: startSlide },
+    { id: 'slide', name: '名画スライド', seal: '絵', desc: '名画や自分の絵をずらして元の絵に戻そう', unit: '手', lowerBetter: true, subs: ['3×3', '4×4', '5×5'], start: startSlide },
     { id: 'memory', name: '首都の札合わせ', seal: '札', desc: '国と首都、県と県庁所在地をそろえよう', unit: '手', lowerBetter: true, start: startMemory },
   ];
 
@@ -32,12 +32,14 @@
   let cleanup = null, inGame = false;
   function stop() { cleanup?.(); cleanup = null; }
   function setGame(g) { stop(); inGame = true; titleEl.textContent = g.name; stat.textContent = ''; body.innerHTML = ''; }
+  let from = 'title';
   function open() {
     Sound.ensure();
+    from = $('#menu').hidden ? 'title' : 'picker';
     $('#title').hidden = true; $('#menu').hidden = true; $('#game').hidden = true;
     scr.hidden = false; showList();
   }
-  function close() { stop(); inGame = false; scr.hidden = true; U.showTitle(); }
+  function close() { stop(); inGame = false; scr.hidden = true; if (from === 'picker') U.showPicker(); else U.showTitle(); }
   function back() { if (inGame) showList(); else close(); }
   window.MINI = { back };
   $('#nav-mini').addEventListener('click', open);
@@ -282,20 +284,20 @@
   // ===== 5. 名画スライド =====
   function startSlide(g) {
     setGame(g);
-    const arts = U.MAP_LIST.filter((m) => U.isMapOpen(m.id)).flatMap((m) => U.artsFor(m.id).filter((a) => !a.locked && a.url));
     const best = (n) => { const b = store.get(bestKey(g, `${n}×${n}`), null); return b == null ? '' : `・ベスト${b}手`; };
     modeSelect(g, [['3×3', 'かんたん' + best(3), 3], ['4×4', 'むずかしい' + best(4), 4], ['5×5', 'たいへん' + best(5), 5]], (N) => {
       body.innerHTML = '';
-      modeSelect(g, [['名画', '持っている絵からおまかせ', 'art'], ['写真', `自分の写真で1回・小判${U.PHOTO_PRICE}枚`, 'photo']], (kind) => {
-        if (kind === 'art') return play(N, pick(arts));
+      modeSelect(g, [['ランダム', '持っている絵から', 'random'], ['絵画を選ぶ', '一覧から1枚えらぶ', 'choose'], ['写真', `1回・小判${U.PHOTO_PRICE}枚`, 'photo']], (kind) => {
+        if (kind === 'random') return play(N, pick(U.pictureList()));
+        if (kind === 'choose') return U.openArtChooser((art) => play(N, art));
         U.choosePhoto((art) => play(N, art));
       }, `${N}×${N}・どの絵で遊ぶ？`);
       const cards = body.querySelectorAll('.mg-modes .mg-card');
-      cards[1]?.insertAdjacentHTML('afterbegin', `<span class="mg-photo-ico">${U.PHOTO_SVG}</span>`);
+      cards[2]?.insertAdjacentHTML('afterbegin', `<span class="mg-photo-ico">${U.PHOTO_SVG}</span>`);
     }, 'どの大きさで遊ぶ？');
     function play(N, art) {
       setGame(g);
-      const label = art.id === 'photo' ? 'あなたの写真' : `${art.artist}「${art.title}」`;
+      const label = art.id === 'photo' ? 'あなたの写真' : art.frame ? `自分の絵「${art.title}」` : `${art.artist}「${art.title}」`;
       const info = h('p', 'mg-hint', `${label}を読み込み中…`);
       body.append(info);
       const img = new Image(); img.referrerPolicy = 'no-referrer';

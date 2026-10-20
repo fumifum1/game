@@ -521,3 +521,9 @@ html[data-theme='night'] .seg button[aria-pressed='true'], html[data-theme='nigh
 .art .pic.photo svg { width: 44%; height: 44%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
 .photo-confirm { text-align: center; }
 .photo-preview { display: block; max-width: 100%; max-height: 38vh; margin: 8px auto 10px; border: 2px solid var(--ink); border-radius: 4px; object-fit: contain; }
+
+/* 額装 */
+.frame-label { display: flex; align-items: center; gap: 8px; margin: 0 auto 10px; max-width: 320px; font: 700 0.9rem var(--mincho); }
+.frame-name { flex: 1; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: 6px; background: var(--card); color: var(--ink); font: 700 1rem var(--mincho); }
+.frame-ico { display: grid; place-items: center; width: 100%; height: 100%; background: repeating-linear-gradient(135deg, var(--paper-2) 0 8px, var(--card) 8px 16px); color: var(--vermilion); }
+.frame-ico svg { width: 60%; height: 60%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }

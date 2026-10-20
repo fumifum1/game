@@ -173,7 +173,8 @@
       return { ...a, key, price: PRICES.world[i] ?? 150, locked: i > 0 && !o.has(key) };
     });
   }
-  const artById = (mapId, id) => artsFor(mapId).find((a) => a.id === id);
+  const allArtsFor = (mapId) => [...artsFor(mapId), ...frameArts()];
+  const artById = (mapId, id) => allArtsFor(mapId).find((a) => a.id === id);
 
   // 以前の版(修行点)で遊んでいた人の進み具合を小判の仕組みへ移す
   (function migrate() {
@@ -250,6 +251,7 @@
     { id: 'japanall', name: '全国制覇', desc: '日本全体を4つの難易度で完成', reward: 80, prog: (s) => [s.japanDiffs, 4] },
     { id: 'streak7', name: '皆勤', desc: '今日のお題を7日続けて達成', reward: 100, prog: (s) => [s.streakMax, 7] },
     { id: 'collector', name: '蒐集家', desc: '絵柄を10枚集める', reward: 50, prog: (s) => [s.arts, 10] },
+    { id: 'frames', name: '私設画廊', desc: '自分の絵を5枚額装する', reward: 100, prog: (s) => [s.frames, FRAME_MAX] },
     { id: 'flags', name: '万国旗', desc: '国旗を50か国集める', reward: 80, prog: (s) => [s.flags, 50] },
     { id: 'world', name: '世界一周', desc: '6つの大陸すべてを完成', reward: 150, prog: (s) => [s.continents, 6], gold: true },
     { id: 'rich', name: '小判長者', desc: '小判を合計1000枚かせぐ', reward: 100, prog: (s) => [s.kobanTotal, 1000], gold: true },
@@ -262,6 +264,7 @@
       japanStages: JAPAN_STAGES.filter(([n]) => starsOf('japan', n) > 0).length,
       japanDiffs: DIFFS.filter((d) => store.get(`done:japan:all:${d.key}`, false)).length,
       streakMax: streak().max,
+      frames: FRAMES.length,
       arts: MAP_LIST.filter((m) => isMapOpen(m.id)).reduce((n, m) => n + artsFor(m.id).filter((a) => !a.locked).length, 0),
       continents: window.WORLD_MAP_INDEX.filter((m) => starsOf(m.id, 'all') > 0).length,
       kobanTotal: store.get('kobanTotal', 0),
@@ -569,7 +572,7 @@
   // 持っている絵から1枚を全面に出す。タイトルに戻るたびに絵が変わる
   let titleArt = null;
   function changeTitleArt(first) {
-    const pool = MAP_LIST.filter((m) => isMapOpen(m.id)).flatMap((m) => artsFor(m.id).filter((a) => !a.locked && a.url));
+    const pool = [...MAP_LIST.filter((m) => isMapOpen(m.id)).flatMap((m) => artsFor(m.id).filter((a) => !a.locked && a.url)), ...frameArts()];
     const next = first ? pool.find((a) => a.id === 'wave') : pool.filter((a) => a !== titleArt && a.id !== titleArt?.id)[Math.floor(Math.random() * Math.max(1, pool.length - 1))] || pool[0];
     titleArt = next;
     const img = $('#title-img');
@@ -693,7 +696,7 @@
   // ===== 写真で遊ぶ =====
   // 自分の写真を絵柄にする。小判を払うと1回遊べる。写真は端末の中だけで使い、保存もしない(アプリを閉じると消える)
   const PHOTO_PRICE = 30;
-  const PHOTO_ART = { id: 'photo', title: '持ち込みの一枚', artist: 'あなたの写真', series: '' };
+  const PHOTO_ART = { id: 'photo', title: '持ち込みの一枚', artist: 'あなたの写真', series: '', own: true };
   let photo = null; // { url(blob), w, h }
   function pickPhotoFile() {
     return new Promise((res) => {
@@ -716,7 +719,7 @@
     src.close?.();
     const blob = await new Promise((res) => cv.toBlob(res, 'image/jpeg', 0.9));
     if (photo) URL.revokeObjectURL(photo.url);
-    photo = { url: URL.createObjectURL(blob), w: cv.width, h: cv.height };
+    photo = { url: URL.createObjectURL(blob), w: cv.width, h: cv.height, blob };
     return photo;
   }
   async function pickPhoto() {
@@ -752,6 +755,77 @@
       closeModal(); onGo({ ...PHOTO_ART, url: photo.url });
     }, 'btn-primary'], ['別の写真', again], ['やめる', closeModal]]);
   }
+  // ===== 額装(自分の写真を絵画として飾る) =====
+  // 小判300枚で1枠。5枠まで。外すと半分(150枚)戻る。写真は端末の IndexedDB に保存
+  const FRAME_PRICE = 300, FRAME_MAX = 5, FRAME_REFUND = FRAME_PRICE / 2;
+  let FRAMES = []; // [{ id, title, url }]
+  const frameDb = () => new Promise((res, rej) => {
+    const rq = indexedDB.open('ukiyo-frames', 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore('frames', { keyPath: 'id' });
+    rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
+  });
+  async function frameTx(mode, fn) {
+    const db = await frameDb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('frames', mode), st = tx.objectStore('frames'), out = fn(st);
+      tx.oncomplete = () => { db.close(); res(out?.result); }; tx.onerror = () => { db.close(); rej(tx.error); };
+    });
+  }
+  const frameArt = (f) => ({ id: 'frame:' + f.id, title: f.title, artist: '自分の絵', series: '', url: f.url, thumb: f.url, own: true, frame: f.id });
+  const frameArts = () => FRAMES.map(frameArt);
+  async function loadFrames() {
+    try {
+      const rows = await frameTx('readonly', (st) => st.getAll());
+      FRAMES.forEach((f) => URL.revokeObjectURL(f.url));
+      FRAMES = (rows || []).sort((a, b) => a.created - b.created).map((r) => ({ id: r.id, title: r.title, url: URL.createObjectURL(r.blob) }));
+    } catch { FRAMES = []; }
+    renderArtPick();
+  }
+  // 写真を選ぶ → 題名を付ける → 小判300枚で額に入れる
+  async function addFrame(after) {
+    if (FRAMES.length >= FRAME_MAX) return;
+    if (koban() < FRAME_PRICE) return confirmBuy({ title: '額装', price: FRAME_PRICE });
+    if (!(await pickPhoto())) return;
+    const body = h('div', 'photo-confirm');
+    const img = h('img', 'photo-preview'); img.src = photo.url; img.alt = '選んだ写真';
+    const name = h('input', 'frame-name'); name.type = 'text'; name.maxLength = 16; name.value = `自分の絵 ${FRAMES.length + 1}`; name.setAttribute('aria-label', '絵の題名');
+    const lab = h('label', 'frame-label', '題名'); lab.append(name);
+    body.append(h('h3', null, '額に入れて飾る'), img, lab);
+    const rw = h('div', 'rewards'), have = koban();
+    const r1 = h('div', 'rw'); r1.append(h('span', null, 'いまの小判'), kobanEl(have));
+    const r2 = h('div', 'rw total'); r2.append(h('span', null, '額装したあと'), kobanEl(have - FRAME_PRICE));
+    rw.append(r1, r2);
+    body.append(rw, h('p', 'note', `絵画の一覧に「自分の絵」として加わり、パズルや名画スライドで何度でも使えます（${FRAME_MAX}枠まで。外すと小判${FRAME_REFUND}枚が戻ります）。写真はこの端末の中だけに保存され、どこにも送りません。`));
+    openModal(body, [['額に入れる', async () => {
+      const title = name.value.trim() || `自分の絵 ${FRAMES.length + 1}`;
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      try {
+        await frameTx('readwrite', (st) => st.put({ id, title, blob: photo.blob, w: photo.w, h: photo.h, created: Date.now() }));
+      } catch {
+        const m = h('div'); m.append(h('h3', null, '保存できませんでした'), h('p', null, 'この端末やブラウザの設定では写真を保存できないようです。小判は使っていません。'));
+        return openModal(m, [['閉じる', closeModal, 'btn-primary']]);
+      }
+      navigator.storage?.persist?.().catch(() => {});
+      store.set('koban', koban() - FRAME_PRICE); Sound.coin(); vibrate(30);
+      FRAMES.push({ id, title, url: URL.createObjectURL(photo.blob) });
+      closeModal(); renderWallet(true); renderArtPick();
+      const earned = checkBadges();
+      after?.();
+      if (earned.length) showBadgeToastModal(earned);
+    }, 'btn-primary'], ['別の写真', () => { closeModal(); photo = null; addFrame(after); }], ['やめる', closeModal]]);
+  }
+  function removeFrame(f, after) {
+    const body = h('div');
+    body.append(h('h3', null, '額から外しますか'), h('p', null, `「${f.title}」を絵画の一覧から外します。小判${FRAME_REFUND}枚が戻ります。`));
+    openModal(body, [['外す', async () => {
+      try { await frameTx('readwrite', (st) => st.delete(f.id)); } catch { /* 消せなくても一覧からは外す */ }
+      URL.revokeObjectURL(f.url);
+      FRAMES = FRAMES.filter((x) => x.id !== f.id);
+      store.set('koban', koban() + FRAME_REFUND); Sound.coin();
+      closeModal(); renderWallet(true); renderArtPick(); after?.();
+    }, 'btn-primary'], ['やめる', closeModal]]);
+  }
+
   const PHOTO_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
 
   // ===== 絵柄えらび =====
@@ -777,9 +851,9 @@
     const pic = btn.querySelector('.ap-pic'); pic.innerHTML = '';
     if (id === 'random') {
       pic.append(artPicEl({ id: 'random' }));
-      btn.querySelector('.ap-t').textContent = 'おまかせ';
-      const n = artsFor(sel.map).filter((a) => !a.locked).length;
-      btn.querySelector('.ap-a').textContent = `持っている${n}枚からランダム`;
+      btn.querySelector('.ap-t').textContent = '絵画を選ぶ';
+      const n = allArtsFor(sel.map).filter((a) => !a.locked).length;
+      btn.querySelector('.ap-a').textContent = `いまはランダム（持っている${n}枚から）`;
     } else {
       const a = artById(sel.map, id);
       pic.append(artPicEl(a));
@@ -791,7 +865,7 @@
   function openArtSheet() {
     const mapId = sel.map, cur = selectedArt(mapId);
     const list = h('div', 'art-list'); list.setAttribute('role', 'radiogroup');
-    const items = [{ id: 'random', title: 'おまかせ', sub: '持っている絵からランダム' }, ...artsFor(mapId).map((a) => ({ ...a, sub: artSubtitle(a) }))];
+    const items = [{ id: 'random', title: 'ランダム', sub: '持っている絵から毎回ちがう絵' }, ...allArtsFor(mapId).map((a) => ({ ...a, sub: artSubtitle(a) })).sort((x, y) => !!x.locked - !!y.locked)]; // 持っている絵(自分の絵を含む)を先に
     for (const a of items) {
       const b = h('button', 'art' + (a.locked ? ' locked' : '')); b.type = 'button';
       b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(a.id === cur));
@@ -817,7 +891,23 @@
       choosePhoto(() => startGame({ mapId, stage: selectedStage(mapId), diffKey: sel.diff, artChoice: 'photo' }));
     });
     list.append(pb);
-    openSheet(`絵柄をえらぶ（${mapInfo(mapId).name}）`, list);
+    openSheet(`絵画を選ぶ（${mapInfo(mapId).name}）`, list);
+  }
+
+  function pictureList() {
+    const seen = new Set();
+    return [...MAP_LIST.filter((m) => isMapOpen(m.id)).flatMap((m) => artsFor(m.id).filter((a) => !a.locked && a.url)), ...frameArts()]
+      .filter((a) => (seen.has(a.url) ? false : seen.add(a.url)));
+  }
+  function openArtChooser(onPick) {
+    const list = h('div', 'art-list');
+    for (const a of pictureList()) {
+      const b = h('button', 'art'); b.type = 'button';
+      b.append(artPicEl(a), h('div', 't', a.title), h('div', 'a', artSubtitle(a)));
+      b.addEventListener('click', () => { closeSheet(); onPick(a); });
+      list.append(b);
+    }
+    openSheet('絵画を選ぶ', list);
   }
 
   // ===== シート(絵柄・お店・称号・設定) =====
@@ -864,6 +954,17 @@
         wrap.append(shopItem(pic, a.locked ? '？？？' : a.title, a.locked ? `${a.artist}の作品` : artSubtitle(a),
           a.locked ? priceBtn(a.price, () => confirmBuy({ key: a.key, title: `${a.artist}のまだ見ぬ一枚`, price: a.price }, reopen)) : h('span', 'owned', '持っている')));
       }
+    }
+    wrap.append(h('div', 'shop-sec', `額装（自分の絵 ${FRAMES.length} / ${FRAME_MAX}枠）`));
+    for (const f of FRAMES) {
+      const img = new Image(); img.src = f.url; img.alt = '';
+      const out = h('button', 'btn btn-small', `外す（+${FRAME_REFUND}枚）`); out.type = 'button';
+      out.addEventListener('click', () => removeFrame(f, reopen));
+      wrap.append(shopItem(img, f.title, '自分の絵', out));
+    }
+    if (FRAMES.length < FRAME_MAX) {
+      const ico = h('span', 'frame-ico'); ico.innerHTML = PHOTO_SVG;
+      wrap.append(shopItem(ico, '写真を額に入れる', `自分の写真を絵画として飾る（あと${FRAME_MAX - FRAMES.length}枠）`, priceBtn(FRAME_PRICE, () => addFrame(reopen))));
     }
     openSheet(`画商（小判 ${koban()}枚）`, wrap);
   }
@@ -930,7 +1031,7 @@
   // ===== 絵柄の決定と読み込み =====
   function resolveArt(mapId, choice) {
     if (choice === 'photo' && photo) return { ...PHOTO_ART, url: photo.url };
-    const open = artsFor(mapId).filter((a) => !a.locked);
+    const open = allArtsFor(mapId).filter((a) => !a.locked);
     if (!open.some((a) => a.id === choice)) choice = 'random';
     if (choice === 'random') {
       const last = store.get('lastArt:' + mapId, null);
@@ -1514,7 +1615,7 @@
     vtext(title, titleX, y0 + 13, ts);
     if (series) vtext(series, x0 + 18, y0 + 13, ss, 'sub');
     // 落款: 浮世絵は「北斎画」の形、世界の絵は作者名(国名の注記は省く)
-    const sign = a.id === 'photo' ? '持込' : a.artist === '創作浮世絵' ? '創作画'
+    const sign = a.own ? '持込' : a.artist === '創作浮世絵' ? '創作画'
       : MAP.id === 'japan' ? a.artist.slice(-2) + '画' : a.artist.replace(/（.*?）/g, '').slice(0, 9);
     const sx = x0 - 18;
     vtext(sign, sx, y0 + colH - sign.length * 16 * 1.05 - 22, 16, 'sub');
@@ -1543,13 +1644,17 @@
     S = null; drag = null;
     showPicker();
   }
+  // 下のメニューはタイトルと地図えらびの両方に出す(要素は1つなので見える画面へ移す)
+  const tabbar = document.querySelector('.tabbar');
   function showPicker() {
     closeSheet();
+    $('#menu').append(tabbar);
     $('#title').hidden = true; $('#game').hidden = true; $('#mini').hidden = true; $('#menu').hidden = false;
     renderMenu();
   }
   function showTitle(first) {
     closeSheet();
+    $('#title').append(tabbar);
     $('#menu').hidden = true; $('#game').hidden = true; $('#mini').hidden = true; $('#title').hidden = false;
     changeTitleArt(first);
     renderMenu();
@@ -1608,8 +1713,9 @@
 
   // ミニゲーム(minigames.js)に渡す道具
   window.UKIYO = { h, svgEl, $, store, Sound, vibrate, settings, fmtTime, shuffle, koban, addKoban, renderWallet, checkBadges, openModal, closeModal,
-    COUNTRIES, flagUrl, shapeEl, speakThanks, choosePhoto, PHOTO_PRICE, PHOTO_SVG, JAPAN, MAP_LIST, artsFor, isMapOpen, loadMap, showTitle: () => showTitle() };
+    COUNTRIES, flagUrl, shapeEl, speakThanks, choosePhoto, PHOTO_PRICE, PHOTO_SVG, pictureList, openArtChooser, JAPAN, MAP_LIST, artsFor, isMapOpen, loadMap, showTitle: () => showTitle(), showPicker: () => showPicker() };
 
   useMap(JAPAN);
   showTitle(true);
+  loadFrames();
 })();
