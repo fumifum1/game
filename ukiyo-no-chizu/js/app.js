@@ -717,9 +717,12 @@
 
   // ===== 写真で遊ぶ =====
   // 自分の写真を絵柄にする。小判を払うと1回遊べる。写真は端末の中だけで使い、保存もしない(アプリを閉じると消える)
-  const PHOTO_PRICE = 30;
+  // 写真は「切り取る(位置と大きさを選ぶ)」か「全体を入れる(余白は掛け軸の表装)」を選べる。
+  // 地図ごとに縦横の比率がちがうので、元の写真と入れ方を覚えておき、使うときにその比率で描く
+  const PHOTO_PRICE = 30, PHOTO_MAX_MB = 30;
   const PHOTO_ART = { id: 'photo', title: '持ち込みの一枚', artist: 'あなたの写真', series: '', own: true };
-  let photo = null; // { url(blob), w, h }
+  const DEFAULT_FRAMING = { mode: 'crop', cx: 0.5, cy: 0.5, z: 1 };
+  let photo = null; // { src(canvas), blob, w, h, framing }
   function pickPhotoFile() {
     return new Promise((res) => {
       const input = document.createElement('input');
@@ -729,58 +732,212 @@
       input.click();
     });
   }
-  // 大きな写真は長辺1920pxに縮める(向きのずれも直す)
+  // 大きな写真は長辺1920pxに縮める(向きのずれも直す。描き直すので位置情報なども消える)
   async function loadPhoto(file) {
     let src;
     try { src = await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch {
-      src = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
+      const u = URL.createObjectURL(file);
+      try { src = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = u; }); } finally { URL.revokeObjectURL(u); }
     }
     const w0 = src.width || src.naturalWidth, h0 = src.height || src.naturalHeight, k = Math.min(1, 1920 / Math.max(w0, h0));
     const cv = document.createElement('canvas'); cv.width = Math.round(w0 * k); cv.height = Math.round(h0 * k);
     cv.getContext('2d').drawImage(src, 0, 0, cv.width, cv.height);
     src.close?.();
     const blob = await new Promise((res) => cv.toBlob(res, 'image/jpeg', 0.9));
-    if (photo) URL.revokeObjectURL(photo.url);
-    photo = { url: URL.createObjectURL(blob), w: cv.width, h: cv.height, blob };
+    photo = { src: cv, blob, w: cv.width, h: cv.height, framing: { ...DEFAULT_FRAMING } };
     return photo;
+  }
+  function photoError(title, msg) {
+    const body = h('div'); body.append(h('h3', null, title), h('p', null, msg));
+    openModal(body, [['閉じる', closeModal, 'btn-primary']]);
   }
   async function pickPhoto() {
     const file = await pickPhotoFile();
     if (!file) return null;
+    if (file.type && !file.type.startsWith('image/')) { photoError('写真を読み込めませんでした', '画像のファイルを選んでください。'); return null; }
+    if (file.size > PHOTO_MAX_MB * 1024 * 1024) { photoError('写真が大きすぎます', `${PHOTO_MAX_MB}MBまでの写真を選んでください。`); return null; }
     $('#loading').hidden = false; $('#loading-text').textContent = '写真を読み込んでいます…';
     try { return await loadPhoto(file); } catch {
-      const body = h('div'); body.append(h('h3', null, '写真を読み込めませんでした'), h('p', null, 'ほかの写真を選んでください。'));
-      openModal(body, [['閉じる', closeModal, 'btn-primary']]);
+      photoError('写真を読み込めませんでした', 'ほかの写真を選んでください。');
       return null;
     } finally { $('#loading').hidden = true; }
   }
-  // 写真を選ぶ → 確認(小判を払う) → onGo(写真の絵柄)
-  async function choosePhoto(onGo) {
+
+  // --- 掛け軸の表装(全体を入れるときの余白) ---
+  // 壁(聚楽壁)に掛け軸を掛けた絵にして、写真は本紙の位置に入れる。本紙の場所を返す
+  function drawScroll(g, W, H, a) {
+    const m = Math.min(W, H);
+    const wall = g.createLinearGradient(0, 0, 0, H); wall.addColorStop(0, '#dccba7'); wall.addColorStop(1, '#c6b088');
+    g.fillStyle = wall; g.fillRect(0, 0, W, H);
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0, n = Math.round((W * H) / 700); i < n; i++) {
+      g.fillStyle = rnd() < 0.5 ? 'rgba(90,64,30,0.12)' : 'rgba(255,250,235,0.22)';
+      const r = (0.6 + rnd() * 1.6) * (m / 700); g.fillRect(rnd() * W, rnd() * H, r, r);
+    }
+    // 各部の寸法(画面の短い辺に対する割合)
+    const cw = 0.04 * m, mt = 0.05 * m, mb = 0.032 * m, ten = 0.12 * m, chi = 0.07 * m;
+    const hasso = 0.014 * m, jiku = 0.026 * m, knob = 0.03 * m, cord = 0.05 * m;
+    const ichiT = 0.06, ichiB = 0.03;
+    const padX = 0.05 * m + knob, padTop = 0.02 * m + cord, padBot = 0.03 * m;
+    const availW = W - 2 * padX - 2 * cw, availH = H - padTop - padBot - hasso - ten - mt - mb - chi - jiku;
+    const ph = Math.max(10, Math.min(availH / (1 + ichiT + ichiB), availW / a)), pw = ph * a;
+    const sw = pw + 2 * cw, sh = hasso + ten + mt + ph * (1 + ichiT + ichiB) + mb + chi + jiku;
+    const x0 = (W - sw) / 2, y0 = padTop + (H - padTop - padBot - sh) / 2;
+    // 影と掛け紐
+    g.save(); g.shadowColor = 'rgba(40,25,10,0.4)'; g.shadowBlur = 0.03 * m; g.shadowOffsetY = 0.012 * m;
+    g.fillStyle = '#2f4560'; g.fillRect(x0, y0, sw, sh); g.restore();
+    g.strokeStyle = '#5a3a22'; g.lineWidth = Math.max(1, 0.004 * m);
+    g.beginPath(); g.moveTo(x0 + sw * 0.32, y0 + hasso / 2); g.lineTo(W / 2, y0 - cord); g.lineTo(x0 + sw * 0.68, y0 + hasso / 2); g.stroke();
+    g.fillStyle = '#3b2618'; g.beginPath(); g.arc(W / 2, y0 - cord, 0.008 * m, 0, Math.PI * 2); g.fill();
+    // 天地(藍の絹): 細い横すじで布らしく
+    const silk = (x, y, w, hh) => {
+      g.fillStyle = '#2f4560'; g.fillRect(x, y, w, hh);
+      g.fillStyle = 'rgba(255,255,255,0.05)';
+      for (let yy = y; yy < y + hh; yy += Math.max(2, 0.006 * m)) g.fillRect(x, yy, w, Math.max(0.5, 0.0015 * m));
+    };
+    const yTen = y0 + hasso, yMid = yTen + ten, midH = mt + ph * (1 + ichiT + ichiB) + mb, yChi = yMid + midH;
+    silk(x0, yTen, sw, ten); silk(x0, yChi, sw, chi);
+    // 中廻し(金茶の金襴): 七宝つなぎの模様
+    g.fillStyle = '#9c7a34'; g.fillRect(x0, yMid, sw, midH);
+    g.save(); g.beginPath(); g.rect(x0, yMid, sw, midH); g.clip();
+    const st = Math.max(4, 0.022 * m);
+    g.strokeStyle = 'rgba(255,228,150,0.35)'; g.lineWidth = Math.max(0.5, 0.0018 * m);
+    for (let yy = yMid; yy < yMid + midH + st; yy += st) for (let xx = x0; xx < x0 + sw + st; xx += st) { g.beginPath(); g.arc(xx, yy, st / 2, 0, Math.PI * 2); g.stroke(); }
+    g.restore();
+    // 一文字(金): 本紙の上下
+    const px = x0 + cw, pyTop = yMid + mt, py = pyTop + ph * ichiT;
+    const gold = (x, y, w, hh) => {
+      const gr = g.createLinearGradient(0, y, 0, y + hh); gr.addColorStop(0, '#ecd27e'); gr.addColorStop(0.5, '#c9a347'); gr.addColorStop(1, '#e2c46c');
+      g.fillStyle = gr; g.fillRect(x, y, w, hh);
+      g.strokeStyle = 'rgba(80,55,15,0.45)'; g.lineWidth = Math.max(0.5, 0.0015 * m); g.strokeRect(x, y, w, hh);
+    };
+    gold(px, pyTop, pw, ph * ichiT); gold(px, py + ph, pw, ph * ichiB);
+    // 風帯: 天から下がる2本の帯
+    for (const fx of [0.3, 0.7]) {
+      const bw = 0.022 * m, bx = x0 + sw * fx - bw / 2;
+      gold(bx, yTen, bw, ten * 0.82);
+      g.fillStyle = 'rgba(60,40,10,0.5)'; g.fillRect(bx + bw * 0.2, yTen + ten * 0.82 - 0.004 * m, bw * 0.6, 0.004 * m);
+    }
+    // 八双(上の細い棒)と軸(下の棒・軸先)
+    const wood = (x, y, w, hh, c1, c2) => { const gr = g.createLinearGradient(0, y, 0, y + hh); gr.addColorStop(0, c1); gr.addColorStop(0.5, c2); gr.addColorStop(1, c1); g.fillStyle = gr; g.fillRect(x, y, w, hh); };
+    wood(x0, y0, sw, hasso, '#3b2618', '#6b4428');
+    wood(x0, yChi + chi, sw, jiku, '#2e1d12', '#5e3b22');
+    for (const kx of [x0 - knob, x0 + sw]) wood(kx, yChi + chi - jiku * 0.15, knob, jiku * 1.3, '#1d130c', '#4a3020');
+    // 本紙のふち
+    g.strokeStyle = 'rgba(40,30,15,0.5)'; g.lineWidth = Math.max(0.5, 0.002 * m);
+    g.strokeRect(px, py, pw, ph);
+    return { x: px, y: py, w: pw, h: ph };
+  }
+  // 写真を W×H に描く(切り取り: 中心cx,cyと拡大z / 全体: 掛け軸に入れる)
+  function drawOwn(g, src, f, W, H) {
+    const iw = src.width, ih = src.height;
+    if (f.mode === 'fit') {
+      const r = drawScroll(g, W, H, iw / ih);
+      g.drawImage(src, r.x, r.y, r.w, r.h);
+      return;
+    }
+    const s = Math.max(W / iw, H / ih) * f.z, dw = iw * s, dh = ih * s;
+    const x = clampN(W / 2 - f.cx * dw, W - dw, 0), y = clampN(H / 2 - f.cy * dh, H - dh, 0);
+    g.drawImage(src, x, y, dw, dh);
+  }
+  const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  function ownCanvas(src, f, W, H) {
+    const cv = document.createElement('canvas'); cv.width = Math.round(W); cv.height = Math.round(H);
+    drawOwn(cv.getContext('2d'), src, f, cv.width, cv.height);
+    return cv;
+  }
+  const toUrl = (cv) => new Promise((res) => cv.toBlob((b) => res(URL.createObjectURL(b)), 'image/jpeg', 0.9));
+  const sizeFor = (aspect, long = 1600) => (aspect >= 1 ? [long, long / aspect] : [long * aspect, long]);
+  // 自分の絵・写真を、使う場所の比率で描いた画像の URL(同じものは使い回す)
+  const ownCache = new Map();
+  async function ownUrl(art, aspect) {
+    const key = `${art.id}|${aspect.toFixed(3)}|${JSON.stringify(art.framing)}`;
+    if (!ownCache.has(key)) {
+      if (ownCache.size > 24) { for (const [k, u] of ownCache) { URL.revokeObjectURL(await u); ownCache.delete(k); if (ownCache.size <= 12) break; } }
+      ownCache.set(key, toUrl(ownCanvas(art.src, art.framing, ...sizeFor(aspect))));
+    }
+    return ownCache.get(key);
+  }
+  // 名画スライドなどで使う前に、比率に合わせた URL を付ける
+  const withUrl = async (art, aspect) => (art.src ? { ...art, url: await ownUrl(art, aspect) } : art);
+
+  // --- 入れ方を選ぶ画面(見本を見ながら) ---
+  function framingEditor(src, aspect, start) {
+    const f = { ...start };
+    const box = h('div', 'framing');
+    const seg = h('div', 'framing-seg');
+    const modes = [['crop', '切り取る'], ['fit', '全体（掛け軸）']];
+    const mbtn = modes.map(([v, label]) => { const b = h('button', null, label); b.type = 'button'; b.addEventListener('click', () => { f.mode = v; sync(); }); seg.append(b); return [v, b]; });
+    const [PW, PH] = sizeFor(aspect, 480);
+    const cv = h('canvas', 'framing-view'); cv.width = Math.round(PW); cv.height = Math.round(PH);
+    cv.style.aspectRatio = `${PW} / ${PH}`;
+    const tip = h('p', 'framing-tip');
+    const zoomRow = h('label', 'framing-zoom'), zoom = h('input'); zoom.type = 'range'; zoom.min = '1'; zoom.max = '3'; zoom.step = '0.01'; zoom.value = String(f.z);
+    zoomRow.append(h('span', null, '大きさ'), zoom);
+    box.append(seg, cv, tip, zoomRow);
+    const g = cv.getContext('2d');
+    // 切り取る位置を、絵がはみ出さない範囲に収める
+    const fix = () => {
+      const s = Math.max(cv.width / src.width, cv.height / src.height) * f.z, dw = src.width * s, dh = src.height * s;
+      const hx = cv.width / 2 / dw, hy = cv.height / 2 / dh;
+      f.cx = hx >= 0.5 ? 0.5 : clampN(f.cx, hx, 1 - hx); f.cy = hy >= 0.5 ? 0.5 : clampN(f.cy, hy, 1 - hy);
+      return [dw, dh];
+    };
+    const draw = () => { fix(); g.clearRect(0, 0, cv.width, cv.height); drawOwn(g, src, f, cv.width, cv.height); };
+    function sync() {
+      for (const [v, b] of mbtn) b.setAttribute('aria-pressed', String(f.mode === v));
+      const crop = f.mode === 'crop';
+      zoomRow.hidden = !crop; cv.classList.toggle('grab', crop);
+      tip.textContent = crop ? '絵を指でずらして、使うところを選んでください。' : '写真をそのまま全部入れて、まわりは掛け軸の表装にします。';
+      draw();
+    }
+    zoom.addEventListener('input', () => { f.z = +zoom.value; draw(); });
+    let drag = null;
+    cv.addEventListener('pointerdown', (e) => { if (f.mode !== 'crop') return; drag = { x: e.clientX, y: e.clientY, cx: f.cx, cy: f.cy }; cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const k = cv.width / cv.getBoundingClientRect().width, [dw, dh] = fix();
+      f.cx = drag.cx - ((e.clientX - drag.x) * k) / dw; f.cy = drag.cy - ((e.clientY - drag.y) * k) / dh; draw();
+    });
+    const end = () => { drag = null; };
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+    cv.addEventListener('wheel', (e) => { if (f.mode !== 'crop') return; e.preventDefault(); f.z = clampN(f.z * (e.deltaY < 0 ? 1.08 : 0.93), 1, 3); zoom.value = String(f.z); draw(); }, { passive: false });
+    sync();
+    return { el: box, get framing() { fix(); return { ...f }; } };
+  }
+  const priceRows = (have, price, after) => {
+    const rw = h('div', 'rewards');
+    const r1 = h('div', 'rw'); r1.append(h('span', null, 'いまの小判'), kobanEl(have));
+    const r2 = h('div', 'rw total'); r2.append(h('span', null, after), kobanEl(have - price));
+    rw.append(r1, r2); return rw;
+  };
+
+  // 写真を選ぶ → 入れ方を選んで確認(小判を払う) → onGo(写真の絵柄)。aspect は使う場所の縦横比
+  async function choosePhoto(onGo, aspect = 1) {
     if (!photo && !(await pickPhoto())) return;
     const have = koban(), body = h('div', 'photo-confirm');
-    const img = h('img', 'photo-preview'); img.src = photo.url; img.alt = '選んだ写真';
-    body.append(h('h3', null, '写真で遊ぶ'), img);
-    const again = async () => { closeModal(); if (await pickPhoto()) choosePhoto(onGo); };
+    body.append(h('h3', null, '写真で遊ぶ'));
+    const again = async () => { closeModal(); if (await pickPhoto()) choosePhoto(onGo, aspect); };
     if (have < PHOTO_PRICE) {
       body.append(h('p', null, `写真で遊ぶには小判${PHOTO_PRICE}枚が必要です（あと${PHOTO_PRICE - have}枚）。`),
         h('p', 'note', '地方ステージや今日のお題、余興で小判を集めましょう。'));
       return openModal(body, [['閉じる', closeModal, 'btn-primary']]);
     }
-    body.append(h('p', null, `この写真を絵柄にして、小判${PHOTO_PRICE}枚で1回遊べます。`));
-    const rw = h('div', 'rewards');
-    const r1 = h('div', 'rw'); r1.append(h('span', null, 'いまの小判'), kobanEl(have));
-    const r2 = h('div', 'rw total'); r2.append(h('span', null, '使ったあと'), kobanEl(have - PHOTO_PRICE));
-    rw.append(r1, r2); body.append(rw);
+    const ed = framingEditor(photo.src, aspect, photo.framing);
+    body.append(ed.el, priceRows(have, PHOTO_PRICE, '使ったあと'));
     body.append(h('p', 'note', '写真はこの端末の中だけで使い、どこにも送りません。アプリを閉じると消えます。ほかの人が作った絵や写真は使わないでください。'));
     openModal(body, [[`小判${PHOTO_PRICE}枚で遊ぶ`, () => {
+      if (koban() < PHOTO_PRICE) return closeModal();
+      photo.framing = ed.framing;
       store.set('koban', koban() - PHOTO_PRICE); Sound.coin(); vibrate(30); renderWallet(true);
-      closeModal(); onGo({ ...PHOTO_ART, url: photo.url });
+      closeModal(); onGo({ ...PHOTO_ART, src: photo.src, framing: photo.framing });
     }, 'btn-primary'], ['別の写真', again], ['やめる', closeModal]]);
   }
+
   // ===== 額装(自分の写真を絵画として飾る) =====
-  // 小判300枚で1枠。5枠まで。外すと半分(150枚)戻る。写真は端末の IndexedDB に保存
-  const FRAME_PRICE = 300, FRAME_MAX = 5, FRAME_REFUND = FRAME_PRICE / 2;
-  let FRAMES = []; // [{ id, title, url }]
+  // 小判300枚で1枠。5枠まで。外すと半分(150枚)戻る。写真(元の画像と入れ方)は端末の IndexedDB に保存
+  const FRAME_PRICE = 300, FRAME_MAX = 5, FRAME_REFUND = FRAME_PRICE / 2, FRAME_ASPECT = 1000 / 943;
+  let FRAMES = []; // [{ id, title, src, framing, url, thumb }]
   const frameDb = () => new Promise((res, rej) => {
     const rq = indexedDB.open('ukiyo-frames', 1);
     rq.onupgradeneeded = () => rq.result.createObjectStore('frames', { keyPath: 'id' });
@@ -793,43 +950,52 @@
       tx.oncomplete = () => { db.close(); res(out?.result); }; tx.onerror = () => { db.close(); rej(tx.error); };
     });
   }
-  const frameArt = (f) => ({ id: 'frame:' + f.id, title: f.title, artist: '自分の絵', series: '', url: f.url, thumb: f.url, own: true, frame: f.id });
+  const frameArt = (f) => ({ id: 'frame:' + f.id, title: f.title, artist: '自分の絵', series: '', url: f.url, thumb: f.thumb, own: true, frame: f.id, src: f.src, framing: f.framing });
   const frameArts = () => FRAMES.map(frameArt);
+  // 一覧の小さい絵と、タイトルなどで使う標準の絵を作る
+  async function makeFrame(id, title, src, framing) {
+    const [tw, th] = sizeFor(FRAME_ASPECT, 330);
+    return { id, title, src, framing, url: await toUrl(ownCanvas(src, framing, ...sizeFor(FRAME_ASPECT))), thumb: await toUrl(ownCanvas(src, framing, tw, th)) };
+  }
+  const dropFrame = (f) => {
+    URL.revokeObjectURL(f.url); URL.revokeObjectURL(f.thumb);
+    for (const [k, u] of ownCache) if (k.startsWith('frame:' + f.id + '|')) { u.then((x) => URL.revokeObjectURL(x)); ownCache.delete(k); }
+  };
   async function loadFrames() {
     try {
-      const rows = await frameTx('readonly', (st) => st.getAll());
-      FRAMES.forEach((f) => URL.revokeObjectURL(f.url));
-      FRAMES = (rows || []).sort((a, b) => a.created - b.created).map((r) => ({ id: r.id, title: r.title, url: URL.createObjectURL(r.blob) }));
+      const rows = ((await frameTx('readonly', (st) => st.getAll())) || []).sort((a, b) => a.created - b.created);
+      FRAMES.forEach(dropFrame);
+      const out = [];
+      for (const r of rows) {
+        try { out.push(await makeFrame(r.id, r.title, await createImageBitmap(r.blob), r.framing || { ...DEFAULT_FRAMING })); } catch { /* 読めない写真は飛ばす */ }
+      }
+      FRAMES = out;
     } catch { FRAMES = []; }
     renderArtPick();
   }
-  // 写真を選ぶ → 題名を付ける → 小判300枚で額に入れる
+  // 写真を選ぶ → 入れ方と題名を決める → 小判300枚で額に入れる
   async function addFrame(after) {
     if (FRAMES.length >= FRAME_MAX) return;
     if (koban() < FRAME_PRICE) return confirmBuy({ title: '額装', price: FRAME_PRICE });
     if (!(await pickPhoto())) return;
     const body = h('div', 'photo-confirm');
-    const img = h('img', 'photo-preview'); img.src = photo.url; img.alt = '選んだ写真';
+    const ed = framingEditor(photo.src, FRAME_ASPECT, photo.framing);
     const name = h('input', 'frame-name'); name.type = 'text'; name.maxLength = 16; name.value = `自分の絵 ${FRAMES.length + 1}`; name.setAttribute('aria-label', '絵の題名');
     const lab = h('label', 'frame-label', '題名'); lab.append(name);
-    body.append(h('h3', null, '額に入れて飾る'), img, lab);
-    const rw = h('div', 'rewards'), have = koban();
-    const r1 = h('div', 'rw'); r1.append(h('span', null, 'いまの小判'), kobanEl(have));
-    const r2 = h('div', 'rw total'); r2.append(h('span', null, '額装したあと'), kobanEl(have - FRAME_PRICE));
-    rw.append(r1, r2);
-    body.append(rw, h('p', 'note', `絵画の一覧に「自分の絵」として加わり、パズルや名画スライドで何度でも使えます（${FRAME_MAX}枠まで。外すと小判${FRAME_REFUND}枚が戻ります）。写真はこの端末の中だけに保存され、どこにも送りません。`));
+    body.append(h('h3', null, '額に入れて飾る'), ed.el, lab, priceRows(koban(), FRAME_PRICE, '額装したあと'));
+    body.append(h('p', 'note', `絵画の一覧に「自分の絵」として加わり、パズルや名画スライドで何度でも使えます（${FRAME_MAX}枠まで。外すと小判${FRAME_REFUND}枚が戻ります）。写真はこの端末の中だけに保存され、どこにも送りません。`));
     openModal(body, [['額に入れる', async () => {
-      const title = name.value.trim() || `自分の絵 ${FRAMES.length + 1}`;
+      if (FRAMES.length >= FRAME_MAX || koban() < FRAME_PRICE) return closeModal();
+      const title = name.value.trim().slice(0, 16) || `自分の絵 ${FRAMES.length + 1}`, framing = ed.framing;
       const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       try {
-        await frameTx('readwrite', (st) => st.put({ id, title, blob: photo.blob, w: photo.w, h: photo.h, created: Date.now() }));
+        await frameTx('readwrite', (st) => st.put({ id, title, blob: photo.blob, w: photo.w, h: photo.h, framing, created: Date.now() }));
       } catch {
-        const m = h('div'); m.append(h('h3', null, '保存できませんでした'), h('p', null, 'この端末やブラウザの設定では写真を保存できないようです。小判は使っていません。'));
-        return openModal(m, [['閉じる', closeModal, 'btn-primary']]);
+        return photoError('保存できませんでした', 'この端末やブラウザの設定では写真を保存できないようです。小判は使っていません。');
       }
       navigator.storage?.persist?.().catch(() => {});
       store.set('koban', koban() - FRAME_PRICE); Sound.coin(); vibrate(30);
-      FRAMES.push({ id, title, url: URL.createObjectURL(photo.blob) });
+      FRAMES.push(await makeFrame(id, title, photo.src, framing));
       closeModal(); renderWallet(true); renderArtPick();
       const earned = checkBadges();
       after?.();
@@ -840,9 +1006,9 @@
     const body = h('div');
     body.append(h('h3', null, '額から外しますか'), h('p', null, `「${f.title}」を絵画の一覧から外します。小判${FRAME_REFUND}枚が戻ります。`));
     openModal(body, [['外す', async () => {
+      if (!FRAMES.includes(f)) return closeModal(); // もう外してある
       try { await frameTx('readwrite', (st) => st.delete(f.id)); } catch { /* 消せなくても一覧からは外す */ }
-      URL.revokeObjectURL(f.url);
-      FRAMES = FRAMES.filter((x) => x.id !== f.id);
+      FRAMES = FRAMES.filter((x) => x !== f); dropFrame(f);
       store.set('koban', koban() + FRAME_REFUND); Sound.coin();
       closeModal(); renderWallet(true); renderArtPick(); after?.();
     }, 'btn-primary'], ['やめる', closeModal]]);
@@ -907,10 +1073,11 @@
     const pb = h('button', 'art photo-art'); pb.type = 'button';
     const ppic = h('div', 'pic photo'); ppic.innerHTML = PHOTO_SVG;
     pb.append(ppic, h('div', 't', '写真で遊ぶ'), h('div', 'a', `自分の写真で1回・小判${PHOTO_PRICE}枚`));
-    pb.addEventListener('click', () => {
+    pb.addEventListener('click', async () => {
       if (!isMapOpen(mapId)) return;
       closeSheet();
-      choosePhoto(() => startGame({ mapId, stage: selectedStage(mapId), diffKey: sel.diff, artChoice: 'photo' }));
+      const m = await loadMap(mapId).catch(() => JAPAN);
+      choosePhoto(() => startGame({ mapId, stage: selectedStage(mapId), diffKey: sel.diff, artChoice: 'photo' }), m.width / m.height);
     });
     list.append(pb);
     openSheet(`絵画を選ぶ（${mapInfo(mapId).name}）`, list);
@@ -1042,8 +1209,8 @@
     row('スマホに入れる', 'ホーム画面からアプリとして起動できます', inst);
     row('バージョン', `${self.APP_BUILD} 更新`, h('span', null, `${self.APP_VERSION}`));
     // つくった人のサイト(アプリ版では端末のブラウザで開く)
-    const site = h('a', 'btn btn-small', 'ひらく'); site.href = 'https://fumifum1.github.io/main/index.html';
-    row('クリエイターのサイト', 'ほかのゲームや作品はこちら', site);
+    const site = h('a', 'btn btn-small', '訪ねる'); site.href = 'https://fumifum1.github.io/main/index.html';
+    row('作り手の庵', 'ほかの遊びや作品はこちら', site);
     const cr = h('p', 'note');
     cr.innerHTML = '地図：<a href="https://www.gsi.go.jp/kankyochiri/gm_jpn.html" target="_blank" rel="noopener">地球地図日本（国土地理院）</a>を加工（<a href="https://github.com/dataofjapan/land" target="_blank" rel="noopener">dataofjapan/land</a> 経由）、<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a><br>絵画：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a>（パブリックドメイン）<br>国旗：<a href="https://flagpedia.net/" target="_blank" rel="noopener">Flagpedia</a>（パブリックドメイン）';
     wrap.append(h('div', 'shop-sec', '出典'), cr);
@@ -1053,7 +1220,7 @@
 
   // ===== 絵柄の決定と読み込み =====
   function resolveArt(mapId, choice) {
-    if (choice === 'photo' && photo) return { ...PHOTO_ART, url: photo.url };
+    if (choice === 'photo' && photo) return { ...PHOTO_ART, src: photo.src, framing: photo.framing };
     const open = allArtsFor(mapId).filter((a) => !a.locked);
     if (!open.some((a) => a.id === choice)) choice = 'random';
     if (choice === 'random') {
@@ -1086,7 +1253,7 @@
   async function loadArt(art) {
     if (artUrl) { URL.revokeObjectURL(artUrl); artUrl = null; }
     if (art.id === 'gen') { artUrl = await makeGenerated(art); return { art, href: artUrl }; }
-    if (art.id === 'photo') return { art, href: art.url };
+    if (art.src) return { art, href: await ownUrl(art, W / H) };
     try {
       return { art, href: await preload(art.url) };
     } catch {
@@ -1646,10 +1813,23 @@
   }
 
   // ===== モーダル =====
+  let modalGen = 0;
   function openModal(bodyEl, actions) {
+    const gen = ++modalGen;
     $('#modal-body').replaceChildren(bodyEl);
-    const box = $('#modal-actions'); box.innerHTML = '';
-    for (const [label, fn, cls] of actions) { const b = h('button', 'btn ' + (cls || ''), label); b.addEventListener('click', fn); box.append(b); }
+    const box = $('#modal-actions'); box.innerHTML = ''; box.dataset.busy = '';
+    for (const [label, fn, cls] of actions) {
+      const b = h('button', 'btn ' + (cls || ''), label);
+      b.addEventListener('click', async () => {
+        if (box.dataset.busy === String(gen)) return; // 処理中の2度押しは無視
+        box.dataset.busy = String(gen);
+        box.querySelectorAll('button').forEach((x) => (x.disabled = true));
+        try { await fn(); } finally {
+          if (modalGen === gen) { box.dataset.busy = ''; box.querySelectorAll('button').forEach((x) => (x.disabled = false)); }
+        }
+      });
+      box.append(b);
+    }
     $('#modal').hidden = false;
     box.querySelector('button')?.focus();
   }
@@ -1736,7 +1916,7 @@
 
   // ミニゲーム(minigames.js)に渡す道具
   window.UKIYO = { h, svgEl, $, store, Sound, vibrate, settings, fmtTime, shuffle, koban, addKoban, renderWallet, checkBadges, openModal, closeModal,
-    COUNTRIES, flagUrl, shapeEl, speakThanks, choosePhoto, PHOTO_PRICE, PHOTO_SVG, guideEl, pickLine, CHARAS, pictureList, openArtChooser, JAPAN, MAP_LIST, artsFor, isMapOpen, loadMap, showTitle: () => showTitle(), showPicker: () => showPicker() };
+    COUNTRIES, flagUrl, shapeEl, speakThanks, choosePhoto, withUrl, PHOTO_PRICE, PHOTO_SVG, guideEl, pickLine, CHARAS, pictureList, openArtChooser, JAPAN, MAP_LIST, artsFor, isMapOpen, loadMap, showTitle: () => showTitle(), showPicker: () => showPicker() };
 
   useMap(JAPAN);
   showTitle(true);

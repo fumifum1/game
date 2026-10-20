@@ -19,22 +19,22 @@
   };
 
   const GAMES = [
-    { id: 'flag', name: '国旗フラッシュ', desc: '60秒で国旗を何問当てられる？', unit: '問', start: startFlag, who: 'pirate',
+    { id: 'flag', name: '国旗フラッシュ', desc: '60秒で国旗を何問当てられるか、勝負だ！', unit: '問', start: startFlag, who: 'pirate',
       intro: '旗を見たら、どこの国か当てるんだ！時間は60秒。まちがえると3秒へるから気をつけな。',
       lines: ['たいした目利きだ！海賊の仲間にしてやろう。', 'なかなかやるな。もっと旗を覚えてこい！', '旗の見分けはまだまだだな。図鑑で勉強だ！'] },
-    { id: 'shape', name: 'シルエット当て', desc: '影の形から県や国を当てよう', unit: '問', start: startShape, who: 'merchant',
+    { id: 'shape', name: 'シルエット当て', desc: '影の形だけで、県や国を当ててごらん。', unit: '問', start: startShape, who: 'merchant',
       intro: '影の形だけで、どこの県か国か当ててごらん。全部で10問だよ。',
       lines: ['見事！地図がすっかり頭に入っているね。', 'いい線いってるよ。あと少しだ。', '形はむずかしいね。地図パズルで覚えるといいよ。'] },
-    { id: 'darts', name: '地球儀ダーツ', desc: '地球儀を回して国の場所を突こう', unit: '点', start: startDarts, who: 'hunter',
+    { id: 'darts', name: '地球儀ダーツ', desc: '地球儀を回して、国の場所をねらい撃て！', unit: '点', start: startDarts, who: 'hunter',
       intro: '地球儀を指で回して、お題の国をねらってトンと突くのだ。近いほど点が高い（150km以内で100点）。5本勝負！',
       lines: ['百発百中とはこのことだ！', '悪くない腕前だ。', '的はまだ遠いな。修行あるのみ！'] },
-    { id: 'thanks', name: 'ありがとう聞き取り', desc: '何語の「ありがとう」か当てよう', unit: '問', start: startThanks, who: 'teller',
+    { id: 'thanks', name: 'ありがとう聞き取り', desc: '何語の「ありがとう」か、聞き分けてね。', unit: '問', start: startThanks, who: 'teller',
       intro: '世界の「ありがとう」を聞かせるよ。何語か当ててみて。全部で8問。音が鳴るので音量に気をつけてね。',
       lines: ['耳がいいね！世界中で友だちができるよ。', 'よく聞けているよ。', 'ことばはむずかしいね。図鑑のカードでも聞けるよ。'] },
-    { id: 'slide', name: '名画スライド', desc: '名画や自分の絵をずらして元の絵に戻そう', unit: '手', lowerBetter: true, subs: ['3×3', '4×4', '5×5'], start: startSlide, who: 'painter',
+    { id: 'slide', name: '名画スライド', desc: 'ばらばらの絵を、ずらして元に戻しておくれ。', unit: '手', lowerBetter: true, subs: ['3×3', '4×4', '5×5'], start: startSlide, who: 'painter',
       intro: '大変だ、絵がばらばらになってしまった！札をずらして元に戻しておくれ。',
       lines: ['ありがとう、見事に元どおりだ！', 'うん、きれいに戻ったね。', '手間をかけたね。でも完成だ！'] },
-    { id: 'memory', name: '首都の札合わせ', desc: '国と首都、県と県庁所在地をそろえよう', unit: '手', lowerBetter: true, start: startMemory, who: 'noble',
+    { id: 'memory', name: '首都の札合わせ', desc: '国と首都、県と県庁所在地の札をそろえるのじゃ。', unit: '手', lowerBetter: true, start: startMemory, who: 'noble',
       intro: '札をめくって、県と県庁所在地（国と首都）の組をそろえるのじゃ。少ない手でそろえるほど見事であるぞ。',
       lines: ['まことに見事じゃ。', 'なかなかの覚えのよさじゃな。', 'ほっほっほ、また挑むがよい。'] },
   ];
@@ -82,8 +82,9 @@
     const list = h('div', 'mg-list');
     for (const g of GAMES) {
       const b = h('button', 'mg-card'); b.type = 'button';
-      const ava = h('img', 'mg-ava'); ava.src = `img/chara/${U.CHARAS[g.who].img}.png`; ava.alt = '';
-      b.append(ava, h('b', null, g.name), h('small', null, g.desc), h('span', 'mg-best', bestText(g)));
+      const talk = U.guideEl(g.who, g.desc, true);
+      talk.querySelector('.guide-img').style.animationDelay = `${-Math.random() * 3}s`; // みんな同じ揺れにならないように
+      b.append(h('b', 'mg-title', g.name), talk, h('span', 'mg-best', bestText(g)));
       b.addEventListener('click', () => g.start(g));
       list.append(b);
     }
@@ -327,9 +328,10 @@
     modeSelect(g, [['3×3', 'かんたん' + best(3), 3], ['4×4', 'むずかしい' + best(4), 4], ['5×5', 'たいへん' + best(5), 5]], (N) => {
       body.innerHTML = '';
       modeSelect(g, [['ランダム', '持っている絵から', 'random'], ['絵画を選ぶ', '一覧から1枚えらぶ', 'choose'], ['写真', `1回・小判${U.PHOTO_PRICE}枚`, 'photo']], (kind) => {
-        if (kind === 'random') return play(N, pick(U.pictureList()));
-        if (kind === 'choose') return U.openArtChooser((art) => play(N, art));
-        U.choosePhoto((art) => play(N, art));
+        const go = async (art) => play(N, await U.withUrl(art, 1));
+        if (kind === 'random') return go(pick(U.pictureList()));
+        if (kind === 'choose') return U.openArtChooser(go);
+        U.choosePhoto(go, 1);
       }, `${N}×${N}・どの絵で遊ぶ？`, 'どの絵にする？自分の写真でもいいよ。');
       const cards = body.querySelectorAll('.mg-modes .mg-card');
       cards[2]?.insertAdjacentHTML('afterbegin', `<span class="mg-photo-ico">${U.PHOTO_SVG}</span>`);

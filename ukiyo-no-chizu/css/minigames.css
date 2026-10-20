@@ -88,3 +88,39 @@ html[data-theme='night'] .mg-q { background: #1c2a44; }
 .mg-ava { width: 46px; height: 46px; object-fit: contain; object-position: top; margin: -4px 0 0 -2px; }
 .mg-go { align-self: center; width: min(320px, 100%) !important; margin-top: 4px; }
 .mg-result .guide { margin: 8px 0 4px; text-align: left; }
+
+/* 余興のカード: 題 → 案内役が吹き出しで説明 → ベスト */
+.mg-list .mg-card { align-items: stretch; gap: 6px; padding: 12px 10px 10px; }
+.mg-title { text-align: center; padding-bottom: 6px; border-bottom: 1px dashed var(--line); }
+.mg-list .guide { align-items: center; gap: 4px; }
+.mg-list .guide-img { width: 54px; }
+.mg-list .guide-bubble { margin-bottom: 0; padding: 6px 8px; font-size: 0.74rem; line-height: 1.5; font-weight: 700; }
+.mg-list .guide-bubble::before { bottom: auto; top: 50%; margin-top: -7px; }
+.mg-list .guide-bubble::after { bottom: auto; top: 50%; margin-top: -5px; }
+.mg-list .mg-best { text-align: center; }
+@media (min-width: 560px) { .mg-list .guide-img { width: 64px; } .mg-list .guide-bubble { font-size: 0.8rem; } }
+/* 案内役の横に吹き出し(2列でも収まるよう文字は小さめ) */
+.mg-list .guide-img { width: 44px; margin-left: -4px; }
+.mg-list .guide-bubble { padding: 5px 6px; font-size: 0.64rem; line-height: 1.45; letter-spacing: 0; }
+.mg-list .guide-bubble::before { left: -9px; border-width: 6px 8px 6px 0; margin-top: -6px; }
+.mg-list .guide-bubble::after { left: -6px; border-width: 4px 6px 4px 0; margin-top: -4px; }
+@media (min-width: 560px) { .mg-list .guide-img { width: 60px; } .mg-list .guide-bubble { font-size: 0.78rem; padding: 6px 9px; } }
+
+/* 写真の入れ方 */
+.framing { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 6px 0 10px; }
+.framing-seg { display: flex; width: 100%; max-width: 360px; border: 1.5px solid var(--indigo); border-radius: 10px; overflow: hidden; background: var(--card); }
+.framing-seg button { flex: 1; padding: 8px 4px; border: 0; background: transparent; color: var(--ink); font: 800 0.82rem var(--mincho); cursor: pointer; }
+.framing-seg button + button { border-left: 1px solid var(--line); }
+.framing-seg button[aria-pressed='true'] { background: var(--indigo); color: #fff; }
+.framing-view { display: block; width: auto; max-width: 100%; max-height: 38vh; border: 2px solid var(--ink); border-radius: 4px; background: #000; touch-action: none; }
+.framing-view.grab { cursor: grab; }
+.framing-tip { margin: 0; font-size: 0.78rem; color: var(--ink-2); text-align: center; line-height: 1.5; }
+.framing-zoom { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 320px; font: 700 0.82rem var(--mincho); }
+.framing-zoom input { flex: 1; accent-color: var(--vermilion); }
+.framing-zoom[hidden] { display: none; }
+/* 余興カードの吹き出し(遊ぶ画面の小さい案内役より優先) */
+.mg-list .mg-card { padding-left: 7px; padding-right: 7px; }
+.mg-list .guide.small { gap: 3px; }
+.mg-list .guide.small .guide-img { width: 42px; margin-left: 0; }
+.mg-list .guide.small .guide-bubble { margin-bottom: 0; padding: 5px 6px; font-size: 0.62rem; line-height: 1.45; letter-spacing: 0; }
+@media (min-width: 560px) { .mg-list .guide.small .guide-img { width: 58px; } .mg-list .guide.small .guide-bubble { font-size: 0.76rem; padding: 6px 9px; } }
