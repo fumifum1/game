@@ -117,3 +117,50 @@ a.btn { display: inline-block; text-decoration: none; }
 /* 地図えらびにも下のメニュー */
 .picker .tabbar { position: static; flex: none; }
 .picker .start-row { padding-bottom: 10px; }
+
+/* ===== 下のメニューを朱色に ===== */
+.tabbar {
+  background: #c3402b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20'%3E%3Cg fill='none' stroke='%23fff3e6' stroke-opacity='.16'%3E%3Ccircle cx='0' cy='20' r='19'/%3E%3Ccircle cx='0' cy='20' r='13'/%3E%3Ccircle cx='0' cy='20' r='7'/%3E%3Ccircle cx='40' cy='20' r='19'/%3E%3Ccircle cx='40' cy='20' r='13'/%3E%3Ccircle cx='40' cy='20' r='7'/%3E%3Ccircle cx='20' cy='20' r='19'/%3E%3Ccircle cx='20' cy='20' r='13'/%3E%3Ccircle cx='20' cy='20' r='7'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 40px 20px;
+  border-top: 2px solid #8f2a1b;
+}
+.tab { color: #fff3e6; }
+.tab svg { background: rgba(255, 243, 230, 0.14); }
+.tab:hover, .tab:focus-visible { color: #f6d27a; }
+.tab:active svg { background: rgba(255, 243, 230, 0.3); }
+.tab-dot { background: #f0c860; border-color: #c3402b; }
+
+/* ===== 横長の画面(PC・タブレット横・スマホ横) ===== */
+/* メニューは左の縦帯に。地図えらびは「地球儀｜選ぶところ」の2列 */
+@media (min-aspect-ratio: 5/4) and (min-width: 640px) {
+  .tabbar { flex-direction: column; justify-content: center; gap: 4px; padding: calc(10px + env(safe-area-inset-top)) 6px 10px calc(6px + env(safe-area-inset-left)); border-top: 0; border-right: 2px solid #8f2a1b; }
+  .tab { min-width: 64px; padding: 6px 4px; font-size: 0.78rem; }
+  .tab svg { width: 30px; height: 30px; }
+  .tab-dot { right: 10px; }
+
+  /* タイトル: 左に縦帯、絵はその右に */
+  .title-screen .tabbar { top: 0; bottom: 0; right: auto; width: 84px; }
+  .title-top { left: 98px; }
+  .title-bottom { left: calc(50% + 42px); bottom: calc(28px + env(safe-area-inset-bottom)); }
+
+  /* 地図えらび */
+  .picker {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr) minmax(340px, 460px);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "rail top top" "rail globe body" "rail nav body" "rail dots start";
+  }
+  .picker .tabbar { grid-area: rail; position: static; width: auto; }
+  .picker .pick-top { grid-area: top; }
+  .picker .globe-wrap { grid-area: globe; min-height: 0; }
+  .picker #pick-globe { width: min(40vw, calc(100vh - 210px), 520px); }
+  .picker .globe-nav { grid-area: nav; }
+  .picker .dots { grid-area: dots; margin: 6px 0 14px; align-self: start; }
+  .picker .pick-body { grid-area: body; padding: 8px 20px 4px 8px; justify-content: center; }
+  .picker .start-row { grid-area: start; padding: 8px 20px calc(14px + env(safe-area-inset-bottom)) 8px; }
+}
+/* 横向きのスマホなど、高さが低いときは縦帯を詰める */
+@media (min-aspect-ratio: 5/4) and (min-width: 640px) and (max-height: 500px) {
+  .tabbar { justify-content: space-evenly; gap: 0; padding-top: 4px; padding-bottom: 4px; overflow-y: auto; }
+  .tab { padding: 1px 4px; font-size: 0.66rem; }
+  .tab svg { width: 24px; height: 24px; padding: 2px; }
+}
