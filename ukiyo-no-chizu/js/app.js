@@ -299,6 +299,27 @@
     openModal(body, [['うれしい', closeModal, 'btn-primary']]);
   }
 
+  // ===== 案内役(人魂たち) =====
+  // 福引・画商・余興で、吹き出しで説明したり反応したりする
+  const CHARAS = {
+    samurai: { img: 'smurai', name: '侍' }, sailor: { img: 'koukaisi', name: '航海士' }, painter: { img: 'gaka', name: '画家' },
+    pirate: { img: 'kaizoku', name: '海賊' }, merchant: { img: 'arabu', name: '隊商' }, hunter: { img: 'syuryou', name: '狩人' },
+    teller: { img: 'minzoku', name: '語り部' }, noble: { img: 'kuge', name: '公家' },
+  };
+  function guideEl(who, text, small) {
+    const c = CHARAS[who], g = h('div', 'guide' + (small ? ' small' : ''));
+    const img = h('img', 'guide-img'); img.src = `img/chara/${c.img}.png`; img.alt = c.name; img.draggable = false;
+    const bubble = h('div', 'guide-bubble'), t = h('span', 'guide-text', text);
+    bubble.append(h('b', 'guide-name', c.name), t); g.append(img, bubble);
+    // 話す: 吹き出しの中身を変えて、ぴょこっと動かす
+    g.say = (msg, mood = '') => {
+      t.textContent = msg; g.dataset.mood = mood;
+      g.classList.remove('pop'); void g.offsetWidth; g.classList.add('pop');
+    };
+    return g;
+  }
+  const pickLine = (a) => a[Math.floor(Math.random() * a.length)];
+
   // ===== 国旗ガチャ・国旗図鑑 =====
   // 地球儀がくるくる回って止まった国のカードが出る。1回30枚。レア度は人口で決める(小さい国ほどレア)
   const GACHA = { one: 30, ten: 280, rates: [[3, 0.07], [2, 0.28], [1, 0.65]], dupe: { 1: 5, 2: 10, 3: 30 } };
@@ -340,7 +361,7 @@
   function openGacha() {
     const wrap = h('div', 'gacha');
     const stage = h('div', 'gacha-stage'), cv = h('canvas'); cv.id = 'gacha-globe'; cv.setAttribute('aria-label', '地球儀'); stage.append(cv);
-    const status = h('p', 'gacha-status', 'ボタンを押すと地球儀が回ります');
+    const status = guideEl('sailor', `地球儀を回して、止まった国の国旗をもらおう！1回${GACHA.one}枚、10回なら${GACHA.ten}枚でお得だぞ。`);
     const btns = h('div', 'gacha-btns');
     const mk = (label, price, n) => {
       const b = h('button', 'btn btn-primary'); b.type = 'button';
@@ -352,7 +373,7 @@
     btns.append(mk('1回まわす', GACHA.one, 1), mk('10回まわす', GACHA.ten, 10));
     const rates = h('p', 'gacha-rates');
     rates.innerHTML = `金色の国は、もう国旗を持っている国です。<br>★★★（人口100万人未満）7%　★★ 28%　★ 65%<br>同じ国旗が出たら小判が戻ります（★5枚・★★10枚・★★★30枚）`;
-    wrap.append(stage, status, btns, rates);
+    wrap.append(status, stage, btns, rates);
     openSheet(`国旗の福引（小判 ${koban()}枚）`, wrap);
     const globe = new window.Globe(cv, { lon: 120 + Math.random() * 60, lat: 20 });
     globe.theme = settings.theme;
@@ -386,7 +407,7 @@
     const { globe, status, btns } = gacha;
     gacha.busy = true;
     btns.querySelectorAll('button').forEach((b) => (b.disabled = true));
-    status.textContent = 'くるくる……'; status.className = 'gacha-status spin';
+    status.say(n === 10 ? '10か国めぐりの船旅だ！どこに寄るかな……' : 'くるくる……どこに着くかな？', 'spin');
     globe.fill = (ft) => (before[ft.a3] ? OWNED_GOLD : null);
     globe.setMarker(null);
     const ms = 3200;
@@ -395,7 +416,8 @@
     globe.spinTo(target.lon, target.lat, ms, 3, () => {
       globe.fill = (ft) => (ft.a3 === target.a3 ? '#c3402b' : before[ft.a3] ? OWNED_GOLD : null);
       globe.setMarker(target.lon, target.lat);
-      status.textContent = `${target.name}！`; status.className = 'gacha-status';
+      const fresh = results.filter((r) => r.isNew).length;
+      status.say(`${target.name}に到着！${target.rarity === 3 ? 'めったに行けない国だぞ！' : n === 10 ? `新しい国旗は${fresh}枚だ。` : results[0].isNew ? '新しい国旗だ！' : 'ここは前にも来たな。小判が少し戻るぞ。'}`, target.rarity === 3 ? 'wow' : '');
       Sound.pop(target.rarity); vibrate(target.rarity === 3 ? [40, 60, 40, 60, 80] : 40);
       setTimeout(() => {
         gacha.busy = false;
@@ -938,6 +960,7 @@
   function openShop() {
     const wrap = h('div');
     const reopen = () => { renderMenu(); openShop(); };
+    wrap.append(guideEl('painter', `いらっしゃい。小判で世界の地図や名画と交換できるよ。自分の写真を額に入れて、${FRAME_MAX}枚まで飾ることもできるんだ。`));
     wrap.append(h('div', 'shop-sec', '地図'));
     for (const m of window.WORLD_MAP_INDEX) {
       const open = isMapOpen(m.id), price = PRICES.maps[m.id];
@@ -1713,7 +1736,7 @@
 
   // ミニゲーム(minigames.js)に渡す道具
   window.UKIYO = { h, svgEl, $, store, Sound, vibrate, settings, fmtTime, shuffle, koban, addKoban, renderWallet, checkBadges, openModal, closeModal,
-    COUNTRIES, flagUrl, shapeEl, speakThanks, choosePhoto, PHOTO_PRICE, PHOTO_SVG, pictureList, openArtChooser, JAPAN, MAP_LIST, artsFor, isMapOpen, loadMap, showTitle: () => showTitle(), showPicker: () => showPicker() };
+    COUNTRIES, flagUrl, shapeEl, speakThanks, choosePhoto, PHOTO_PRICE, PHOTO_SVG, guideEl, pickLine, CHARAS, pictureList, openArtChooser, JAPAN, MAP_LIST, artsFor, isMapOpen, loadMap, showTitle: () => showTitle(), showPicker: () => showPicker() };
 
   useMap(JAPAN);
   showTitle(true);

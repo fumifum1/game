@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dest = path.resolve(process.argv[2] || path.join(root, '../../game/ukiyo-no-chizu'));
-const SKIP = new Set(['proposals', '.claude', '.git', 'node_modules', 'android-app', 'apk']);
+const SKIP = new Set(['art-src', 'proposals', '.claude', '.git', 'node_modules', 'android-app', 'apk']);
 
 const version = fs.readFileSync(path.join(root, 'js/version.js'), 'utf8').match(/APP_VERSION = '([^']+)'/)[1];
 let count = 0;

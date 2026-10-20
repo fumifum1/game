@@ -19,13 +19,33 @@
   };
 
   const GAMES = [
-    { id: 'flag', name: '国旗フラッシュ', seal: '旗', desc: '60秒で国旗を何問当てられる？', unit: '問', start: startFlag },
-    { id: 'shape', name: 'シルエット当て', seal: '形', desc: '影の形から県や国を当てよう', unit: '問', start: startShape },
-    { id: 'darts', name: '地球儀ダーツ', seal: '的', desc: '地球儀を回して国の場所を突こう', unit: '点', start: startDarts },
-    { id: 'thanks', name: 'ありがとう聞き取り', seal: '聴', desc: '何語の「ありがとう」か当てよう', unit: '問', start: startThanks },
-    { id: 'slide', name: '名画スライド', seal: '絵', desc: '名画や自分の絵をずらして元の絵に戻そう', unit: '手', lowerBetter: true, subs: ['3×3', '4×4', '5×5'], start: startSlide },
-    { id: 'memory', name: '首都の札合わせ', seal: '札', desc: '国と首都、県と県庁所在地をそろえよう', unit: '手', lowerBetter: true, start: startMemory },
+    { id: 'flag', name: '国旗フラッシュ', desc: '60秒で国旗を何問当てられる？', unit: '問', start: startFlag, who: 'pirate',
+      intro: '旗を見たら、どこの国か当てるんだ！時間は60秒。まちがえると3秒へるから気をつけな。',
+      lines: ['たいした目利きだ！海賊の仲間にしてやろう。', 'なかなかやるな。もっと旗を覚えてこい！', '旗の見分けはまだまだだな。図鑑で勉強だ！'] },
+    { id: 'shape', name: 'シルエット当て', desc: '影の形から県や国を当てよう', unit: '問', start: startShape, who: 'merchant',
+      intro: '影の形だけで、どこの県か国か当ててごらん。全部で10問だよ。',
+      lines: ['見事！地図がすっかり頭に入っているね。', 'いい線いってるよ。あと少しだ。', '形はむずかしいね。地図パズルで覚えるといいよ。'] },
+    { id: 'darts', name: '地球儀ダーツ', desc: '地球儀を回して国の場所を突こう', unit: '点', start: startDarts, who: 'hunter',
+      intro: '地球儀を指で回して、お題の国をねらってトンと突くのだ。近いほど点が高い（150km以内で100点）。5本勝負！',
+      lines: ['百発百中とはこのことだ！', '悪くない腕前だ。', '的はまだ遠いな。修行あるのみ！'] },
+    { id: 'thanks', name: 'ありがとう聞き取り', desc: '何語の「ありがとう」か当てよう', unit: '問', start: startThanks, who: 'teller',
+      intro: '世界の「ありがとう」を聞かせるよ。何語か当ててみて。全部で8問。音が鳴るので音量に気をつけてね。',
+      lines: ['耳がいいね！世界中で友だちができるよ。', 'よく聞けているよ。', 'ことばはむずかしいね。図鑑のカードでも聞けるよ。'] },
+    { id: 'slide', name: '名画スライド', desc: '名画や自分の絵をずらして元の絵に戻そう', unit: '手', lowerBetter: true, subs: ['3×3', '4×4', '5×5'], start: startSlide, who: 'painter',
+      intro: '大変だ、絵がばらばらになってしまった！札をずらして元に戻しておくれ。',
+      lines: ['ありがとう、見事に元どおりだ！', 'うん、きれいに戻ったね。', '手間をかけたね。でも完成だ！'] },
+    { id: 'memory', name: '首都の札合わせ', desc: '国と首都、県と県庁所在地をそろえよう', unit: '手', lowerBetter: true, start: startMemory, who: 'noble',
+      intro: '札をめくって、県と県庁所在地（国と首都）の組をそろえるのじゃ。少ない手でそろえるほど見事であるぞ。',
+      lines: ['まことに見事じゃ。', 'なかなかの覚えのよさじゃな。', 'ほっほっほ、また挑むがよい。'] },
   ];
+  // 案内役を出す(small: 遊んでいる間の小さい版)
+  const host = (g, text, small) => U.guideEl(g.who, text ?? g.intro, small);
+  // まえおき: 説明と「はじめる」(大きさなどを選ばないゲーム)
+  function intro(g, go) {
+    const b = h('button', 'btn btn-primary mg-go', 'はじめる'); b.type = 'button';
+    b.addEventListener('click', () => { Sound.pick(); body.innerHTML = ''; go(); });
+    body.append(host(g), b, h('p', 'mg-hint', bestText(g)));
+  }
 
   // ===== 画面 =====
   const scr = $('#mini'), body = $('#mini-body'), titleEl = $('#mini-title'), stat = $('#mini-stat');
@@ -58,11 +78,12 @@
     stop(); inGame = false;
     titleEl.textContent = '余興'; stat.textContent = '';
     body.innerHTML = '';
-    body.append(h('p', 'mg-lead', '1回1〜2分。結果に応じて小判がもらえます（最大30枚）。'));
+    body.append(U.guideEl('samurai', '余興の間へようこそ。どれも1〜2分で遊べて、小判ももらえるでござる（1回最大30枚）。'));
     const list = h('div', 'mg-list');
     for (const g of GAMES) {
       const b = h('button', 'mg-card'); b.type = 'button';
-      b.append(h('span', 'mg-seal', g.seal), h('b', null, g.name), h('small', null, g.desc), h('span', 'mg-best', bestText(g)));
+      const ava = h('img', 'mg-ava'); ava.src = `img/chara/${U.CHARAS[g.who].img}.png`; ava.alt = '';
+      b.append(ava, h('b', null, g.name), h('small', null, g.desc), h('span', 'mg-best', bestText(g)));
       b.addEventListener('click', () => g.start(g));
       list.append(b);
     }
@@ -70,7 +91,7 @@
   }
 
   // 結果(ベストを記録して小判を渡す)
-  function finish(g, { score, detail, reward, sub }) {
+  function finish(g, { score, detail, reward, sub, grade = 0.5 }) {
     stop();
     const key = bestKey(g, sub), prev = store.get(key, null);
     const better = prev == null || (g.lowerBetter ? score < prev : score > prev);
@@ -81,6 +102,7 @@
     Sound.finish(); if (gain) setTimeout(() => Sound.coin(), 700);
     const m = h('div', 'mg-result');
     m.append(h('h3', null, g.name), h('div', 'mg-score', `${score}${g.unit}`));
+    m.append(host(g, g.lines[grade >= 0.7 ? 0 : grade >= 0.4 ? 1 : 2]));
     if (detail) m.append(h('p', 'note', detail));
     m.append(h('p', better && prev != null ? 'new-best' : 'note', better && prev != null ? 'ベスト更新！' : `ベスト ${better ? score : prev}${g.unit}`));
     const k = h('p', 'gain'); k.append(h('span', 'koban'), document.createTextNode(` 小判 +${gain}枚`)); m.append(k);
@@ -109,19 +131,23 @@
   // ===== 1. 国旗フラッシュ =====
   function startFlag(g) {
     setGame(g);
+    intro(g, () => playFlag(g));
+  }
+  function playFlag(g) {
     const LIMIT = 60000;
     let score = 0, miss = 0, end = performance.now() + LIMIT, busy = false;
     const bar = h('div', 'mg-timer'), fill = h('i'); bar.append(fill);
     const img = h('img', 'mg-flag'); img.alt = '国旗';
     const qbox = h('div', 'mg-q'); qbox.append(img);
     const area = h('div');
-    body.append(bar, h('p', 'mg-hint', 'この国旗はどこの国？（まちがえると3秒へる）'), qbox, area);
+    const gd = host(g, 'この旗はどこの国だ？', true); let warned = false;
+    body.append(bar, gd, qbox, area);
     function next() {
       const c = pick(COUNTRIES), opts = shuffle([c, ...distractors(c, COUNTRIES, 'map')]);
       img.src = flagUrl(c);
       const ch = choices(opts.map((o) => o.name), (i) => {
         const ok = opts[i] === c; answerFx(ok);
-        if (ok) score++; else { miss++; end -= 3000; }
+        if (ok) { score++; gd.say(U.pickLine(['その通り！', 'いいぞ！', 'お見事！', 'その調子だ！']), 'ok'); } else { miss++; end -= 3000; gd.say(`ちがう！それは${c.name}の旗だ（-3秒）`, 'ng'); }
         ch.mark(opts.indexOf(c), i);
         stat.textContent = `${score}問`;
         busy = true; setTimeout(() => { busy = false; if (performance.now() < end) next(); }, ok ? 350 : 900);
@@ -131,15 +157,16 @@
     const iv = setInterval(() => {
       const left = end - performance.now();
       fill.style.width = `${clamp(left / LIMIT, 0, 1) * 100}%`;
-      if (left <= 0 && !busy) { clearInterval(iv); finish(g, { score, detail: `まちがい ${miss}回`, reward: score }); }
+      if (!warned && left < 10000) { warned = true; gd.say('あと10秒だ、急げ！', 'ng'); }
+      if (left <= 0 && !busy) { clearInterval(iv); finish(g, { score, detail: `まちがい ${miss}回`, reward: score, grade: score / 18 }); }
     }, 100);
     cleanup = () => clearInterval(iv);
     next();
   }
 
   // ===== 2. シルエット当て =====
-  function modeSelect(g, opts, go, q = 'どちらで遊ぶ？') {
-    body.append(h('p', 'mg-hint', q));
+  function modeSelect(g, opts, go, q = 'どちらで遊ぶ？', talk) {
+    body.append(host(g, talk), h('p', 'mg-hint', q));
     const box = h('div', 'mg-modes');
     for (const [label, sub, v] of opts) {
       const b = h('button', 'mg-card'); b.type = 'button';
@@ -169,18 +196,19 @@
       const pool = mode === 'japan' ? U.JAPAN.pieces.map((p) => ({ ...p, group: p.region })) : await worldPieces();
       const qs = shuffle(pool.slice()).slice(0, 10), t0 = performance.now();
       let i = 0, score = 0;
-      const prog = h('p', 'mg-hint'), qbox = h('div', 'mg-q'), area = h('div');
-      body.append(prog, qbox, area);
+      const prog = h('p', 'mg-hint'), qbox = h('div', 'mg-q'), area = h('div'), gd = host(g, 'この形はどこかな？', true);
+      body.append(gd, prog, qbox, area);
       const next = () => {
         if (i >= qs.length) {
           const sec = (performance.now() - t0) / 1000;
-          return finish(g, { score, detail: `${mode === 'japan' ? '日本' : '世界'}・${fmtTime(sec)}`, reward: score * 2 + (score === 10 ? 5 : 0) });
+          return finish(g, { score, detail: `${mode === 'japan' ? '日本' : '世界'}・${fmtTime(sec)}`, reward: score * 2 + (score === 10 ? 5 : 0), grade: score / 10 });
         }
         const p = qs[i], opts = shuffle([p, ...distractors(p, pool, 'group')]);
         prog.textContent = `第${i + 1}問 / 10　この形はどこ？`;
         qbox.replaceChildren(silhouette(p));
         const ch = choices(opts.map((o) => o.name), (k) => {
           const ok = opts[k] === p; answerFx(ok); if (ok) score++;
+          gd.say(ok ? U.pickLine(['正解！', 'その通り！', 'よくわかったね。']) : `正しくは「${p.name}」だよ。`, ok ? 'ok' : 'ng');
           ch.mark(opts.indexOf(p), k); stat.textContent = `${score}問`;
           i++; setTimeout(next, ok ? 500 : 1100);
         });
@@ -198,12 +226,15 @@
   }
   function startDarts(g) {
     setGame(g);
+    intro(g, () => playDarts(g));
+  }
+  function playDarts(g) {
     const ROUNDS = 5, pool = COUNTRIES.filter((c) => c.shape && c.rarity <= 2);
     const qs = shuffle(pool.slice()).slice(0, ROUNDS);
     let i = 0, total = 0, locked = false;
-    const prompt = h('p', 'mg-prompt'), hint = h('p', 'mg-hint', '地球儀をドラッグして回し、指でトンと突こう（150km以内で100点）'), res = h('p', 'mg-darts-res');
+    const prompt = h('p', 'mg-prompt'), res = h('p', 'mg-darts-res'), gd = host(g, '回してねらって、トンと突け！', true);
     const cv = h('canvas'); cv.className = 'mg-globe';
-    body.append(prompt, cv, hint, res);
+    body.append(prompt, cv, res, gd);
     const globe = new window.Globe(cv, { lon: 0, lat: 20 });
     globe.theme = U.settings.theme;
     // ドラッグで回す・タップで投げる
@@ -230,13 +261,15 @@
       globe.pins = [{ ...hit, color: '#c3402b' }, { lon: c.lon, lat: c.lat, color: '#e0a23a' }];
       globe.setMarker(c.lon, c.lat);
       answerFx(pts >= 60);
+      gd.say(pts >= 90 ? 'お見事、ど真ん中だ！' : pts >= 60 ? 'おしい、なかなかの腕前だ。' : pts > 0 ? 'うむ、まだ遠いな。' : 'まるで見当ちがいだぞ！', pts >= 60 ? 'ok' : 'ng');
       res.textContent = `${c.name}まで ${Math.round(km).toLocaleString()}km → ${pts}点`;
       globe.turnTo(c.lon, c.lat, 700);
       setTimeout(() => { i++; next(); }, 2200);
     }
     function next() {
-      if (i >= ROUNDS) { globe.stop(); return finish(g, { score: total, detail: `${ROUNDS}回の合計（1回100点満点）`, reward: total / 20 }); }
+      if (i >= ROUNDS) { globe.stop(); return finish(g, { score: total, detail: `${ROUNDS}回の合計（1回100点満点）`, reward: total / 20, grade: total / 400 }); }
       globe.pins = []; globe.setMarker(null); res.textContent = ''; locked = false;
+      if (i) gd.say(i === ROUNDS - 1 ? '最後の一本だ、集中！' : '次の的だ。');
       prompt.textContent = `第${i + 1}投：「${qs[i].name}」はどこ？`;
       globe.draw();
     }
@@ -247,6 +280,9 @@
   // ===== 4. ありがとう聞き取り =====
   function startThanks(g) {
     setGame(g);
+    intro(g, () => playThanks(g));
+  }
+  function playThanks(g) {
     // 言葉ごとにまとめる(同じ言葉の国が選択肢に並ばないように)
     const byLang = new Map();
     for (const c of COUNTRIES) { if (!byLang.has(c.langName)) byLang.set(c.langName, []); byLang.get(c.langName).push(c); }
@@ -257,20 +293,23 @@
     play.type = 'button';
     play.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a7.5 7.5 0 010 11"/></svg>';
     play.append(document.createTextNode('もう一度聞く'));
-    body.append(prog, play, note, reveal, area);
+    const gd = host(g, 'よく聞いてね。', true);
+    body.append(gd, prog, play, note, reveal, area);
     let cur = null;
     // 案内文に言葉の名前が出ると答えがわかるので伏せる
     const say = () => U.speakThanks(cur, { set textContent(t) { note.textContent = t.split(cur.langName).join('その言葉'); } });
     play.addEventListener('click', () => cur && say());
     const next = () => {
-      if (i >= qs.length) return finish(g, { score, detail: `${qs.length}問中`, reward: score * 2.5 });
+      if (i >= qs.length) return finish(g, { score, detail: `${qs.length}問中`, reward: score * 2.5, grade: score / 8 });
       const lang = qs[i]; cur = pick(byLang.get(lang));
       const opts = shuffle([lang, ...shuffle(langs.filter((l) => l !== lang)).slice(0, 3)]);
       prog.textContent = `第${i + 1}問 / ${qs.length}　何語の「ありがとう」？`;
       reveal.replaceChildren();
+      if (i) gd.say(i === qs.length - 1 ? '最後の問題だよ。' : '次はこれ。何語かな？');
       say();
       const ch = choices(opts, (k) => {
         const ok = opts[k] === lang; answerFx(ok); if (ok) score++;
+        gd.say(ok ? U.pickLine(['正解！', 'よく聞き取れたね。', 'その通り！']) : `答えは${lang}だよ。`, ok ? 'ok' : 'ng');
         ch.mark(opts.indexOf(lang), k); stat.textContent = `${score}問`;
         const ex = byLang.get(lang).slice(0, 4).map((c) => c.name).join('・');
         reveal.append(h('b', null, `${cur.word}（${cur.yomi}）`), h('small', null, `${lang}：${ex}${byLang.get(lang).length > 4 ? 'など' : ''}`));
@@ -291,21 +330,21 @@
         if (kind === 'random') return play(N, pick(U.pictureList()));
         if (kind === 'choose') return U.openArtChooser((art) => play(N, art));
         U.choosePhoto((art) => play(N, art));
-      }, `${N}×${N}・どの絵で遊ぶ？`);
+      }, `${N}×${N}・どの絵で遊ぶ？`, 'どの絵にする？自分の写真でもいいよ。');
       const cards = body.querySelectorAll('.mg-modes .mg-card');
       cards[2]?.insertAdjacentHTML('afterbegin', `<span class="mg-photo-ico">${U.PHOTO_SVG}</span>`);
     }, 'どの大きさで遊ぶ？');
     function play(N, art) {
       setGame(g);
       const label = art.id === 'photo' ? 'あなたの写真' : art.frame ? `自分の絵「${art.title}」` : `${art.artist}「${art.title}」`;
-      const info = h('p', 'mg-hint', `${label}を読み込み中…`);
-      body.append(info);
+      const info = h('p', 'mg-hint', `${label}を読み込み中…`), gd = host(g, '空いているところのとなりの札を押すと、ずれるよ。', true);
+      body.append(gd, info);
       const img = new Image(); img.referrerPolicy = 'no-referrer';
       img.onerror = () => { info.textContent = '絵を読み込めませんでした。通信状態を確かめてください。'; };
       img.onload = () => build(img);
       img.src = art.url;
       function build(im) {
-        info.textContent = `${label}　空いているところのとなりの札を押してずらそう`;
+        info.textContent = label;
         const wrap = h('div', 'mg-slide-wrap'), board = h('div', 'mg-board'), mini = h('img', 'mg-sample'); mini.src = art.url; mini.alt = '見本';
         wrap.append(board, mini); body.append(wrap);
         const B = board.clientWidth, T = B / N, sc = Math.max(B / im.naturalWidth, B / im.naturalHeight);
@@ -342,11 +381,15 @@
           if (!nbrs(empty).includes(pos)) return;
           [tiles[empty], tiles[pos]] = [tiles[pos], tiles[empty]]; empty = pos; moves++;
           Sound.pick(); stat.textContent = `${moves}手`; paint();
+          if (moves === N * N * 4) gd.say('あわてずに、角から順にそろえるのがコツだよ。');
           if (tiles.every((t, k) => t === k)) {
             board.classList.add('done'); els[empty].style.backgroundImage = `url("${art.url}")`;
             const tt = N * N - 1; els[empty].style.backgroundSize = `${iw}px ${ihh}px`; els[empty].style.backgroundPosition = `${ox - (tt % N) * T}px ${oy - Math.floor(tt / N) * T}px`; els[empty].classList.remove('empty');
             const sec = (performance.now() - t0) / 1000;
-            setTimeout(() => finish(g, { score: moves, detail: `${N}×${N}・${fmtTime(sec)}`, sub: `${N}×${N}`, reward: N === 3 ? clamp(25 - moves / 6, 5, 15) : N === 4 ? clamp(40 - moves / 8, 10, 30) : clamp(30 - moves / 25, 15, 30) }), 900);
+            gd.say('元どおりだ！', 'ok');
+            const reward = N === 3 ? clamp(25 - moves / 6, 5, 15) : N === 4 ? clamp(40 - moves / 8, 10, 30) : clamp(30 - moves / 25, 15, 30);
+            const grade = N === 3 ? (reward - 5) / 10 : N === 4 ? (reward - 10) / 20 : (reward - 15) / 15;
+            setTimeout(() => finish(g, { score: moves, detail: `${N}×${N}・${fmtTime(sec)}`, sub: `${N}×${N}`, reward, grade }), 900);
           }
         }
         paint();
@@ -369,7 +412,8 @@
         pairs = shuffle(ok.slice()).slice(0, 8).map((c) => [{ text: c.name, flag: flagUrl(c) }, { text: c.cap }]);
       }
       const cards = shuffle(pairs.flatMap((pr, k) => pr.map((f, side) => ({ ...f, pair: k, side }))));
-      body.append(h('p', 'mg-hint', mode === 'japan' ? '県と、その県庁所在地の札をそろえよう' : '国と、その首都の札をそろえよう'));
+      const gd = host(g, mode === 'japan' ? '県と、その県庁所在地の札をそろえるのじゃ。' : '国と、その首都の札をそろえるのじゃ。', true);
+      body.append(gd);
       const grid = h('div', 'mg-memory');
       let open = [], matched = 0, moves = 0, busy = false; const t0 = performance.now();
       for (const c of cards) {
@@ -391,9 +435,10 @@
         const [a, b] = open; open = [];
         if (a.c.pair === b.c.pair) {
           a.el.classList.add('got'); b.el.classList.add('got'); Sound.snap(); matched++;
+          gd.say(matched === pairs.length ? 'すべてそろったぞ！' : U.pickLine(['見事じゃ。', 'うむ、そろったな。', `あと${pairs.length - matched}組じゃ。`]), 'ok');
           if (matched === pairs.length) {
             const sec = (performance.now() - t0) / 1000;
-            setTimeout(() => finish(g, { score: moves, detail: `${mode === 'japan' ? '日本' : '世界'}・${fmtTime(sec)}`, reward: clamp(30 - (moves - 8) * 1.5, 8, 25) }), 700);
+            setTimeout(() => finish(g, { score: moves, detail: `${mode === 'japan' ? '日本' : '世界'}・${fmtTime(sec)}`, reward: clamp(30 - (moves - 8) * 1.5, 8, 25), grade: (clamp(30 - (moves - 8) * 1.5, 8, 25) - 8) / 17 }), 700);
           }
         } else {
           busy = true; vibrate(40);
