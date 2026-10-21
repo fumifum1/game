@@ -685,12 +685,15 @@
     const m = mapInfo(sel.map), box = $('#stage-list'), cur = selectedStage(sel.map);
     box.innerHTML = '';
     if (!m.regions.length) { box.hidden = true; return; }
+    // 7つ以上(日本)は4列、それ以外は3列で、横にずらさず全部見せる
+    box.style.gridTemplateColumns = `repeat(${m.regions.length + 1 > 6 ? 4 : 3}, minmax(0, 1fr))`;
     for (const st of [{ name: 'all', count: m.count }, ...m.regions]) {
       const b = h('button', 'stage-chip'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(st.name === cur));
-      b.append(h('span', null, st.name === 'all' ? '全体' : st.name), h('span', 'sc-n', `${st.count}枚`));
-      const n = starsOf(sel.map, st.name), sEl = h('span', 'sc-s');
+      const n = starsOf(sel.map, st.name), meta = h('span', 'sc-meta'), sEl = h('span', 'sc-s');
       sEl.innerHTML = '★'.repeat(n) + `<span class="off">${'★'.repeat(3 - n)}</span>`;
-      b.append(sEl);
+      meta.append(h('span', 'sc-n', `${st.count}枚`), sEl);
+      const label = st.name === 'all' ? '全体' : st.name;
+      b.append(h('span', 'sc-name' + (label.length > 5 ? ' long' : ''), label), meta);
       b.addEventListener('click', () => { store.set('stage:' + sel.map, st.name); renderStageList(); renderDiffSeg(); });
       box.append(b);
     }
@@ -1747,27 +1750,28 @@
 
     setTimeout(() => {
       if (!S || !S.done) return;
-      const body = h('div');
-      body.append(h('h3', null, stageMode ? `${stage} 完成` : '完　成'), artCaption(S.art));
-      const sr = h('div', 'stars3'); for (let i = 0; i < 3; i++) sr.append(h('span', i < stars ? 'on' : 'off', '★')); body.append(sr);
+      const body = h('div', 'done'), side = h('div', 'done-side');
+      const main = h('div', 'done-main'); body.append(main, side);
+      main.append(h('h3', null, stageMode ? `${stage} 完成` : '完　成'), artCaption(S.art));
+      const sr = h('div', 'stars3'); for (let i = 0; i < 3; i++) sr.append(h('span', i < stars ? 'on' : 'off', '★')); main.append(sr);
       const cd = h('div', 'conds');
       for (const [ok, label] of [[true, '完成'], [swift, `${fmtTime(S.target)}以内`], [solo, 'ヒント・ガイドなし']]) cd.append(h('span', ok ? 'ok' : null, `${ok ? '✓' : '✗'} ${label}`));
-      body.append(cd);
+      main.append(cd);
       const res = h('div', 'result');
       for (const [k, v] of [['タイム', fmtTime(t)], ['ヒント', `${S.hints}回`], ['ベスト', newBest ? fmtTime(t) : prevBest == null ? '―' : fmtTime(prevBest)]]) {
         const d = h('div'); d.append(h('div', 'k', k), h('div', 'v', v)); res.append(d);
       }
-      body.append(res);
-      if (newBest && prevBest != null) body.append(h('p', 'new-best', 'ベスト更新！'));
-      if (S.daily) body.append(h('p', `daily-result ${dailyOk ? 'ok' : 'ng'}`, dailyOk ? 'お題達成！' : `お題は未達成（${S.daily.cond === 'time' ? fmtTime(S.daily.limit) + '以内' : 'ヒントなし'}）`));
+      main.append(res);
+      if (newBest && prevBest != null) main.append(h('p', 'new-best', 'ベスト更新！'));
+      if (S.daily) main.append(h('p', `daily-result ${dailyOk ? 'ok' : 'ng'}`, dailyOk ? 'お題達成！' : `お題は未達成（${S.daily.cond === 'time' ? fmtTime(S.daily.limit) + '以内' : 'ヒントなし'}）`));
       const rw = h('div', 'rewards');
       for (const [label, v] of rewards) { const r = h('div', 'rw'); r.append(h('span', null, label), kobanEl(v, '+')); rw.append(r); }
       if (earned.length) { const r = h('div', 'rw'); r.append(h('span', null, `称号「${earned.map((b) => b.name).join('」「')}」`), kobanEl(earned.reduce((a, b) => a + b.reward, 0), '+')); rw.append(r); }
       const tr = h('div', 'rw total'); tr.append(h('span', null, `合計（所持 ${koban()}枚）`), kobanEl(total + earned.reduce((a, b) => a + b.reward, 0), '+')); rw.append(tr);
-      body.append(rw);
+      side.append(rw);
       if (earned.length) {
         const box = h('div', 'unlocked'); box.append(h('div', 'unlocked-head', '称号を手に入れました'));
-        const g = h('div', 'badges'); earned.forEach((b) => g.append(badgeEl(b, true))); box.append(g); body.append(box);
+        const g = h('div', 'badges'); earned.forEach((b) => g.append(badgeEl(b, true))); box.append(g); main.append(box);
       }
       // 次の地方(ステージのとき)
       const regions = mapInfo(mapId).regions, idx = regions.findIndex((r) => r.name === stage);

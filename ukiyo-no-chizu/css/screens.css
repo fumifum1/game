@@ -185,3 +185,5 @@ html[data-theme='night'] .guide[data-mood='wow'] .guide-bubble { background: #3a
 .guide[data-mood='spin'] .guide-img { animation-duration: 0.9s; }
 /* 福引・画商のシートでは上に */
 .sheet-body .guide { margin: 0 auto 6px; max-width: 520px; }
+/* 地方の札が2段になった分、縦長の画面では地球儀を少し小さく */
+#pick-globe { width: min(64vw, 300px, 33vh); }
