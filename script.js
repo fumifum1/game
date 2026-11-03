@@ -52,15 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const PLAYER_HEIGHT = 40;
     const BULLET_SPEED = 8;
     const HOMING_LIFETIME = 180; // 追尾ミサイルの寿命(フレーム)。敵の周りを回り続けるのを防ぐ
-    const INVADER_ROWS = 5;
-    const INVADER_COLS = 5;
     const INVADER_WIDTH = 30;
     const INVADER_HEIGHT = 24;
     const INVADER_PADDING = 10;
     const INVADER_OFFSET_TOP = 50;
-    const INVADER_OFFSET_LEFT = (canvas.width - (INVADER_COLS * (INVADER_WIDTH + INVADER_PADDING))) / 2;
-    const MAX_LEVEL = 10;
-    const BOSS_START_HP = 200;
+    const FORMATION_DROP = 8; // 編隊が端で折り返すときに下がる量
     const INVADER_BULLET_SPEED = 4;
     const INVADER_SHOOT_PROBABILITY = 0.0008;
     const ITEM_DROP_CHANCE = 0.25;
@@ -197,27 +193,95 @@ document.addEventListener('DOMContentLoaded', () => {
     const isUnlocked = (ship) => ship.cost === 0 || save.unlocked.includes(ship.id);
     let currentShip = SHIPS.find(s => s.id === save.selected && isUnlocked(s)) || SHIPS[0];
 
-    // インベーダーの種類
+    // --- 敵の種類 ---
+    // path: 見た目 / fire: 撃ち方 (single・rapid・spread・aim・none) / hp: 耐久 (省略時1)
+    // move: dive(急降下して戻る) / rush(溜めてから自機へ突進) / blink(瞬間移動) / split(倒すと2体に分裂)
     const INVADER_TYPES = {
-        NORMAL: { color: '#f00', pathIndex: 0 },
-        RAPID:  { color: '#f0f', pathIndex: 0 }, // 弾を2連射
-        SPREAD: { color: '#0f0', pathIndex: 0 }, // 3方向拡散弾
-        DIVE:   { color: '#0ff', pathIndex: 1 }, // 3方向拡散弾 (旧DIVEグラフィック)
+        NORMAL:   { color: '#f00', path: 'alien', fire: 'single' },
+        RAPID:    { color: '#f0f', path: 'alien', fire: 'rapid' },  // 弾を2連射
+        SPREAD:   { color: '#0f0', path: 'alien', fire: 'spread' }, // 3方向拡散弾
+        SNIPER:   { color: '#ff0', path: 'alien', fire: 'aim' },    // 自機を狙い撃つ
+        DIVER:    { color: '#0ff', path: 'diver', fire: 'single', move: 'dive' },
+        ARMOR:    { color: '#f80', path: 'armor', fire: 'single', hp: 3 },
+        BLINKER:  { color: '#c8f', path: 'squid', fire: 'single', move: 'blink' },
+        KAMIKAZE: { color: '#f55', path: 'arrow', fire: 'none', move: 'rush' },
+        SPLITTER: { color: '#af0', path: 'squid', fire: 'single', move: 'split' },
+        MINI:     { color: '#af0', path: 'alien', fire: 'none' },   // SPLITTERの分身
     };
-    const INVADER_PATH_1 = new Path2D("M2 8 L2 20 L6 20 L6 24 L24 24 L24 20 L28 20 L28 8 L24 8 L24 4 L20 4 L20 0 L10 0 L10 4 L6 4 L6 8 Z M8 12 L12 12 L12 16 L8 16 Z M18 12 L22 12 L22 16 L18 16 Z");
-    const INVADER_PATH_2 = new Path2D("M8 0 L22 0 L22 4 L26 4 L26 8 L30 8 L30 20 L26 20 L26 24 L22 24 L22 20 L18 20 L18 16 L12 16 L12 20 L8 20 L8 24 L4 24 L4 20 L0 20 L0 8 L4 8 L4 4 L8 4 Z M8 8 L12 8 L12 12 L8 12 Z M18 8 L22 8 L22 12 L18 12 Z");
-    const INVADER_PATH_3 = new Path2D("M15 0 L25 10 L25 18 L20 24 L10 24 L5 18 L5 10 Z M15 4 L21 10 L18 13 L12 13 L9 10 Z");
-    const INVADER_PATHS = [
-        [INVADER_PATH_1, INVADER_PATH_2], // NORMAL, RAPID, SPREAD用
-        [INVADER_PATH_3, INVADER_PATH_3]  // DIVE用 (レベル7以降の最上段)
+    // ステージ配置表の1文字 → 敵の種類
+    const INVADER_CODES = { N: 'NORMAL', R: 'RAPID', S: 'SPREAD', P: 'SNIPER', D: 'DIVER', A: 'ARMOR', B: 'BLINKER', K: 'KAMIKAZE', X: 'SPLITTER' };
+    // 30x24の座標系。アニメーション用に2コマずつ
+    const INVADER_PATHS = {
+        alien: [
+            new Path2D("M2 8 L2 20 L6 20 L6 24 L24 24 L24 20 L28 20 L28 8 L24 8 L24 4 L20 4 L20 0 L10 0 L10 4 L6 4 L6 8 Z M8 12 L12 12 L12 16 L8 16 Z M18 12 L22 12 L22 16 L18 16 Z"),
+            new Path2D("M8 0 L22 0 L22 4 L26 4 L26 8 L30 8 L30 20 L26 20 L26 24 L22 24 L22 20 L18 20 L18 16 L12 16 L12 20 L8 20 L8 24 L4 24 L4 20 L0 20 L0 8 L4 8 L4 4 L8 4 Z M8 8 L12 8 L12 12 L8 12 Z M18 8 L22 8 L22 12 L18 12 Z"),
+        ],
+        diver: [
+            new Path2D("M15 0 L25 10 L25 18 L20 24 L10 24 L5 18 L5 10 Z M15 4 L21 10 L18 13 L12 13 L9 10 Z"),
+            new Path2D("M15 0 L27 10 L25 18 L20 24 L10 24 L5 18 L3 10 Z M15 4 L21 10 L18 13 L12 13 L9 10 Z"),
+        ],
+        armor: [
+            new Path2D("M8 0 L22 0 L30 8 L30 18 L22 24 L8 24 L0 18 L0 8 Z M10 8 L20 8 L20 14 L10 14 Z"),
+            new Path2D("M8 0 L22 0 L30 8 L30 18 L22 24 L8 24 L0 18 L0 8 Z M11 9 L19 9 L19 13 L11 13 Z"),
+        ],
+        squid: [
+            new Path2D("M10 0 L20 0 L20 4 L24 4 L24 8 L28 8 L28 16 L24 16 L28 24 L22 24 L20 18 L10 18 L8 24 L2 24 L6 16 L2 16 L2 8 L6 8 L6 4 L10 4 Z M9 8 L13 8 L13 12 L9 12 Z M17 8 L21 8 L21 12 L17 12 Z"),
+            new Path2D("M10 0 L20 0 L20 4 L24 4 L24 8 L28 8 L28 16 L24 16 L24 20 L20 24 L18 18 L12 18 L10 24 L6 20 L6 16 L2 16 L2 8 L6 8 L6 4 L10 4 Z M9 8 L13 8 L13 12 L9 12 Z M17 8 L21 8 L21 12 L17 12 Z"),
+        ],
+        arrow: [
+            new Path2D("M0 0 L15 8 L30 0 L22 14 L15 24 L8 14 Z M13 10 L17 10 L15 16 Z"),
+            new Path2D("M2 2 L15 8 L28 2 L22 14 L15 24 L8 14 Z M13 10 L17 10 L15 16 Z"),
+        ],
+    };
+
+    // --- ステージ構成 ---
+    // map: 1文字が敵1体 (INVADER_CODES を参照。'.' は空き)。wave: 編隊が波打つ
+    // boss: ボス戦 (mid: 中ボス / final: ラスボス)
+    const STAGES = [
+        /*  1 */ { map: ['NNNNN', 'NNNNN', 'NNNNN', 'NNNNN'] },
+        /*  2 */ { map: ['NDNDN', 'NNNNN', 'NNNNN', 'NNNNN'] },
+        /*  3 */ { map: ['PNPNP', 'RRRRR', 'NNNNN', 'NNNNN', 'NNNNN'] },
+        /*  4 */ { map: ['D.....D', 'ND...DN', '.NR.RN.', '..NAN..', '...A...'], wave: true },
+        /*  5 */ { map: ['SSSSS', 'AAAAA', 'RRRRR', 'NNNNN', 'NNNNN'] },
+        /*  6 */ { map: ['...B...', '..PNP..', '.RNDNR.', '..NAN..', '...B...'], wave: true },
+        /*  7 */ { map: ['KDKDK', 'PPPPP', 'RRRRR', 'NNNNN', 'NNNNN'] },
+        /*  8 */ { map: ['X.X.X.X', 'N.N.N.N', 'A.A.A.A', 'R.R.R.R', 'N.N.N.N'], wave: true },
+        /*  9 */ { map: ['BSBSBS', 'AAAAAA', 'PRPRPR', 'DNNNND', 'NNNNNN'] },
+        /* 10 */ { boss: 'mid' },
+        /* 11 */ { map: ['KKKKK', 'SPSPS', 'AAAAA', 'DRDRD', 'NNNNN'] },
+        /* 12 */ { map: ['XXXXXX', 'BNNNNB', 'PAAAAP', 'RRRRRR', 'DNNNND'], wave: true },
+        /* 13 */ { map: ['K.....K', 'SA...AS', '.DP.PD.', '..XAX..', '...B...'], wave: true },
+        /* 14 */ { map: ['PPPPPP', 'KAAAAK', 'SBSBSB', 'XRRRRX', 'DDDDDD'] },
+        /* 15 */ { map: ['...K...', '..SAS..', '.PBXBP.', 'DAAAAAD', '.RRRRR.', '..NNN..'] },
+        /* 16 */ { map: ['A.A.A.A', '.K.K.K.', 'P.X.X.P', '.D.D.D.', 'B.R.R.B'], wave: true },
+        /* 17 */ { map: ['KKKKKKK', 'SPSPSPS', 'AAAAAAA', 'XBXBXBX', 'DDDDDDD'] },
+        /* 18 */ { map: ['BKBKBK', 'PAPAPA', 'XSXSXS', 'AAAAAA', 'DRDRDR', 'NNNNNN'], wave: true },
+        /* 19 */ { map: ['KSPKPSK', 'AAAAAAA', 'XBDXDBX', 'PAPAPAP', 'RRRRRRR', 'DDDDDDD'] },
+        /* 20 */ { boss: 'final' },
     ];
+    const MAX_LEVEL = STAGES.length;
+    // hue: 画像の色相をずらして中ボスとラスボスを見分ける / rage: HPが半分を切ると速くなる
+    const BOSS_TYPES = {
+        mid:   { width: 160, hp: 150, speed: 1.5, cooldownScale: 1,   patterns: ['spread', 'snipe', 'laser'], hue: 140, rage: false, rewardCoins: 15 },
+        final: { width: 200, hp: 350, speed: 2,   cooldownScale: 0.7, patterns: ['spread', 'snipe', 'laser', 'ring'], hue: 0, rage: true },
+    };
+    // ステージが進むほど速く・よく撃ち・よく襲ってくる
+    function stageParams(lv) {
+        return {
+            speed: Math.min(0.5 + (lv - 1) * 0.09, 2),
+            fire: INVADER_SHOOT_PROBABILITY * (1 + lv * 0.35),
+            attackChance: 0.0015 + lv * 0.00015, // 1フレームごとに編隊から飛び出す確率
+            maxAttackers: 1 + Math.floor(lv / 4), // 同時に編隊を離れる敵の上限
+            armorHp: lv > 10 ? 4 : 3,
+        };
+    }
 
     // Boss Image
     const bossImage = new Image();
     bossImage.src = 'images/Boss.png';
 
     // ゲーム状態
-    let ctx, player, bullets, invaderBullets, items, invaders, score, level, gameOver, lastShotTime, invaderDirection, invaderSpeed, animationFrameId, boss, isPaused;
+    let ctx, player, bullets, invaderBullets, items, invaders, score, level, gameOver, lastShotTime, formation, stage, stageSlots, animationFrameId, boss, isPaused;
     let effects = [], runCoins = 0, lastEarnedCoins = 0, lastBombTime = 0, pausedAt = 0, isHangarOpen = false;
     // 移動キー (矢印キー / WASD)
     const KEY_DIRECTIONS = {
@@ -275,76 +339,79 @@ document.addEventListener('DOMContentLoaded', () => {
         gameLoop();
     }
 
-    // レベル設定
+    // ステージ設定
     function setupLevel() {
-        if (level === MAX_LEVEL) { // レベル10はボス戦なので何もしない
-            setupBossFight();
+        const config = STAGES[level - 1];
+        stage = stageParams(level);
+        boss = null;
+        invaders = [];
+        bullets = [];
+        invaderBullets = [];
+        items = [];
+        player.x = canvas.width / 2 - PLAYER_WIDTH / 2;
+        player.y = DEFENSE_LINE;
+
+        if (config.boss) {
+            setupBossFight(config.boss);
+            showBanner('WARNING', '#f33');
             return;
         }
 
-        invaders = [];
-        for (let c = 0; c < INVADER_COLS; c++) {
-            invaders[c] = [];
-            for (let r = 0; r < INVADER_ROWS; r++) {
-                let type = 'NORMAL';
-                if (level >= 7 && r === 0) { // レベル7から最上段はDIVEタイプ
-                    type = 'DIVE';
-                } else if (level >= 5 && r === 0) { // 最上段はSPREADタイプ
-                    type = 'SPREAD';
-                } else if (level >= 3 && r === 1) { // 2段目はRAPIDタイプ
-                    type = 'RAPID';
-                }
-
-                invaders[c][r] = {
-                    x: c * (INVADER_WIDTH + INVADER_PADDING) + INVADER_OFFSET_LEFT,
-                    y: r * (INVADER_HEIGHT + INVADER_PADDING) + INVADER_OFFSET_TOP,
-                    width: INVADER_WIDTH,
-                    height: INVADER_HEIGHT,
-                    status: 1, // 1: 生存, 0: 死亡
-                    type: type
-                };
-            }
-        }
-        invaderDirection = 1;
-        invaderSpeed = 0.5 + (level - 1) * 0.25;
-        if (invaderSpeed > 3) invaderSpeed = 3; // スピード上限
-        player.x = canvas.width / 2 - PLAYER_WIDTH / 2;
-        player.y = DEFENSE_LINE;
-        bullets = [];
-        invaderBullets = [];
-        items = [];
+        const cellW = INVADER_WIDTH + INVADER_PADDING, cellH = INVADER_HEIGHT + INVADER_PADDING;
+        const cols = Math.max(...config.map.map(row => row.length));
+        formation = { x: (canvas.width - (cols * cellW - INVADER_PADDING)) / 2, y: INVADER_OFFSET_TOP, dir: 1, t: 0, wave: !!config.wave };
+        stageSlots = []; // BLINKERのワープ先にもなる配置マス
+        const now = Date.now();
+        config.map.forEach((row, r) => {
+            [...row].forEach((code, c) => {
+                const slot = { x: c * cellW, y: r * cellH };
+                stageSlots.push(slot);
+                if (INVADER_CODES[code]) invaders.push(createInvader(INVADER_CODES[code], slot, now));
+            });
+        });
+        showBanner(`STAGE ${level}`, '#0f0');
+    }
+    function createInvader(type, slot, now) {
+        const hp = type === 'ARMOR' ? stage.armorHp : (INVADER_TYPES[type].hp || 1);
+        return {
+            type, slotX: slot.x, slotY: slot.y,
+            x: formation.x + slot.x, y: formation.y + slot.y, width: INVADER_WIDTH, height: INVADER_HEIGHT,
+            status: 1, hp, maxHp: hp,
+            mode: 'formation', vx: 0, vy: 0,
+            timer: now + 1500 + Math.random() * 2500, // BLINKERのワープ・KAMIKAZEの溜めに使う
+            flash: 0,
+        };
+    }
+    function showBanner(text, color) {
+        effects.push({ type: 'banner', text, color, start: Date.now(), duration: 1600 });
     }
 
     // ボス戦設定
-    function setupBossFight() {
-        invaders = []; // 通常の敵はクリア
-        items = [];
-        bullets = [];
-        invaderBullets = [];
-
-        const bossWidth = 200;
-        let bossHeight = 160; // デフォルトの高さ
+    function setupBossFight(kind) {
+        const def = BOSS_TYPES[kind];
+        const bossWidth = def.width;
+        let bossHeight = bossWidth * 0.8; // 画像が読めていない時の高さ
         // 画像が読み込み済みであれば、アスペクト比を維持して高さを計算
         if (bossImage.complete && bossImage.naturalWidth > 0) {
-            const aspectRatio = bossImage.naturalHeight / bossImage.naturalWidth;
-            bossHeight = bossWidth * aspectRatio;
+            bossHeight = bossWidth * bossImage.naturalHeight / bossImage.naturalWidth;
         }
 
         boss = {
+            kind, def,
             x: canvas.width / 2 - bossWidth / 2,
             y: -bossHeight, // 画面上部から登場
             width: bossWidth,
             height: bossHeight,
-            speed: 1.5,
             direction: 1,
-            hp: BOSS_START_HP,
-            maxHp: BOSS_START_HP,
+            hp: def.hp,
+            maxHp: def.hp,
             active: true,
             pattern: 'spread',
             patternTimer: Date.now(),
             shootCooldown: 0,
         };
     }
+    const isBossRaging = () => boss.def.rage && boss.hp < boss.maxHp / 2;
     // UI更新
     function updateUI() {
         scoreEl.textContent = score;
@@ -449,6 +516,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.beginPath();
                 ctx.arc(e.x, e.y, 10 + t * e.radius, 0, Math.PI * 2);
                 ctx.stroke();
+            } else if (e.type === 'banner') {
+                ctx.fillStyle = e.color;
+                ctx.shadowColor = e.color;
+                ctx.shadowBlur = 10;
+                ctx.font = "22px 'Press Start 2P'";
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.globalAlpha = t < 0.7 ? 1 : (1 - t) / 0.3;
+                ctx.fillText(e.text, canvas.width / 2, canvas.height / 2 + 20);
             } else if (e.type === 'text') {
                 ctx.fillStyle = e.color;
                 ctx.font = "8px 'Press Start 2P'";
@@ -473,10 +549,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function drawInvaderBullets() {
         ctx.save();
-        ctx.fillStyle = '#f5a';
-        ctx.shadowColor = '#f5a';
         ctx.shadowBlur = 5;
-        invaderBullets.forEach(bullet => ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height));
+        invaderBullets.forEach(bullet => {
+            ctx.fillStyle = ctx.shadowColor = bullet.color || '#f5a';
+            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        });
         ctx.restore();
     }
     function drawItems() {
@@ -506,24 +583,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     function drawInvaders() {
-        const animToggle = Math.floor(Date.now() / 500) % 2 === 0;
-        invaders.forEach(column => {
-            column.forEach(invader => {
-                if (invader.status === 1) { // 生存中のみ
-                    const invaderDef = INVADER_TYPES[invader.type];
-                    const pathSet = INVADER_PATHS[invaderDef.pathIndex];
-                    const currentPath = animToggle ? pathSet[0] : pathSet[1];
+        const now = Date.now();
+        const animToggle = Math.floor(now / 500) % 2 === 0;
+        invaders.forEach(invader => {
+            if (invader.status !== 1) return;
+            const def = INVADER_TYPES[invader.type];
+            const pathSet = INVADER_PATHS[def.path];
+            const color = invader.flash > now ? '#fff' : def.color; // 被弾した瞬間は白く光る
 
-                    ctx.save();
-                    ctx.translate(invader.x, invader.y);
-                    ctx.scale(invader.width / 30, invader.height / 24);
-                    ctx.fillStyle = invaderDef.color;
-                    ctx.shadowColor = invaderDef.color;
-                    ctx.shadowBlur = 5;
-                    ctx.fill(currentPath);
-                    ctx.restore();
-                }
-            });
+            ctx.save();
+            ctx.translate(invader.x, invader.y);
+            ctx.scale(invader.width / 30, invader.height / 24);
+            ctx.fillStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 5;
+            ctx.fill(animToggle ? pathSet[0] : pathSet[1], 'evenodd');
+            if (invader.maxHp > 1) { // 耐久ゲージ
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#400';
+                ctx.fillRect(2, 26, 26, 3);
+                ctx.fillStyle = '#fc0';
+                ctx.fillRect(2, 26, 26 * invader.hp / invader.maxHp, 3);
+            }
+            ctx.restore();
+
+            if (invader.mode === 'aim') { // 突進の予告
+                ctx.save();
+                ctx.fillStyle = '#f33';
+                ctx.font = "10px 'Press Start 2P'";
+                ctx.textAlign = 'center';
+                ctx.fillText('!', invader.x + invader.width / 2, invader.y - 4);
+                ctx.restore();
+            }
         });
     }
     function drawBoss() {
@@ -532,7 +623,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.save();
         // ボス画像が読み込み済みの場合のみ描画
         if (bossImage.complete) {
-            ctx.shadowColor = '#a0f';
+            if (boss.def.hue) ctx.filter = `hue-rotate(${boss.def.hue}deg)`;
+            ctx.shadowColor = isBossRaging() ? '#f00' : '#a0f';
             ctx.shadowBlur = 20;
             ctx.drawImage(bossImage, boss.x, boss.y, boss.width, boss.height);
         }
@@ -541,21 +633,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // HPバー
         if (!gameOver) { // ゲームオーバー（エンディング含む）時はHPバーを表示しない
             const barWidth = 200;
-        const barHeight = 10;
-        const barX = canvas.width / 2 - barWidth / 2;
-        const barY = 15;
-        const hpRatio = boss.hp / boss.maxHp;
+            const barHeight = 10;
+            const barX = canvas.width / 2 - barWidth / 2;
+            const barY = 15;
+            const hpRatio = boss.hp / boss.maxHp;
 
-        ctx.save();
-        ctx.fillStyle = '#500';
-        ctx.fillRect(barX, barY, barWidth, barHeight);
-        ctx.fillStyle = '#f00';
-        ctx.shadowColor = '#f00';
-        ctx.shadowBlur = 5;
-        ctx.fillRect(barX, barY, barWidth * hpRatio, barHeight);
-        ctx.strokeStyle = '#fff';
-        ctx.strokeRect(barX, barY, barWidth, barHeight);
-        ctx.restore();
+            ctx.save();
+            ctx.fillStyle = '#500';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+            ctx.fillStyle = '#f00';
+            ctx.shadowColor = '#f00';
+            ctx.shadowBlur = 5;
+            ctx.fillRect(barX, barY, barWidth * hpRatio, barHeight);
+            ctx.strokeStyle = '#fff';
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+            ctx.restore();
         }
     }
     function drawPauseScreen() {
@@ -652,12 +744,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function findHomingTarget(bullet) {
         if (boss && boss.active) return { x: boss.x + boss.width / 2, y: boss.y + boss.height / 2 };
         let best = null, bestDist = Infinity;
-        invaders.forEach(column => column.forEach(inv => {
+        invaders.forEach(inv => {
             if (inv.status !== 1) return;
             const tx = inv.x + inv.width / 2, ty = inv.y + inv.height / 2;
             const dist = Math.hypot(tx - bullet.x, ty - bullet.y);
             if (dist < bestDist) { bestDist = dist; best = { x: tx, y: ty }; }
-        }));
+        });
         return best;
     }
 
@@ -725,92 +817,92 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function invaderShoot() {
         if (boss && boss.active) return; // ボス戦中はインベーダーは撃たない
-        invaders.forEach(column => {
-            column.forEach(invader => {
-                if (invader.status !== 1) return; // 編隊にいる敵だけが対象
+        invaders.forEach(invader => {
+            if (invader.status !== 1 || invader.mode === 'return' || invader.y < 0) return;
+            const fire = INVADER_TYPES[invader.type].fire;
+            if (fire === 'none' || Math.random() >= stage.fire) return;
 
-                const shootChance = INVADER_SHOOT_PROBABILITY * (1 + level * 0.5);
-                if (Math.random() < shootChance) {
-                    if (invader.type === 'RAPID') {
-                        // 2連射
-                        invaderBullets.push({
-                            x: invader.x + invader.width / 2 - 2, y: invader.y + invader.height,
-                            width: 4, height: 8, speed: INVADER_BULLET_SPEED,
-                            dx: 0, dy: INVADER_BULLET_SPEED
-                        });
-                        setTimeout(() => {
-                            // インベーダーがまだ生きていれば2発目を発射
-                            if (invader.status === 1) {
-                                invaderBullets.push({
-                                    x: invader.x + invader.width / 2 - 2, y: invader.y + invader.height,
-                                    width: 4, height: 8, speed: INVADER_BULLET_SPEED,
-                                    dx: 0, dy: INVADER_BULLET_SPEED
-                                });
-                            }
-                        }, 150);
-                    } else if (invader.type === 'SPREAD' || invader.type === 'DIVE') {
-                        // 3方向拡散弾
-                        [-1, 0, 1].forEach(dir => {
-                            invaderBullets.push({
-                                x: invader.x + invader.width / 2 - 2, y: invader.y + invader.height,
-                                width: 5, height: 5, speed: INVADER_BULLET_SPEED,
-                                dx: dir * (INVADER_BULLET_SPEED / 2),
-                                dy: INVADER_BULLET_SPEED * 0.8
-                            });
-                        });
-                    } else if (invader.type === 'NORMAL') {
-                        invaderBullets.push({
-                            x: invader.x + invader.width / 2 - 2, y: invader.y + invader.height,
-                            width: 4, height: 8, speed: INVADER_BULLET_SPEED,
-                            dx: 0, dy: INVADER_BULLET_SPEED
-                        });
-                    }
+            const x = invader.x + invader.width / 2 - 2, y = invader.y + invader.height;
+            switch (fire) {
+                case 'rapid': // 2連射
+                    invaderBullets.push({ x, y, width: 4, height: 8, dx: 0, dy: INVADER_BULLET_SPEED });
+                    setTimeout(() => {
+                        // インベーダーがまだ生きていれば2発目を発射
+                        if (invader.status === 1 && !gameOver) {
+                            invaderBullets.push({ x: invader.x + invader.width / 2 - 2, y: invader.y + invader.height, width: 4, height: 8, dx: 0, dy: INVADER_BULLET_SPEED });
+                        }
+                    }, 150);
+                    break;
+                case 'spread': // 3方向拡散弾
+                    [-1, 0, 1].forEach(dir => {
+                        invaderBullets.push({ x, y, width: 5, height: 5, dx: dir * (INVADER_BULLET_SPEED / 2), dy: INVADER_BULLET_SPEED * 0.8 });
+                    });
+                    break;
+                case 'aim': { // 自機を狙い撃ち
+                    const angle = Math.atan2(player.y + player.height / 2 - y, player.x + player.width / 2 - x);
+                    const speed = INVADER_BULLET_SPEED * 1.1;
+                    invaderBullets.push({ x, y, width: 6, height: 6, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed, color: '#ff0' });
+                    break;
                 }
-            });
+                default:
+                    invaderBullets.push({ x, y, width: 4, height: 8, dx: 0, dy: INVADER_BULLET_SPEED });
+            }
         });
     }
     function bossShoot() {
         if (!boss || !boss.active || boss.y < 0) return;
 
         const now = Date.now();
+        const scale = boss.def.cooldownScale * (isBossRaging() ? 0.75 : 1);
 
         // パターン切り替え
         if (now - boss.patternTimer > 8000) {
-            const patterns = ['spread', 'snipe', 'laser'];
+            const patterns = boss.def.patterns;
             boss.pattern = patterns[Math.floor(Math.random() * patterns.length)];
             boss.patternTimer = now;
-            boss.shootCooldown = now + 1000; // パターン変更後少し待つ
+            boss.shootCooldown = now + 1000 * scale; // パターン変更後少し待つ
         }
 
         if (now < boss.shootCooldown) return;
 
+        const cx = boss.x + boss.width / 2, cy = boss.y + boss.height / 2;
         switch (boss.pattern) {
             case 'spread': // 拡散弾
-                boss.shootCooldown = now + 800;
+                boss.shootCooldown = now + 800 * scale;
                 for (let i = -2; i <= 2; i++) {
                     const angle = i * (Math.PI / 12);
                     invaderBullets.push({
-                        x: boss.x + boss.width / 2, y: boss.y + boss.height / 2 - 40, // 発射位置を少し上に変更
-                        width: 6, height: 6, speed: INVADER_BULLET_SPEED * 1.2,
+                        x: cx, y: cy - 40, // 発射位置を少し上に変更
+                        width: 6, height: 6,
                         dx: Math.sin(angle) * INVADER_BULLET_SPEED,
                         dy: Math.cos(angle) * INVADER_BULLET_SPEED
                     });
                 }
                 break;
-            case 'snipe': // 狙い撃ち
-                boss.shootCooldown = now + 500;
-                const angle = Math.atan2(player.y + player.height / 2 - (boss.y + boss.height / 2), player.x + player.width / 2 - (boss.x + boss.width / 2));
+            case 'snipe': { // 狙い撃ち
+                boss.shootCooldown = now + 500 * scale;
+                const angle = Math.atan2(player.y + player.height / 2 - cy, player.x + player.width / 2 - cx);
                 invaderBullets.push({
-                    x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, // 発射位置をボスの中心に変更
-                    width: 8, height: 8, speed: INVADER_BULLET_SPEED * 1.5,
+                    x: cx, y: cy, // 発射位置をボスの中心に変更
+                    width: 8, height: 8,
                     dx: Math.cos(angle) * INVADER_BULLET_SPEED * 1.5,
                     dy: Math.sin(angle) * INVADER_BULLET_SPEED * 1.5
                 });
                 break;
+            }
+            case 'ring': { // 回転しながら全方位に撃つ
+                boss.shootCooldown = now + 1200 * scale;
+                const offset = now / 400;
+                for (let i = 0; i < 14; i++) {
+                    const angle = offset + i * Math.PI * 2 / 14;
+                    invaderBullets.push({ x: cx, y: cy, width: 6, height: 6, dx: Math.cos(angle) * 3, dy: Math.sin(angle) * 3, color: '#f80' });
+                }
+                break;
+            }
             case 'laser':
-                boss.shootCooldown = now + 3000;
+                boss.shootCooldown = now + 3000 * scale;
                 invaderBullets.push({
-                    x: boss.x + boss.width / 2 - 5, y: boss.y + boss.height,
+                    x: cx - 5, y: boss.y + boss.height,
                     width: 10, height: canvas.height, speed: 0,
                     isLaser: true,
                     timer: now
@@ -823,35 +915,130 @@ document.addEventListener('DOMContentLoaded', () => {
             if (boss.y < 50) {
                 boss.y += 1; // 登場シーン
             } else {
-                boss.x += boss.speed * boss.direction;
-                if (boss.x < 0 || boss.x + boss.width > canvas.width) boss.direction *= -1;
-            }
-            return;
-        }
-        let edgeReached = false;
-        let isGameOver = false; // ゲームオーバーフラグをループの前に初期化
-
-        for (const column of invaders) {
-            for (const invader of column) {
-                if (invader.status === 1) { // 編隊行動
-                    invader.x += invaderSpeed * invaderDirection;
-                    if (invader.x + invader.width > canvas.width || invader.x < 0) edgeReached = true;
-                    if (invader.y + invader.height > DEFENSE_LINE)
-                    isGameOver = true; // フラグを立てるだけで、ここではゲームオーバーにしない
+                boss.x += boss.def.speed * (isBossRaging() ? 1.5 : 1) * boss.direction;
+                if (boss.x < 0 || boss.x + boss.width > canvas.width) {
+                    boss.direction *= -1;
+                    boss.x = clamp(boss.x, 0, canvas.width - boss.width);
                 }
             }
-        }
-
-        // すべての敵の移動が終わった後に、フラグをチェックしてゲームオーバーを判定
-        if (isGameOver) {
-            endGame(false);
             return;
         }
 
-        if (edgeReached) {
-            invaderDirection *= -1;
-            invaders.forEach(column => column.forEach(invader => invader.y += INVADER_HEIGHT / 2));
+        // 編隊の左右移動 (飛び出している敵も含めた、配置マスの端で折り返す)
+        const slotted = invaders.filter(inv => inv.status === 1 && inv.slotX !== undefined);
+        formation.x += stage.speed * formation.dir;
+        formation.t++;
+        if (slotted.length > 0) {
+            const minX = Math.min(...slotted.map(inv => formation.x + inv.slotX));
+            const maxX = Math.max(...slotted.map(inv => formation.x + inv.slotX + inv.width));
+            if (minX < 0 || maxX > canvas.width) {
+                formation.x -= stage.speed * formation.dir;
+                formation.dir *= -1;
+                formation.y += FORMATION_DROP;
+            }
         }
+
+        const now = Date.now();
+        const px = player.x + player.width / 2, py = player.y + player.height / 2;
+        let attackers = invaders.filter(inv => inv.status === 1 && ['aim', 'rush', 'dive'].includes(inv.mode)).length;
+        let reachedLine = false;
+
+        invaders.forEach(inv => {
+            if (inv.status !== 1) return;
+            const def = INVADER_TYPES[inv.type];
+            const homeX = formation.x + inv.slotX;
+            const homeY = formation.y + inv.slotY + (formation.wave ? Math.sin(formation.t * 0.05 + inv.slotX * 0.04) * 10 : 0);
+
+            switch (inv.mode) {
+                case 'formation':
+                    inv.x = homeX;
+                    inv.y = homeY;
+                    if (inv.y + inv.height > DEFENSE_LINE) reachedLine = true;
+                    if ((def.move === 'dive' || def.move === 'rush') && attackers < stage.maxAttackers && Math.random() < stage.attackChance) {
+                        attackers++;
+                        if (def.move === 'dive') {
+                            inv.mode = 'dive';
+                            inv.vx = (px > inv.x ? 1 : -1) * 1.5;
+                            inv.vy = -2; // 一度ふわっと上がってから落ちる
+                        } else {
+                            inv.mode = 'aim';
+                            inv.timer = now + 600;
+                        }
+                    }
+                    if (def.move === 'blink' && now > inv.timer) blinkInvader(inv, now);
+                    break;
+                case 'dive': { // 自機の方へ弧を描いて急降下
+                    const targetX = px - inv.width / 2;
+                    inv.vx = clamp(inv.vx + clamp((targetX - inv.x) * 0.004, -0.15, 0.15), -3, 3);
+                    inv.vy = Math.min(inv.vy + 0.12, 3.5 + level * 0.05);
+                    inv.x += inv.vx;
+                    inv.y += inv.vy;
+                    if (inv.y > canvas.height) {
+                        inv.mode = 'return';
+                        inv.x = homeX;
+                        inv.y = -inv.height;
+                    }
+                    break;
+                }
+                case 'aim': // 突進前の溜め (その場で震える)
+                    inv.x = homeX + Math.sin(now / 20) * 2;
+                    inv.y = homeY;
+                    if (now > inv.timer) {
+                        const dx = px - (inv.x + inv.width / 2), dy = py - (inv.y + inv.height / 2);
+                        const dist = Math.hypot(dx, dy) || 1;
+                        const speed = 4 + level * 0.08;
+                        inv.vx = dx / dist * speed;
+                        inv.vy = dy / dist * speed;
+                        inv.mode = 'rush';
+                    }
+                    break;
+                case 'rush': // 一直線に突進
+                    inv.x += inv.vx;
+                    inv.y += inv.vy;
+                    if (inv.y > canvas.height || inv.x < -inv.width || inv.x > canvas.width) {
+                        inv.mode = 'return';
+                        inv.x = homeX;
+                        inv.y = -inv.height;
+                    }
+                    break;
+                case 'return': { // 画面の上から自分の配置マスへ戻る
+                    const dx = homeX - inv.x, dy = homeY - inv.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist < 4) {
+                        inv.mode = 'formation';
+                    } else {
+                        inv.x += dx / dist * 3;
+                        inv.y += dy / dist * 3;
+                    }
+                    break;
+                }
+                case 'free': // SPLITTERの分身: 画面内を跳ね回る
+                    inv.x += inv.vx;
+                    inv.y += inv.vy;
+                    if (inv.x < 0 || inv.x + inv.width > canvas.width) inv.vx *= -1;
+                    if (inv.y < INVADER_OFFSET_TOP || inv.y + inv.height > canvas.height - 10) inv.vy *= -1;
+                    inv.x = clamp(inv.x, 0, canvas.width - inv.width);
+                    inv.y = clamp(inv.y, INVADER_OFFSET_TOP, canvas.height - 10 - inv.height);
+                    break;
+            }
+        });
+
+        if (reachedLine) endGame(false); // 編隊が防衛ラインまで来たらゲームオーバー
+    }
+    // BLINKER: 空いている配置マスへ瞬間移動する
+    function blinkInvader(inv, now) {
+        inv.timer = now + 2500 + Math.random() * 2000;
+        const freeSlots = stageSlots.filter(slot => !invaders.some(other =>
+            other !== inv && other.status === 1 && other.slotX === slot.x && other.slotY === slot.y));
+        if (freeSlots.length === 0) return;
+        const slot = freeSlots[Math.floor(Math.random() * freeSlots.length)];
+        const ring = (x, y) => effects.push({ type: 'ring', x, y, radius: 20, color: '#c8f', start: now, duration: 300 });
+        ring(inv.x + inv.width / 2, inv.y + inv.height / 2);
+        inv.slotX = slot.x;
+        inv.slotY = slot.y;
+        inv.x = formation.x + slot.x;
+        inv.y = formation.y + slot.y;
+        ring(inv.x + inv.width / 2, inv.y + inv.height / 2);
     }
     const pointInRect = (x, y, r) => x > r.x && x < r.x + r.width && y > r.y && y < r.y + r.height;
     const rectsOverlap = (a, b) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
@@ -905,9 +1092,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function killInvader(invader) {
         invader.status = 0;
-        score += 10 * level;
+        score += invader.type === 'MINI' ? 5 * level : 10 * level * invader.maxHp;
         playSound(sounds.explosion);
         updateUI();
+        if (INVADER_TYPES[invader.type].move === 'split') { // 2体の分身に分かれて跳ね回る
+            [-1, 1].forEach(dir => invaders.push({
+                type: 'MINI', x: invader.x + 6, y: invader.y + 5, width: 18, height: 14,
+                status: 1, hp: 1, maxHp: 1, mode: 'free', vx: dir * (1.5 + level * 0.05), vy: 1.2, flash: 0,
+            }));
+        }
+        if (invader.type === 'MINI') return; // 分身はアイテムを落とさない
+
         const cx = invader.x + invader.width / 2;
         if (Math.random() < ITEM_DROP_CHANCE) {
             let itemType;
@@ -924,6 +1119,31 @@ document.addEventListener('DOMContentLoaded', () => {
             dropCoin(cx, invader.y);
         }
     }
+    function hitInvader(invader, damage) {
+        invader.hp -= damage;
+        if (invader.hp <= 0) {
+            killInvader(invader);
+        } else {
+            invader.flash = Date.now() + 80;
+        }
+    }
+    // ボス撃破: ラスボスならエンディング、中ボスならコインをもらって次のステージへ
+    function defeatBoss() {
+        if (boss.kind === 'final') {
+            endGame(true);
+            return;
+        }
+        const reward = boss.def.rewardCoins * (currentShip.coinMult || 1);
+        runCoins += reward;
+        score += 2000;
+        playSound(sounds.levelClear);
+        effects.push({ type: 'ring', x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, radius: 300, color: '#fd0', start: Date.now(), duration: 800 });
+        effects.push({ type: 'text', text: `+${reward} COINS`, color: '#fd0', x: canvas.width / 2, y: canvas.height / 2 - 40, start: Date.now(), duration: 1500 });
+        boss = null;
+        level++;
+        setupLevel();
+        updateUI();
+    }
 
     function checkCollisions() {
         // プレイヤーの弾と敵の衝突判定
@@ -936,7 +1156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 bullets.splice(i, 1);
                 boss.hp -= bullet.damage || 1;
                 score += 50;
-                if (boss.hp <= 0) { endGame(true); return; } // ボス撃破
+                if (boss.hp <= 0) { defeatBoss(); return; }
 
                 // ボスヒット時に低確率でアイテム・コインをドロップ
                 if (Math.random() < 0.05) { // 5%の確率
@@ -954,16 +1174,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
 
-            hitLoop:
-            for (const column of invaders) {
-                for (const invader of column) {
-                    if (invader.status === 1 && pointInRect(bx, by, invader)) {
-                        killInvader(invader);
-                        if (!bullet.pierce) { // 貫通弾はそのまま進む
-                            bullets.splice(i, 1);
-                            break hitLoop;
-                        }
-                    }
+            // 分裂で増えた敵をこの弾でそのまま撃たないよう、今いる敵だけを見る
+            for (const invader of invaders.slice()) {
+                if (invader.status !== 1 || !pointInRect(bx, by, invader)) continue;
+                if (bullet.pierce) { // 貫通弾はそのまま進む (同じ敵には1回だけ当たる)
+                    bullet.hits = bullet.hits || new Set();
+                    if (bullet.hits.has(invader)) continue;
+                    bullet.hits.add(invader);
+                    hitInvader(invader, bullet.damage);
+                } else {
+                    hitInvader(invader, bullet.damage);
+                    bullets.splice(i, 1);
+                    break;
                 }
             }
         }
@@ -972,14 +1194,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 自機とインベーダー・ボスの体当たり (無敵中はすり抜ける)
         if (!player.invincible) {
-            hitLoop:
-            for (const column of invaders) {
-                for (const invader of column) {
-                    if (invader.status === 1 && rectsOverlap(hitbox, invader)) {
-                        killInvader(invader);
-                        damagePlayer(false);
-                        break hitLoop; // 被弾で無敵になるので、1フレームに1体だけ
-                    }
+            for (const invader of invaders.slice()) {
+                if (invader.status === 1 && rectsOverlap(hitbox, invader)) {
+                    killInvader(invader);
+                    damagePlayer(false);
+                    break; // 被弾で無敵になるので、1フレームに1体だけ
                 }
             }
             if (boss && boss.active && boss.y > 0 && rectsOverlap(hitbox, boss)) damagePlayer(false);
@@ -1037,13 +1256,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     function checkLevelClear() {
-        const allDead = invaders.every(column => column.every(invader => invader.status === 0));
+        const allDead = invaders.every(invader => invader.status === 0);
         if (allDead && !(boss && boss.active)) {
             playSound(sounds.levelClear);
             if (level < MAX_LEVEL) {
                 level++;
                 updateUI();
-                setupLevel(); // レベル10ならボス戦の準備になる
+                setupLevel(); // ボスのステージならボス戦の準備になる
             }
         }
     }
@@ -1146,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // GAME CLEAR テキスト
             ctx.save();
             ctx.fillStyle = '#ff0';
-            ctx.font = "40px 'Press Start 2P'";
+            ctx.font = "28px 'Press Start 2P'"; // 40pxだと画面幅からはみ出していた
             ctx.textAlign = 'center';
             ctx.shadowColor = '#f00';
             ctx.shadowBlur = 10;
