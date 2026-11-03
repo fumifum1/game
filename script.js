@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- UI要素の取得 ---
     const canvas = document.getElementById('gameCanvas');
-    const gameContainer = document.getElementById('game-container');
     const gameInfoEl = document.getElementById('game-info');
     const scoreEl = document.getElementById('score');
     const levelEl = document.getElementById('level');
@@ -49,19 +48,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ゲーム設定
-    const LIVES_START = 3;
     const PLAYER_WIDTH = 40;
     const PLAYER_HEIGHT = 40;
-    const PLAYER_SPEED = 7;
     const BULLET_SPEED = 8;
-    const BULLET_COOLDOWN = 350;
+    const HOMING_LIFETIME = 180; // 追尾ミサイルの寿命(フレーム)。敵の周りを回り続けるのを防ぐ
     const INVADER_ROWS = 5;
     const INVADER_COLS = 5;
     const INVADER_WIDTH = 30;
     const INVADER_HEIGHT = 24;
     const INVADER_PADDING = 10;
     const INVADER_OFFSET_TOP = 50;
-    let INVADER_OFFSET_LEFT = (canvas.width - (INVADER_COLS * (INVADER_WIDTH + INVADER_PADDING))) / 2;
+    const INVADER_OFFSET_LEFT = (canvas.width - (INVADER_COLS * (INVADER_WIDTH + INVADER_PADDING))) / 2;
     const MAX_LEVEL = 10;
     const BOSS_START_HP = 200;
     const INVADER_BULLET_SPEED = 4;
@@ -212,13 +209,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const INVADER_PATH_3 = new Path2D("M15 0 L25 10 L25 18 L20 24 L10 24 L5 18 L5 10 Z M15 4 L21 10 L18 13 L12 13 L9 10 Z");
     const INVADER_PATHS = [
         [INVADER_PATH_1, INVADER_PATH_2], // NORMAL, RAPID, SPREAD用
-        [INVADER_PATH_3, INVADER_PATH_3]  // (旧DIVE用、現在は未使用)
+        [INVADER_PATH_3, INVADER_PATH_3]  // DIVE用 (レベル7以降の最上段)
     ];
-
-    // Boss Path
-    const BOSS_BASE_PATH = new Path2D("M 50 10 L 150 10 L 180 40 L 160 80 L 130 70 L 70 70 L 40 80 L 20 40 Z");
-    const BOSS_TURRET_PATH = new Path2D("M 90 50 L 110 50 L 115 70 L 85 70 Z");
-    const BOSS_WEAK_POINT_PATH = new Path2D("M 95 20 L 105 20 L 105 30 L 95 30 Z");
 
     // Boss Image
     const bossImage = new Image();
@@ -226,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ゲーム状態
     let ctx, player, bullets, invaderBullets, items, invaders, score, level, gameOver, lastShotTime, invaderDirection, invaderSpeed, animationFrameId, boss, isPaused;
-    let effects = [], runCoins = 0, lastEarnedCoins = 0, lastBombTime = 0, isHangarOpen = false;
+    let effects = [], runCoins = 0, lastEarnedCoins = 0, lastBombTime = 0, pausedAt = 0, isHangarOpen = false;
     // 移動キー (矢印キー / WASD)
     const KEY_DIRECTIONS = {
         arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right',
@@ -245,9 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
             y: DEFENSE_LINE,
             width: PLAYER_WIDTH,
             height: PLAYER_HEIGHT,
-            speed: currentShip.speed || PLAYER_SPEED,
+            speed: currentShip.speed,
             activePowerUps: [], // 複数のパワーアップを管理
-            lives: currentShip.lives || LIVES_START,
+            lives: currentShip.lives,
             invincible: false,
             invincibleTimer: null,
             innateShield: !!currentShip.shieldRegen, // GUARDIANの常備シールド
@@ -274,6 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
         messageContainer.classList.add('hidden');
         gameInfoEl.classList.remove('hidden');
         canvas.classList.remove('hidden');
+        pauseButton.textContent = '❚❚';
+        pauseButton.classList.remove('hidden');
 
         if (animationFrameId) {
             cancelAnimationFrame(animationFrameId);
@@ -351,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
             shootCooldown: 0,
         };
     }
-    // UI更新 (変更なし)
+    // UI更新
     function updateUI() {
         scoreEl.textContent = score;
         levelEl.textContent = `LV${level}`;
@@ -583,11 +577,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameOver || !ctx || isHangarOpen) return;
         isPaused = !isPaused;
         if (isPaused) {
+            pausedAt = Date.now();
             sounds.bgm.pause();
             pauseButton.textContent = '▶'; // 再開アイコン
             // ポーズした瞬間にオーバーレイを描画
             drawPauseScreen();
         } else {
+            lastBombTime += Date.now() - pausedAt;
             sounds.bgm.play().catch(e => console.error("BGM play failed on resume:", e));
             pauseButton.textContent = '❚❚'; // 一時停止アイコン
             // ゲームループを再開
@@ -613,8 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentTime = Date.now();
         const hasRapid = player.activePowerUps.some(p => p.type === ITEM_TYPES.RAPID_FIRE);
         const hasDouble = player.activePowerUps.some(p => p.type === ITEM_TYPES.DOUBLE_SHOT);
-        const baseCooldown = currentShip.cooldown || BULLET_COOLDOWN;
-        const currentCooldown = hasRapid ? baseCooldown / 2 : baseCooldown;
+        const currentCooldown = hasRapid ? currentShip.cooldown / 2 : currentShip.cooldown;
         if (currentTime - lastShotTime <= currentCooldown) return;
 
         const cx = player.x + player.width / 2;
@@ -669,8 +664,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function moveBullets() {
         for (let i = bullets.length - 1; i >= 0; i--) {
             const b = bullets[i];
-            if (b.vx === undefined) { b.vx = 0; b.vy = -(b.speed || BULLET_SPEED); }
             if (b.homing) {
+                b.life = (b.life || 0) + 1;
+                if (b.life > HOMING_LIFETIME) { bullets.splice(i, 1); continue; }
                 const target = findHomingTarget(b);
                 if (target) {
                     const speed = Math.hypot(b.vx, b.vy);
@@ -803,7 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'snipe': // 狙い撃ち
                 boss.shootCooldown = now + 500;
-                const angle = Math.atan2(player.y - (boss.y + boss.height / 2), player.x - (boss.x + boss.width / 2));
+                const angle = Math.atan2(player.y + player.height / 2 - (boss.y + boss.height / 2), player.x + player.width / 2 - (boss.x + boss.width / 2));
                 invaderBullets.push({
                     x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, // 発射位置をボスの中心に変更
                     width: 8, height: 8, speed: INVADER_BULLET_SPEED * 1.5,
@@ -848,7 +844,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // すべての敵の移動が終わった後に、フラグをチェックしてゲームオーバーを判定
         if (isGameOver) {
-            console.log("Invaders reached player line. Game Over.");
             endGame(false);
             return;
         }
@@ -975,17 +970,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hitbox = playerHitbox();
 
-        // 自機とインベーダー・ボスの体当たり
-        for (const column of invaders) {
-            for (const invader of column) {
-                if (invader.status === 1 && rectsOverlap(hitbox, invader)) {
-                    killInvader(invader);
-                    damagePlayer(false);
+        // 自機とインベーダー・ボスの体当たり (無敵中はすり抜ける)
+        if (!player.invincible) {
+            hitLoop:
+            for (const column of invaders) {
+                for (const invader of column) {
+                    if (invader.status === 1 && rectsOverlap(hitbox, invader)) {
+                        killInvader(invader);
+                        damagePlayer(false);
+                        break hitLoop; // 被弾で無敵になるので、1フレームに1体だけ
+                    }
                 }
             }
+            if (boss && boss.active && boss.y > 0 && rectsOverlap(hitbox, boss)) damagePlayer(false);
+            if (gameOver) return;
         }
-        if (boss && boss.active && boss.y > 0 && rectsOverlap(hitbox, boss)) damagePlayer(false);
-        if (gameOver) return;
 
         for (let i = invaderBullets.length - 1; i >= 0; i--) {
             const bullet = invaderBullets[i];
@@ -999,14 +998,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     continue;
                 }
                 // レーザーの描画はdrawInvaderBulletsで行う
-                if (rectsOverlap(hitbox, bullet)) {
-                    // 当たり判定
-                    if (!player.invincible && !hasShield()) {
-                        player.lives = 0; // レーザーは即死
-                        updateUI();
-                        endGame(false);
-                        return;
-                    }
+                if (rectsOverlap(hitbox, bullet) && !player.invincible && !consumeShield()) {
+                    player.lives = 0; // レーザーは即死 (シールドがあれば身代わりになって壊れる)
+                    updateUI();
+                    endGame(false);
+                    return;
                 }
                 continue; // 通常の弾の処理はスキップ
             }
@@ -1047,9 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (level < MAX_LEVEL) {
                 level++;
                 updateUI();
-                // レベル9クリア後はボス戦へ
-                if (level === MAX_LEVEL) setupBossFight();
-                setupLevel();
+                setupLevel(); // レベル10ならボス戦の準備になる
             }
         }
     }
@@ -1085,6 +1079,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameOver) return; // 同じフレームで二重に呼ばれてもコインを二重加算しない
         sounds.bgm.pause();
         gameOver = true;
+        pauseButton.classList.add('hidden');
         player.activePowerUps.forEach(p => clearTimeout(p.timer));
         player.activePowerUps = [];
         if (player.invincibleTimer) clearTimeout(player.invincibleTimer);
@@ -1118,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // エンディング用にプレイヤーとボスを再配置//
         player.x = canvas.width / 2 - player.width / 2;
-        player.y = canvas.height - player.height - 30;
+        player.y = DEFENSE_LINE;
         bullets = [];
         invaderBullets = [];
         items = [];
@@ -1318,7 +1313,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 格納庫 (機体選択画面) ---
-    let hangarIndex = Math.max(0, SHIPS.indexOf(currentShip));
+    let hangarIndex = 0; // 格納庫を開くたびに使用中の機体に合わせる
     const shipCards = SHIPS.map((ship, index) => {
         const card = document.createElement('button');
         card.className = 'ship-card';
@@ -1425,7 +1420,7 @@ document.addEventListener('DOMContentLoaded', () => {
     restartButton.addEventListener('click', startGame);
     hangarButton.addEventListener('click', openHangar);
     launchButton.addEventListener('click', handleLaunch);
-    pauseButton.addEventListener('click', togglePause);
+    pauseButton.addEventListener('click', () => { togglePause(); pauseButton.blur(); });
     pauseButton.addEventListener('touchstart', (e) => { e.preventDefault(); togglePause(); });
 
     document.addEventListener('keydown', (e) => {
@@ -1442,10 +1437,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return;
         }
-        if (key === 'enter') {
-            if (gameOver && !messageContainer.classList.contains('hidden')) {
-                startGame();
-            }
+        if (key === 'enter' && gameOver && !messageContainer.classList.contains('hidden')) {
+            e.preventDefault();
+            startGame();
         }
         if (key in KEY_DIRECTIONS) {
             if (key.startsWith('arrow')) e.preventDefault();

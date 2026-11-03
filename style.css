@@ -59,13 +59,13 @@ body {
     color: #0f0;
     border: 1px solid #0f0;
     border-radius: 5px;
-    font-family: sans-serif; /* アイコン表示のため *//
+    padding: 0;
+    font-family: sans-serif; /* アイコン表示のため */
     font-size: 18px;
     line-height: 28px; /* 中央揃え */
     text-align: center;
     cursor: pointer;
-    z-index: 5; /* canvasより手前 */
-    display: none; /* ゲーム開始時に表示 */
+    z-index: 5; /* canvasより手前 (表示/非表示はJSで .hidden を切り替え) */
 }
 
 #pause-button:hover {
@@ -102,7 +102,7 @@ body {
 #game-info span {
     flex-grow: 1;
     text-align: center;
-    font-size: 14px;
+    font-size: 12px;
     color: #aaa;
 }
 
@@ -122,7 +122,6 @@ body {
     height: 20px;
 }
 
-#start-screen,
 #message-container {
     position: absolute;
     top: 0;
@@ -140,7 +139,6 @@ body {
     z-index: 10;
 }
 
-#start-screen h2,
 #message-container h2 {
     color: #0f0;
     text-shadow: 0 0 10px #0f0;
@@ -148,7 +146,6 @@ body {
     font-size: 1.5rem;
 }
 
-#start-button,
 #restart-button {
     background-color: transparent;
     color: #0f0;
@@ -163,14 +160,12 @@ body {
     transition: all 0.2s ease;
 }
 
-#start-button:hover,
 #restart-button:hover {
     background-color: #0f0;
     color: #000;
     box-shadow: 0 0 20px #0f0;
 }
 
-#start-button:active,
 #restart-button:active {
     transform: scale(0.95);
 }
@@ -237,12 +232,6 @@ body {
     height: 40px;
     z-index: 20;
     transform: translateX(-50%);
-}
-#loading-ship-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    image-rendering: pixelated;
 }
 .loading-missile {
     position: absolute;
@@ -326,10 +315,6 @@ footer {
     background: radial-gradient(circle at 35% 35%, #ffe680 0%, #fc0 55%, #a70 100%);
     box-shadow: 0 0 4px #fd0;
     vertical-align: -1px;
-}
-
-#game-info span {
-    font-size: 12px;
 }
 
 #game-info #coins-display {
