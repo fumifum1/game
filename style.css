@@ -315,3 +315,287 @@ footer {
     margin-top: 10px;
     line-height: 1.5;
 }
+
+/* ===== コイン ===== */
+.coin-icon {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffe680 0%, #fc0 55%, #a70 100%);
+    box-shadow: 0 0 4px #fd0;
+    vertical-align: -1px;
+}
+
+#game-info span {
+    font-size: 12px;
+}
+
+#game-info #coins-display {
+    color: #fd0;
+    white-space: nowrap;
+}
+
+/* ===== 格納庫 (機体選択画面) ===== */
+#hangar {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
+    box-sizing: border-box;
+    background-color: rgba(0, 0, 0, 0.88);
+}
+
+#hangar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#hangar-header h2 {
+    margin: 0;
+    font-size: 14px;
+    color: #0f0;
+    text-shadow: 0 0 8px #0f0;
+}
+
+#hangar-coins {
+    font-size: 12px;
+    color: #fd0;
+    text-shadow: 0 0 6px rgba(255, 220, 0, 0.6);
+}
+
+#ship-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.ship-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0 5px;
+    background-color: #0a140a;
+    border: 2px solid #1a4d1a;
+    border-radius: 4px;
+    color: #9f9;
+    font-family: 'Press Start 2P', cursive;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ship-card canvas {
+    width: 40px;
+    height: 40px;
+}
+
+.ship-card-label {
+    margin-top: 3px;
+    font-size: 6px;
+    white-space: nowrap;
+}
+
+.ship-card-label .coin-icon {
+    width: 6px;
+    height: 6px;
+    margin-right: 2px;
+    vertical-align: 0;
+}
+
+.ship-card:hover {
+    border-color: #3c3;
+}
+
+.ship-card.focused {
+    border-color: #0f0;
+    box-shadow: 0 0 8px #0f0, inset 0 0 8px rgba(0, 255, 0, 0.3);
+}
+
+.ship-card.locked {
+    background-color: #111;
+    border-color: #333;
+    color: #777;
+}
+
+.ship-card.locked::after {
+    content: "🔒";
+    position: absolute;
+    top: 14px;
+    font-size: 14px;
+    filter: grayscale(1);
+}
+
+.ship-card.locked.affordable {
+    color: #fd0;
+    border-color: #665500;
+}
+
+.ship-card.locked.focused {
+    border-color: #fd0;
+    box-shadow: 0 0 8px #fd0;
+}
+
+.ship-card.equipped::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #0f0;
+    box-shadow: 0 0 4px #0f0;
+}
+
+#ship-detail {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 10px;
+    border: 1px solid #1a4d1a;
+    border-radius: 4px;
+    background-color: rgba(0, 40, 0, 0.35);
+}
+
+#ship-preview {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+}
+
+#ship-info {
+    flex: 1;
+    text-align: left;
+}
+
+#ship-name {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: #fff;
+    text-shadow: 0 0 6px #0f0;
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 7px;
+    color: #8c8;
+}
+
+.stat-row > span:first-child {
+    width: 24px;
+}
+
+.pips {
+    display: flex;
+    gap: 3px;
+}
+
+.pips i {
+    width: 12px;
+    height: 6px;
+    background-color: #1a331a;
+}
+
+.pips i.on {
+    background-color: #0f0;
+    box-shadow: 0 0 4px #0f0;
+}
+
+#ship-desc {
+    margin: 0;
+    min-height: 34px;
+    font-family: 'DotGothic16', sans-serif;
+    font-size: 13px;
+    line-height: 1.35;
+    color: #cfc;
+    text-align: left;
+}
+
+#launch-button {
+    align-self: center;
+    min-width: 200px;
+    background-color: transparent;
+    color: #0f0;
+    border: 2px solid #0f0;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+#launch-button:hover:not(:disabled) {
+    background-color: #0f0;
+    color: #000;
+    box-shadow: 0 0 20px #0f0;
+}
+
+#launch-button.unlock {
+    color: #fd0;
+    border-color: #fd0;
+    box-shadow: 0 0 10px rgba(255, 220, 0, 0.3);
+}
+
+#launch-button.unlock:hover:not(:disabled) {
+    background-color: #fd0;
+    color: #000;
+    box-shadow: 0 0 20px #fd0;
+}
+
+#launch-button:disabled {
+    color: #666;
+    border-color: #444;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+#launch-button .coin-icon {
+    vertical-align: 0;
+}
+
+#hangar-help {
+    margin: 0;
+    font-family: 'DotGothic16', sans-serif;
+    font-size: 11px;
+    color: #6a6;
+}
+
+/* ===== ゲームオーバー画面の追加分 ===== */
+#message-coins {
+    color: #fd0;
+    font-size: 12px;
+    margin: 0;
+}
+
+#message-coins small {
+    font-size: 8px;
+    color: #ca0;
+}
+
+#hangar-button {
+    background-color: transparent;
+    color: #8c8;
+    border: 2px solid #3a3;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 11px;
+    cursor: pointer;
+    margin-top: 14px;
+    transition: all 0.2s ease;
+}
+
+#hangar-button:hover {
+    background-color: #3a3;
+    color: #000;
+}

@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Teko:wght@300..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- ローディング画面 -->
@@ -47,6 +48,7 @@
         <span id="score">0</span>
         <span id="level">1</span>
         <span id="powerup">---</span>
+        <span id="coins-display"><i class="coin-icon"></i><span id="run-coins">0</span></span>
         <span id="lives-display"></span>
     </div>
 
@@ -56,14 +58,35 @@
         <canvas id="gameCanvas" width="360" height="440" class="hidden"></canvas>
         <button id="pause-button" class="hidden">❚❚</button>
 
+        <!-- 格納庫 (機体選択画面) -->
+        <div id="hangar" class="hidden">
+            <div id="hangar-header">
+                <h2>SELECT SHIP</h2>
+                <div id="hangar-coins"><i class="coin-icon"></i><span id="hangar-coin-count">0</span></div>
+            </div>
+            <div id="ship-grid"></div>
+            <div id="ship-detail">
+                <canvas id="ship-preview" width="64" height="64"></canvas>
+                <div id="ship-info">
+                    <h3 id="ship-name"></h3>
+                    <div id="ship-stats"></div>
+                </div>
+            </div>
+            <p id="ship-desc"></p>
+            <button id="launch-button">LAUNCH</button>
+            <p id="hangar-help">移動: 矢印キー / WASD / ドラッグ</p>
+        </div>
+
         <div id="message-container" class="hidden">
             <h2 id="message-title"></h2>
             <p id="message-text"></p>
+            <p id="message-coins"></p>
             <button id="restart-button">PLAY AGAIN</button>
+            <button id="hangar-button">CHANGE SHIP</button>
         </div>
     </div>
     <footer>
-        &copy; 2025 Synapse Creations. Sep.Arcade Invade_ver2.1.0 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
+        &copy; 2025 Synapse Creations. Sep.Arcade Invade_ver2.2.0 <a href="https://fumifum1.github.io/main/index.html">Creator/fumifumi</a>
     </footer>
     <script src="menu.js" defer></script>
     <script src="script.js" defer></script>
