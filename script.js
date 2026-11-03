@@ -59,11 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const FORMATION_DROP = 8; // 編隊が端で折り返すときに下がる量
     const INVADER_BULLET_SPEED = 4;
     const INVADER_SHOOT_PROBABILITY = 0.0008;
-    const ITEM_DROP_CHANCE = 0.25;
+    const ITEM_DROP_CHANCE = 0.14;
     const ITEM_SPEED = 3;
     const POWERUP_DURATION = 7000;
     const ITEM_TYPES = { SHIELD: 'SHIELD', DOUBLE_SHOT: '2-SHOT', RAPID_FIRE: 'RAPID', LIFE_UP: 'LIFE_UP', COIN: 'COIN' };
-    const COIN_DROP_CHANCE = 0.3;
+    const COIN_DROP_CHANCE = 0.18;
     const SCORE_PER_COIN = 200;   // ゲーム終了時、スコア200ごとに1コイン
     const CLEAR_BONUS_COINS = 100;
     const DEFENSE_LINE = canvas.height - PLAYER_HEIGHT - 30; // インベーダーがここまで来たらゲームオーバー
@@ -260,10 +260,10 @@ document.addEventListener('DOMContentLoaded', () => {
         /* 20 */ { boss: 'final' },
     ];
     const MAX_LEVEL = STAGES.length;
-    // hue: 画像の色相をずらして中ボスとラスボスを見分ける / rage: HPが半分を切ると速くなる
+    // image: BOSS_IMAGES のどれを使うか / rage: HPが半分を切ると速くなる
     const BOSS_TYPES = {
-        mid:   { width: 160, hp: 150, speed: 1.5, cooldownScale: 1,   patterns: ['spread', 'snipe', 'laser'], hue: 140, rage: false, rewardCoins: 15 },
-        final: { width: 200, hp: 350, speed: 2,   cooldownScale: 0.7, patterns: ['spread', 'snipe', 'laser', 'ring'], hue: 0, rage: true },
+        mid:   { width: 160, hp: 150, speed: 1.5, cooldownScale: 1,   patterns: ['spread', 'snipe', 'laser'], image: 'mid', rage: false, rewardCoins: 15 },
+        final: { width: 200, hp: 350, speed: 2,   cooldownScale: 0.7, patterns: ['spread', 'snipe', 'laser', 'ring'], image: 'final', rage: true },
     };
     // ステージが進むほど速く・よく撃ち・よく襲ってくる
     function stageParams(lv) {
@@ -279,6 +279,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // Boss Image
     const bossImage = new Image();
     bossImage.src = 'images/Boss.png';
+    // 中ボス: 紫の装甲に赤いコアを持つ戦艦 (SVGを画像として読み込む)
+    const MID_BOSS_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="120" viewBox="0 0 160 120">
+        <defs>
+            <radialGradient id="core">
+                <stop offset="0" stop-color="#fff"/><stop offset="0.35" stop-color="#ff4"/>
+                <stop offset="0.7" stop-color="#f40"/><stop offset="1" stop-color="#600"/>
+            </radialGradient>
+            <linearGradient id="hull" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#3a2a5a"/><stop offset="1" stop-color="#140a24"/>
+            </linearGradient>
+        </defs>
+        <path d="M30 40 L4 56 L8 92 L18 100 L22 78 L36 64 Z" fill="url(#hull)" stroke="#0ff" stroke-width="2"/>
+        <path d="M130 40 L156 56 L152 92 L142 100 L138 78 L124 64 Z" fill="url(#hull)" stroke="#0ff" stroke-width="2"/>
+        <rect x="46" y="78" width="8" height="30" fill="#556" stroke="#0ff" stroke-width="1.5"/>
+        <rect x="106" y="78" width="8" height="30" fill="#556" stroke="#0ff" stroke-width="1.5"/>
+        <rect x="76" y="88" width="8" height="28" fill="#556" stroke="#f0f" stroke-width="1.5"/>
+        <path d="M50 10 L110 10 L134 34 L128 76 L104 92 L56 92 L32 76 L26 34 Z" fill="url(#hull)" stroke="#f0f" stroke-width="2.5"/>
+        <path d="M40 40 L60 24 L100 24 L120 40 M38 70 L58 82 L102 82 L122 70" fill="none" stroke="#7a5ab0" stroke-width="2"/>
+        <rect x="60" y="2" width="12" height="10" fill="#0ff" opacity="0.8"/>
+        <rect x="88" y="2" width="12" height="10" fill="#0ff" opacity="0.8"/>
+        <circle cx="80" cy="54" r="20" fill="#200" stroke="#f0f" stroke-width="2"/>
+        <circle cx="80" cy="54" r="15" fill="url(#core)"/>
+        <circle cx="80" cy="54" r="5" fill="#fff"/>
+        <circle cx="44" cy="54" r="3" fill="#0f0"/>
+        <circle cx="116" cy="54" r="3" fill="#0f0"/>
+    </svg>`;
+    const midBossImage = new Image();
+    midBossImage.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(MID_BOSS_SVG);
+    const BOSS_IMAGES = { mid: midBossImage, final: bossImage };
 
     // ゲーム状態
     let ctx, player, bullets, invaderBullets, items, invaders, score, level, gameOver, lastShotTime, formation, stage, stageSlots, animationFrameId, boss, isPaused;
@@ -392,8 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const bossWidth = def.width;
         let bossHeight = bossWidth * 0.8; // 画像が読めていない時の高さ
         // 画像が読み込み済みであれば、アスペクト比を維持して高さを計算
-        if (bossImage.complete && bossImage.naturalWidth > 0) {
-            bossHeight = bossWidth * bossImage.naturalHeight / bossImage.naturalWidth;
+        const image = BOSS_IMAGES[def.image];
+        if (image.complete && image.naturalWidth > 0) {
+            bossHeight = bossWidth * image.naturalHeight / image.naturalWidth;
         }
 
         boss = {
@@ -622,11 +652,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ctx.save();
         // ボス画像が読み込み済みの場合のみ描画
-        if (bossImage.complete) {
-            if (boss.def.hue) ctx.filter = `hue-rotate(${boss.def.hue}deg)`;
+        const image = BOSS_IMAGES[boss.def.image];
+        if (image.complete) {
             ctx.shadowColor = isBossRaging() ? '#f00' : '#a0f';
             ctx.shadowBlur = 20;
-            ctx.drawImage(bossImage, boss.x, boss.y, boss.width, boss.height);
+            ctx.drawImage(image, boss.x, boss.y, boss.width, boss.height);
         }
         ctx.restore();
 
@@ -1159,16 +1189,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (boss.hp <= 0) { defeatBoss(); return; }
 
                 // ボスヒット時に低確率でアイテム・コインをドロップ
-                if (Math.random() < 0.05) { // 5%の確率
+                if (Math.random() < 0.03) { // 3%の確率
                     let itemType;
-                    if (Math.random() < 0.25) { // ライフアップはさらに低確率(全体の約1.25%)
+                    if (Math.random() < 0.25) { // ライフアップはさらに低確率(全体の約0.75%)
                         itemType = ITEM_TYPES.LIFE_UP;
                     } else {
                         const powerUpTypes = [ITEM_TYPES.SHIELD, ITEM_TYPES.DOUBLE_SHOT, ITEM_TYPES.RAPID_FIRE];
                         itemType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
                     }
                     items.push({ x: bx - 10, y: by, width: 20, height: 20, speed: ITEM_SPEED, type: itemType });
-                } else if (Math.random() < 0.08) {
+                } else if (Math.random() < 0.05) {
                     dropCoin(bx, by);
                 }
                 continue;
